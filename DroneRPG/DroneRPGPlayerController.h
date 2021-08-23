@@ -24,6 +24,7 @@ protected:
 	FTimerHandle TimerHandle_ShotTimerExpired;
 
 	bool bCanFire;
+	bool isFiring;
 
 	float FireRate;
 
@@ -44,6 +45,7 @@ protected:
 	virtual void PlayerTick(float DeltaTime) override;
 	void FireShot(FVector FireDirection);
 	void UseTool();
+	void StopUsingTool();
 	void CalculateMovement(float DeltaSeconds);
 	virtual void SetupInputComponent() override;
 };

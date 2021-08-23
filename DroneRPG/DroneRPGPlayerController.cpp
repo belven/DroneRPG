@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include <Kismet/GameplayStatics.h>
 #include <Kismet/KismetMathLibrary.h>
+#include "DroneProjectile.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()
@@ -22,6 +23,9 @@ ADroneRPGPlayerController::ADroneRPGPlayerController()
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
+	bCanFire = true;
+	GunOffset = FVector(100.f, 0.f, 0.f);
+	FireRate = 0.5;
 }
 
 ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
@@ -31,29 +35,32 @@ ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
 void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
-	CalculateMovement(DeltaTime);
 
-	// Create fire direction vector
-	const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
-	const float FireRightValue = GetInputAxisValue(FireRightBinding);
-	const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
+	if (GetCharacter() != NULL) {
+		CalculateMovement(DeltaTime);
 
-	FHitResult Hit;
-	GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
-	FRotator lookAt = UKismetMathLibrary::FindLookAtRotation(mActorLocation, Hit.ImpactPoint);
-	lookAt.Pitch = mActorRotation.Pitch;
-	lookAt.Roll = mActorRotation.Roll;
+		// Create fire direction vector
+		const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
+		const float FireRightValue = GetInputAxisValue(FireRightBinding);
+		const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
 
-	GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
+		FHitResult Hit;
+		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
+		FRotator lookAt = UKismetMathLibrary::FindLookAtRotation(mActorLocation, Hit.ImpactPoint);
+		lookAt.Pitch = mActorRotation.Pitch;
+		lookAt.Roll = mActorRotation.Roll;
 
-	// Try and fire a shot
-	FireShot(FireDirection);
+		GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
+
+		// Try and fire a shot
+		FireShot(mActorRotation.Vector());
+	}
 }
 
 void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 {
 	// If it's ok to fire again
-	if (bCanFire == true)
+	if (isFiring && bCanFire)
 	{
 		// If we are pressing fire stick in a direction
 		if (FireDirection.SizeSquared() > 0.0f)
@@ -67,26 +74,31 @@ void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 			if (World != NULL)
 			{
 				// spawn the projectile
-				//World->SpawnActor<ATestTwinStickProjectile>(gunLocation, FireRotation);
+				ADroneProjectile* projectile = World->SpawnActor<ADroneProjectile>(gunLocation, FireRotation);
+
+				if (projectile != NULL) {
+					projectile->SetShooter(GetCharacter());
+					World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ADroneRPGPlayerController::ShotTimerExpired, FireRate);
+
+					// try and play the sound if specified
+					if (FireSound != nullptr)
+					{
+						UGameplayStatics::PlaySoundAtLocation(this, FireSound, mActorLocation);
+					}
+					bCanFire = false;
+				}
 			}
-
-			World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ADroneRPGPlayerController::ShotTimerExpired, FireRate);
-
-			// try and play the sound if specified
-			if (FireSound != nullptr)
-			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, mActorLocation);
-			}
-
-			bCanFire = false;
 		}
 	}
 }
 
 void ADroneRPGPlayerController::UseTool() {
-
+	isFiring = true;
 }
 
+void ADroneRPGPlayerController::StopUsingTool() {
+	isFiring = false;
+}
 void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds)
 {
 	// Find movement direction
@@ -118,6 +130,7 @@ void ADroneRPGPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	InputComponent->BindAction("UseTool", IE_Pressed, this, &ADroneRPGPlayerController::UseTool);
+	InputComponent->BindAction("UseTool", IE_Released, this, &ADroneRPGPlayerController::StopUsingTool);
 	
 	// set up game play key bindings
 	InputComponent->BindAxis(MoveForwardBinding);
