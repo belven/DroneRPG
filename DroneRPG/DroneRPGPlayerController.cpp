@@ -20,6 +20,12 @@ const FName ADroneRPGPlayerController::FireRightBinding("FireRight");
 
 ADroneRPGPlayerController::ADroneRPGPlayerController()
 {
+	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
+
+	if (ProjectileClassFound.Succeeded()) {
+		projectileClass = ProjectileClassFound.Class;
+	}
+
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
@@ -74,7 +80,7 @@ void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 			if (World != NULL)
 			{
 				// spawn the projectile
-				ADroneProjectile* projectile = World->SpawnActor<ADroneProjectile>(gunLocation, FireRotation);
+				ADroneProjectile* projectile = World->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation);
 
 				if (projectile != NULL) {
 					projectile->SetShooter(GetCharacter());
@@ -131,7 +137,7 @@ void ADroneRPGPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("UseTool", IE_Pressed, this, &ADroneRPGPlayerController::UseTool);
 	InputComponent->BindAction("UseTool", IE_Released, this, &ADroneRPGPlayerController::StopUsingTool);
-	
+
 	// set up game play key bindings
 	InputComponent->BindAxis(MoveForwardBinding);
 	InputComponent->BindAxis(MoveRightBinding);

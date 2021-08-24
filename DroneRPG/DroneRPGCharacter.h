@@ -6,6 +6,25 @@
 #include "GameFramework/Character.h"
 #include "DroneRPGCharacter.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
+class ADroneProjectile;
+
+USTRUCT(BlueprintType)
+struct FDroneStats
+{
+	GENERATED_USTRUCT_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float  health;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float  shields;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float energy;
+};
+
 UCLASS(Blueprintable)
 class ADroneRPGCharacter : public ACharacter
 {
@@ -14,10 +33,22 @@ class ADroneRPGCharacter : public ACharacter
 public:
 	ADroneRPGCharacter();
 
+	FDroneStats currentStats;
+	FDroneStats maxStats;
+	bool canRegenShields;
+	bool shieldsCritical;
+	bool shieldsActive;
+	FColor healthStatus;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* meshComponent;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
+
+	float ClampValue(float value, float max, float min);
+	void RecieveHit(ADroneProjectile* projectile);
+	void CalculateShieldParticles();
+	void CalculateShields(float DeltaSeconds);
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -31,6 +62,30 @@ public:
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
+	virtual void BeginPlay() override;
+
+	void StartShieldRegen();
+
+	/** Handle for efficient management of ShotTimerExpired timer */
+	FTimerHandle TimerHandle_ShieldRegenRestart;
+
+	UNiagaraSystem* auraSystem;
+	UNiagaraSystem* trailSystem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+		UNiagaraComponent* engineParticle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+		UNiagaraComponent* shieldParticle;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+		UNiagaraComponent* healthParticle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float energyRegen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float energyRegenDelay;
 
 private:
 	/** Top down camera */

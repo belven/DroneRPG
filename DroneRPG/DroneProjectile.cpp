@@ -3,11 +3,12 @@
 
 #include "DroneProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "DroneRPGCharacter.h"
 
 // Sets default values
 ADroneProjectile::ADroneProjectile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Static reference to the mesh to use for the projectile
@@ -19,7 +20,7 @@ ADroneProjectile::ADroneProjectile()
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->BodyInstance.SetCollisionProfileName("Projectile");
 	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);		// set up a notification for when this component hits something
-	
+
 	RootComponent = ProjectileMesh;
 
 	// Use a ProjectileMovementComponent to govern this projectile's movement
@@ -38,7 +39,7 @@ ADroneProjectile::ADroneProjectile()
 // Called when the game starts or when spawned
 void ADroneProjectile::BeginPlay()
 {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 }
 
 // Called every frame
@@ -52,7 +53,11 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 	// Only add impulse and destroy projectile if we hit a physics
 	if (OtherActor != NULL && OtherActor != this && OtherActor != GetShooter() && OtherActor->GetClass() != ADroneProjectile::StaticClass())
 	{
-		OtherActor->Destroy();
+		if (OtherActor->IsA(ADroneRPGCharacter::StaticClass())) {
+			ADroneRPGCharacter* target = Cast<ADroneRPGCharacter>(OtherActor);
+			target->RecieveHit(this);
+		}
+
 		Destroy();
 	}
 }
