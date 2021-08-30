@@ -8,11 +8,14 @@
 #include "../DroneProjectile.h"
 #include "Kismet/GameplayStatics.h"
 #include <Kismet/KismetMathLibrary.h>
+#include <Kismet/KismetArrayLibrary.h>
+#include <Objective.h>
 
-#define mActorLocation GetCharacter()->GetActorLocation()
-#define mActorRotation GetCharacter()->GetActorRotation()
-#define mDist FVector::Dist(targetObjective->GetActorLocation(), GetCharacter()->GetActorLocation())
+#define mDroneLocation GetCharacter()->GetActorLocation()
+#define mDroneRotation GetCharacter()->GetActorRotation()
+#define mDist(a, b) FVector::Dist(a, b)
 #define  mObjectiveLocation targetObjective->GetActorLocation()
+#define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
 
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
@@ -28,56 +31,177 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 	bCanFire = true;
 	GunOffset = FVector(100.f, 0.f, 0.f);
 	FireRate = 0.5;
+	currentGameMode = EGameModeType::Domination;
 }
 
 void ADroneBaseAI::CalculateObjective()
 {
-	//switch (GetCurrentGameMode()) {
-	//case EGameModeType::AttackDefend:
-	//case EGameModeType::Payload:
-	//case EGameModeType::TeamDeathMatch:
-	//case EGameModeType::Domination:
-	//case EGameModeType::Hardpoint:
-	//default:
-	//};
-	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
-	{
-		// Follow iterator object to my actual actor pointer
-		AActor* actor = *actorItr;
-
-		if (actor != GetCharacter() && actor->IsA(ADroneRPGCharacter::StaticClass())) {
-			targetObjective = actor;
-			break;
-		}
-	}
+	switch (GetCurrentGameMode()) {
+	case EGameModeType::TeamDeathMatch:
+		FindTarget();
+		break;
+	case EGameModeType::Domination:
+		FindObjective();
+		break;
+	case EGameModeType::AttackDefend:
+		FindObjective();
+		break;
+	case EGameModeType::Payload:
+		FindObjective();
+		break;
+	case EGameModeType::Hardpoint:
+		FindObjective();
+		break;
+	default:
+		break;
+	};
 
 	if (targetObjective != NULL)
 		currentState = EActionState::MovingToObjective;
 }
 
+void ADroneBaseAI::FindObjective() {
+	TArray<AActor*> actors;
+
+	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
+	{
+		actors.Add(*actorItr);
+	}
+
+	// TODO figure out random array sorting
+	//const TArray<AActor*>& actorsSorted = actors;
+	//UKismetArrayLibrary::Array_Shuffle(actorsSorted);
+
+	for (AActor* actor : actors)
+	{
+		if (actor != GetCharacter() && mIsA(actor, AObjective)) {
+			targetObjective = actor;
+			break;
+		}
+	}
+}
+
+void ADroneBaseAI::DroneAttacked(AActor* attacker) {
+	if (target == NULL || (target != NULL && target != attacker)) {
+		target = attacker;
+	}
+}
+
+AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
+	TArray<AActor*> actors;
+
+	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
+	{
+		actors.Add(*actorItr);
+	}
+
+	// TODO figure out random array sorting
+	//const TArray<AActor*>& actorsSorted = actors;
+	//UKismetArrayLibrary::Array_Shuffle(actorsSorted);
+
+	for (AActor* actor : actors)
+	{
+		if (actor != GetCharacter() && mIsA(actor, ADroneRPGCharacter) &&
+			(distance == 0 || mDist(mDroneLocation, actor->GetActorLocation()) <= distance)) {
+			return actor;
+		}
+	}
+
+	return NULL;
+}
+
+void ADroneBaseAI::FindTarget() {
+	targetObjective = FindEnemyTarget();
+}
+
+void ADroneBaseAI::RotateToFace() {
+	FVector targetLocation;
+	FRotator targetRotation;
+
+	if (currentState == EActionState::AttackingTarget) {
+		if (targetObjective != NULL)
+			targetLocation = mObjectiveLocation;
+	}
+	else if (IsTargetValid()) {
+		targetLocation = target->GetTargetLocation();
+	}
+	else {
+		targetLocation = GetCharacter()->GetActorForwardVector();
+	}
+
+	if (!targetLocation.IsNearlyZero()) {
+		lookAt = UKismetMathLibrary::FindLookAtRotation(mDroneLocation, targetLocation);
+		lookAt.Pitch = mDroneRotation.Pitch;
+		lookAt.Roll = mDroneRotation.Roll;
+		targetRotation = lookAt;
+	}
+	else {
+		targetRotation = GetCharacter()->GetActorForwardVector().Rotation();
+		targetRotation.Pitch = mDroneRotation.Pitch;
+		targetRotation.Roll = mDroneRotation.Roll;
+	}
+
+	GetCharacter()->SetActorRotation(FMath::Lerp(mDroneRotation, targetRotation, 0.10f));
+}
+
 void ADroneBaseAI::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	
-	// Update Lookat on tick, so it's always facing correctly TODO make it follow the movement direction, if no target etc
-	if (targetObjective != NULL) {
-		lookAt = UKismetMathLibrary::FindLookAtRotation(mActorLocation, mObjectiveLocation);
-		lookAt.Pitch = mActorRotation.Pitch;
-		lookAt.Roll = mActorRotation.Roll;
 
-		GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
-	}
+	// Update Lookat on tick, so it's always facing correctly TODO make it follow the movement direction, if no target etc
+	RotateToFace();
 
 	switch (currentState) {
 	case EActionState::SearchingForObjective:
 		CalculateObjective();
 		break;
-	case EActionState::MovingToObjective: 
-		MoveToTarget();
-		break;	
+	case EActionState::MovingToObjective:
+		MoveToObjective();
+		break;
 	case EActionState::AttackingTarget:
-		AttackTarget();
-		break;	
+		AttackingTarget();
+		break;
+	case EActionState::CapturingObjective:
+		CapturingObjective();
+		break;
+	case EActionState::EvadingDamage:
+		break;
+	case EActionState::ReturingToBase:
+		break;
+	default:
+		break;
+	}
+}
+
+void ADroneBaseAI::AttackingTarget() {
+	if (targetObjective->IsActorBeingDestroyed()) {
+		currentState = EActionState::SearchingForObjective;
+		targetObjective = NULL;
+	}
+	else {
+		AttackTarget(targetObjective);
+	}
+}
+
+bool ADroneBaseAI::IsTargetValid() {
+	return target != NULL && !target->IsActorBeingDestroyed();
+}
+
+void ADroneBaseAI::CapturingObjective() {
+	if (mDist(mDroneLocation, mObjectiveLocation) >= 800) {
+		MoveToActor(targetObjective);
+		target = NULL;
+	}
+	else if (IsTargetValid()) {
+		if (!AttackTarget(target, false)) {
+			target = NULL;
+		}
+	}
+	else {
+		AActor* targetFound = FindEnemyTarget(800);
+
+		if (targetFound != NULL)
+			target = targetFound;
 	}
 }
 
@@ -97,7 +221,7 @@ void ADroneBaseAI::FireShot(FVector FireDirection)
 			const FRotator FireRotation = FireDirection.Rotation();
 
 			// Spawn projectile at an offset from this pawn
-			const FVector gunLocation = mActorLocation + FireRotation.RotateVector(GunOffset);
+			const FVector gunLocation = mDroneLocation + FireRotation.RotateVector(GunOffset);
 
 			UWorld* const World = GetWorld();
 			if (World != NULL)
@@ -112,7 +236,7 @@ void ADroneBaseAI::FireShot(FVector FireDirection)
 					// try and play the sound if specified
 					if (FireSound != nullptr)
 					{
-						UGameplayStatics::PlaySoundAtLocation(this, FireSound, mActorLocation);
+						UGameplayStatics::PlaySoundAtLocation(this, FireSound, mDroneLocation);
 					}
 					bCanFire = false;
 				}
@@ -121,30 +245,34 @@ void ADroneBaseAI::FireShot(FVector FireDirection)
 	}
 }
 
-void ADroneBaseAI::AttackTarget()
+bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 {
 	FHitResult hit;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(GetCharacter());
 
-	GetWorld()->LineTraceSingleByChannel(hit, mActorLocation, mObjectiveLocation, ECC_Pawn, params);
+	GetWorld()->LineTraceSingleByChannel(hit, mDroneLocation, targetToAttack->GetActorLocation(), ECC_Pawn, params);
 
-	if (hit.GetActor() == targetObjective)
+	if (hit.GetActor() == targetToAttack)
 	{
+		GetCharacter()->GetMovementComponent()->StopActiveMovement();
 		FireShot(lookAt.Vector());
+		return true;
 	}
 	else {
-		isMovingToObjective = false;
-		currentState = EActionState::MovingToObjective;
+		if (moveIfCantSee)
+			MoveToActor(targetToAttack);
+		return false;
 	}
-
+	return false;
 }
 
-void ADroneBaseAI::MoveToTarget()
+void ADroneBaseAI::MoveToObjective()
 {
-	if (mDist <= minDistance)
+	if (mDist(mObjectiveLocation, mDroneLocation) <= 800)
 	{
 		isMovingToObjective = false;
+
 		if (targetObjective->IsA(ADroneRPGCharacter::StaticClass())) {
 			currentState = EActionState::AttackingTarget;
 		}
@@ -156,5 +284,4 @@ void ADroneBaseAI::MoveToTarget()
 		MoveToActor(targetObjective);
 		isMovingToObjective = true;
 	}
-
 }

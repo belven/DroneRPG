@@ -33,12 +33,26 @@ class ADroneRPGCharacter : public ACharacter
 public:
 	ADroneRPGCharacter();
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float energyRegen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float shieldRegen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float energyRegenDelay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		float shieldRegenDelay;
+
 	FDroneStats currentStats;
 	FDroneStats maxStats;
+	FColor healthStatus;
+
 	bool canRegenShields;
 	bool shieldsCritical;
 	bool shieldsActive;
-	FColor healthStatus;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* meshComponent;
@@ -47,8 +61,11 @@ public:
 
 	float ClampValue(float value, float max, float min);
 	void RecieveHit(ADroneProjectile* projectile);
+
 	void CalculateShieldParticles();
+
 	void CalculateShields(float DeltaSeconds);
+	void CalculateEnergy(float DeltaSeconds);
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -80,12 +97,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* healthParticle;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float energyRegen;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float energyRegenDelay;
 
 private:
 	/** Top down camera */

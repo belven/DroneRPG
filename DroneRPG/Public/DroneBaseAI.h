@@ -6,6 +6,8 @@
 #include "AIController.h"
 #include "DroneBaseAI.generated.h"
 
+class ADroneRPGCharacter;
+
 UENUM(BlueprintType)
 enum class  EActionState : uint8 {
 	SearchingForObjective,
@@ -33,13 +35,20 @@ public:
 	ADroneBaseAI();
 
 	void CalculateObjective();
+	void FindObjective();
+	void DroneAttacked(AActor* attacker);
+	AActor* FindEnemyTarget(float distance = 0);
+	void FindTarget();
+	void RotateToFace();
 	float minDistance;
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	void AttackingTarget();
+	bool IsTargetValid();
 	void FireShot(FVector FireDirection);
-	void AttackTarget();
-	void MoveToTarget();
+	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
+	void MoveToObjective();
 	
 	TSubclassOf<class ADroneProjectile> projectileClass;
 
@@ -53,6 +62,7 @@ public:
 	FVector GunOffset;
 	class USoundBase* FireSound;
 
+	void CapturingObjective();
 	/* Handler for the fire timer expiry */
 	void ShotTimerExpired();
 
@@ -69,6 +79,7 @@ public:
 	void SetCurrentGameMode(EGameModeType val) { currentGameMode = val; }
 private:
 	AActor* targetObjective;
+	AActor* target;
 	EActionState currentState;
 	EActionState preivousState;
 	EGameModeType currentGameMode;

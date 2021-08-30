@@ -17,10 +17,12 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "DroneProjectile.h"
+#include <DroneBaseAI.h>
 
 #define MIN(a,b) (a < b) ? (a) : (b)
 #define MAX(a,b) (a > b) ? (a) : (b)
 #define CLAMP(value, max, min) (value = (MAX(MIN(value, max), min)))
+#define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -105,6 +107,11 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	currentStats.shields = shields;
 
 	energyRegen = 10;
+	shieldRegen = 10;
+
+	shieldRegenDelay = 3.0f;
+	energyRegenDelay = 3.0f;
+
 	canRegenShields = true;
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
@@ -130,7 +137,7 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	float damage = 15;
 
 	canRegenShields = false;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle_ShieldRegenRestart, this, &ADroneRPGCharacter::StartShieldRegen, 3.0f);
+	mSetTimer(TimerHandle_ShieldRegenRestart, StartShieldRegen, shieldRegenDelay);
 
 	if (currentStats.shields <= 0) {
 		currentStats.health -= damage;
@@ -142,7 +149,7 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 			healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 			healthStatus = FColor::Red;
 		}
-		else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange) {
+		else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange && healthStatus != FColor::Red) {
 			healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Orange));
 			healthStatus = FColor::Orange;
 		}
@@ -154,6 +161,12 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	else {
 		currentStats.shields -= damage;
 		CalculateShieldParticles();
+	}
+
+	ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
+
+	if (con != NULL) {
+		con->DroneAttacked(projectile->GetShooter());
 	}
 
 	ClampValue(currentStats.health, maxStats.health, 0);
@@ -183,9 +196,9 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 }
 
 void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
-	float value = energyRegen * DeltaSeconds;
-
 	if (currentStats.shields < maxStats.shields && canRegenShields) {
+		float value = shieldRegen * DeltaSeconds;
+
 		if (currentStats.energy > value) {
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -197,18 +210,20 @@ void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
 	}
 }
 
-void ADroneRPGCharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	float value = energyRegen * DeltaSeconds;
-
+void ADroneRPGCharacter::CalculateEnergy(float DeltaSeconds) {
 	if (currentStats.energy < maxStats.energy) {
+		float value = energyRegen * DeltaSeconds;
 		currentStats.energy += value;
 
 		ClampValue(currentStats.energy, maxStats.energy, 0);
 	}
+}
 
+void ADroneRPGCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	CalculateEnergy(DeltaSeconds);
 	CalculateShields(DeltaSeconds);
 
 	if (engineParticle != NULL) {
