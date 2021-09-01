@@ -20,7 +20,7 @@
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
 	isMovingToObjective = false;
-	minDistance = 800;
+	minDistance = 1000;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
 
@@ -75,6 +75,8 @@ void ADroneBaseAI::FindObjective() {
 	for (AActor* actor : actors)
 	{
 		if (actor != GetCharacter() && mIsA(actor, AObjective)) {
+			AObjective* objective = Cast<AObjective>(actor);
+
 			targetObjective = actor;
 			break;
 		}
@@ -188,9 +190,14 @@ bool ADroneBaseAI::IsTargetValid() {
 }
 
 void ADroneBaseAI::CapturingObjective() {
-	if (mDist(mDroneLocation, mObjectiveLocation) >= 800) {
+	AObjective* currentObjective = Cast<AObjective>(targetObjective);
+
+	if (mDist(mDroneLocation, mObjectiveLocation) >= minDistance) {
 		MoveToActor(targetObjective);
 		target = NULL;
+	}
+	else if (currentObjective != NULL && currentObjective->HasCompleteControl(team)) {
+		currentState = EActionState::SearchingForObjective;
 	}
 	else if (IsTargetValid()) {
 		if (!AttackTarget(target, false)) {
@@ -198,7 +205,7 @@ void ADroneBaseAI::CapturingObjective() {
 		}
 	}
 	else {
-		AActor* targetFound = FindEnemyTarget(800);
+		AActor* targetFound = FindEnemyTarget(minDistance);
 
 		if (targetFound != NULL)
 			target = targetFound;
@@ -269,7 +276,7 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 
 void ADroneBaseAI::MoveToObjective()
 {
-	if (mDist(mObjectiveLocation, mDroneLocation) <= 800)
+	if (mDist(mObjectiveLocation, mDroneLocation) <= 400)
 	{
 		isMovingToObjective = false;
 

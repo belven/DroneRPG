@@ -23,6 +23,7 @@
 #define MAX(a,b) (a > b) ? (a) : (b)
 #define CLAMP(value, max, min) (value = (MAX(MIN(value, max), min)))
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
+#define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -116,6 +117,8 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
 	shieldsActive = true;
+
+	SetTeam(1);
 }
 
 void ADroneRPGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -252,6 +255,9 @@ void ADroneRPGCharacter::BeginPlay()
 
 	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
 	healthParticle->SetFloatParameter(TEXT("Size"), 20);
+
+	if (mIsA(GetController(), ADroneBaseAI))
+		SetTeam(2);
 
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);

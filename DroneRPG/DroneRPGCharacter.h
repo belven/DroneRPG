@@ -32,8 +32,7 @@ class ADroneRPGCharacter : public ACharacter
 
 public:
 	ADroneRPGCharacter();
-
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float energyRegen;
 
@@ -98,6 +97,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* healthParticle;
 
+	int32 GetTeam() const { return team; }
+	void SetTeam(int32 val) { team = val; }
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -110,5 +111,7 @@ private:
 	/** A decal that projects to the cursor location. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent* CursorToWorld;
+
+	int32 team;
 };
 
