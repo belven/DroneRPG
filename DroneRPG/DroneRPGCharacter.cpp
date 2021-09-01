@@ -17,7 +17,7 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "DroneProjectile.h"
-#include <DroneBaseAI.h>
+#include "DroneBaseAI.h"
 
 #define MIN(a,b) (a < b) ? (a) : (b)
 #define MAX(a,b) (a > b) ? (a) : (b)

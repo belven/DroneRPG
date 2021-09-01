@@ -3,7 +3,7 @@
 
 #include "Objective.h"
 #include "Components/BoxComponent.h"
-#include <../DroneRPGCharacter.h>
+#include "DroneRPGCharacter.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"

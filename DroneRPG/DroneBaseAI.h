@@ -85,4 +85,6 @@ private:
 	EGameModeType currentGameMode;
 	bool isMovingToObjective;
 
+	ADroneRPGCharacter* GetDrone();
+
 };

@@ -3,13 +3,13 @@
 
 #include "DroneBaseAI.h"
 #include <EngineUtils.h>
-#include "../DroneRPGCharacter.h"
+#include "DroneRPGCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "../DroneProjectile.h"
+#include "DroneProjectile.h"
 #include "Kismet/GameplayStatics.h"
 #include <Kismet/KismetMathLibrary.h>
 #include <Kismet/KismetArrayLibrary.h>
-#include <Objective.h>
+#include "Objective.h"
 
 #define mDroneLocation GetCharacter()->GetActorLocation()
 #define mDroneRotation GetCharacter()->GetActorRotation()
@@ -196,7 +196,7 @@ void ADroneBaseAI::CapturingObjective() {
 		MoveToActor(targetObjective);
 		target = NULL;
 	}
-	else if (currentObjective != NULL && currentObjective->HasCompleteControl(team)) {
+	else if (currentObjective != NULL && currentObjective->HasCompleteControl(GetDrone()->GetTeam())) {
 		currentState = EActionState::SearchingForObjective;
 	}
 	else if (IsTargetValid()) {
@@ -215,6 +215,11 @@ void ADroneBaseAI::CapturingObjective() {
 void ADroneBaseAI::ShotTimerExpired()
 {
 	bCanFire = true;
+}
+
+ADroneRPGCharacter* ADroneBaseAI::GetDrone()
+{
+	return Cast<ADroneRPGCharacter>(GetCharacter());
 }
 
 void ADroneBaseAI::FireShot(FVector FireDirection)
