@@ -45,8 +45,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float shieldRegenDelay;
 
-	FDroneStats currentStats;
-	FDroneStats maxStats;
 	FColor healthStatus;
 
 	bool canRegenShields;
@@ -99,6 +97,11 @@ public:
 
 	int32 GetTeam() const { return team; }
 	void SetTeam(int32 val) { team = val; }
+
+	FDroneStats GetCurrentStats() const { return currentStats; }
+	void SetCurrentStats(FDroneStats val) { currentStats = val; }
+	FDroneStats GetMaxStats() const { return maxStats; }
+	void SetMaxStats(FDroneStats val) { maxStats = val; }
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -113,5 +116,8 @@ private:
 		class UDecalComponent* CursorToWorld;
 
 	int32 team;
+
+	FDroneStats currentStats;
+	FDroneStats maxStats;
 };
 

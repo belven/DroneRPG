@@ -44,6 +44,8 @@ public:
 
 	virtual void Tick(float DeltaSeconds) override;
 
+	void ReturningToBase();
+	void EvadingDamage();
 	void AttackingTarget();
 	bool IsTargetValid();
 	void FireShot(FVector FireDirection);

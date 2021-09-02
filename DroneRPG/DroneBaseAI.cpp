@@ -53,6 +53,7 @@ void ADroneBaseAI::CalculateObjective()
 		FindObjective();
 		break;
 	default:
+		FindTarget();
 		break;
 	};
 
@@ -167,12 +168,22 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		CapturingObjective();
 		break;
 	case EActionState::EvadingDamage:
+		EvadingDamage();
 		break;
 	case EActionState::ReturingToBase:
+		ReturningToBase();
 		break;
 	default:
 		break;
 	}
+}
+
+void ADroneBaseAI::ReturningToBase() {
+
+}
+
+void ADroneBaseAI::EvadingDamage() {
+	//if(GetDrone()->GetCurrentStats() < ) etc
 }
 
 void ADroneBaseAI::AttackingTarget() {
@@ -285,7 +296,7 @@ void ADroneBaseAI::MoveToObjective()
 	{
 		isMovingToObjective = false;
 
-		if (targetObjective->IsA(ADroneRPGCharacter::StaticClass())) {
+		if (mIsA(targetObjective, ADroneRPGCharacter)) {
 			currentState = EActionState::AttackingTarget;
 		}
 		else {

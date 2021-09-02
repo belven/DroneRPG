@@ -1,28 +1,26 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Objective.h"
 #include "Components/BoxComponent.h"
 #include "DroneRPGCharacter.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
-#include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
+#include "NiagaraSystem.h"
 
 #define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
+#define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
 
-// Sets default values
 AObjective::AObjective()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
 	objectiveArea->SetBoxExtent(FVector(700, 700, 100));
-	objectiveArea->SetupAttachment(GetRootComponent());
 	objectiveArea->SetRelativeLocation(FVector(0, 0, 50)); // TODO not working
+	objectiveArea->SetupAttachment(GetRootComponent());
 
 	SetAreaOwner(0);
 	currentControl = 75;
 	currentColour = FColor::Red;
+	fullClaim = false;
+	objectiveName = "";
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
 
@@ -36,12 +34,12 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex,
 	bool bFromSweep,
-	const FHitResult& SweepResult) {
-
+	const FHitResult& SweepResult)
+{
 	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
 		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
 		CalculateOwnership();
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("A drone entered the area")));
+		mAddOnScreenDebugMessage("A drone entered the area");
 	}
 }
 
@@ -52,12 +50,11 @@ void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent,
 {
 	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
 		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("A drone left the area")));
+		mAddOnScreenDebugMessage("A drone left the area");
 		CalculateOwnership();
 	}
 }
 
-// Called when the game starts or when spawned
 void AObjective::BeginPlay()
 {
 	Super::BeginPlay();
@@ -68,7 +65,7 @@ void AObjective::BeginPlay()
 
 	captureParticle->SetFloatParameter(TEXT("Radius"), 400);
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-	captureParticle->SetFloatParameter(TEXT("Size"), 35);
+	captureParticle->SetFloatParameter(TEXT("Size"), 25);
 }
 
 void AObjective::CalculateOwnership() {
@@ -86,17 +83,16 @@ void AObjective::CalculateOwnership() {
 
 	if (team1 && !team2) {
 		SetAreaOwner(1);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Area Owner is now Team 1")));
+		mAddOnScreenDebugMessage("Area Owner is now Team 1");
 	}
 	else if (!team1 && team2) {
 		SetAreaOwner(2);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Area Owner is now Team 2")));
+		mAddOnScreenDebugMessage("Area Owner is now Team 2");
 	}
 	else {
 		SetAreaOwner(0);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Area Owner is now no Team")));
+		mAddOnScreenDebugMessage("No Team owns the area");
 	}
-
 }
 
 void AObjective::UpdateColour() {
@@ -108,21 +104,17 @@ void AObjective::UpdateColour() {
 		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 		currentColour = FColor::Green;
 	}
-	else if (currentColour != FColor::Red) {
+	else if (currentControl < 100 && currentControl > 50 && currentColour != FColor::Red) {
 		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 		currentColour = FColor::Red;
 	}
 }
 
-// Called every frame
-void AObjective::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
+void AObjective::CalculateClaim() {
 	if (GetAreaOwner() == 1 && currentControl > 0) {
 		currentControl--;
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Current Control %d"), currentControl));
 		UpdateColour();
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Current Control %d"), currentControl));
 	}
 	else	if (GetAreaOwner() == 2 && currentControl < 150) {
 		currentControl++;
@@ -130,7 +122,20 @@ void AObjective::Tick(float DeltaTime)
 		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Current Control %d"), currentControl));
 	}
 
+	if ((currentControl == 0 || currentControl == 150) && !fullClaim) {
+		captureParticle->SetFloatParameter(TEXT("Size"), 45);
+		fullClaim = true;
+	}
+	else if ((currentControl != 0 || currentControl != 150) && fullClaim) {
+		captureParticle->SetFloatParameter(TEXT("Size"), 25);
+		fullClaim = false;
+	}
+}
 
+void AObjective::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	CalculateClaim();
 }
 
 bool AObjective::HasCompleteControl(int32 team)

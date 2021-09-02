@@ -33,11 +33,15 @@ public:
 	void SetAreaOwner(int32 val) { areaOwner = val; }
 
 	bool HasCompleteControl(int32 team);
+
+	FName GetObjectiveName() const { return objectiveName; }
+	void SetObjectiveName(FName val) { objectiveName = val; }
 protected:
 	virtual void BeginPlay() override;
 
 	void CalculateOwnership();
 	void UpdateColour();
+	void CalculateClaim();
 private:
 	UPROPERTY()
 		UBoxComponent* objectiveArea;
@@ -50,7 +54,15 @@ private:
 
 	UPROPERTY()
 		int32 currentControl;
-	FColor currentColour;
+
+	UPROPERTY()
+		FColor currentColour;
+
+	UPROPERTY()
+	bool fullClaim;
+
+	UPROPERTY()
+		FName objectiveName;
 
 	UNiagaraSystem* auraSystem;
 
