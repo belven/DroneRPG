@@ -7,6 +7,9 @@
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, AObjective*, objective);
+
 class UBoxComponent;
 class ADroneRPGCharacter;
 class UNiagaraSystem;
@@ -30,9 +33,11 @@ public:
 		UNiagaraComponent* captureParticle;
 
 	int32 GetAreaOwner() const { return areaOwner; }
-	void SetAreaOwner(int32 val) { areaOwner = val; }
+	void SetAreaOwner(int32 val);
 
 	bool HasCompleteControl(int32 team);
+
+	FObjectiveClaimed OnObjectiveClaimed;
 
 	FName GetObjectiveName() const { return objectiveName; }
 	void SetObjectiveName(FName val) { objectiveName = val; }
@@ -53,13 +58,22 @@ private:
 		int32 areaOwner;
 
 	UPROPERTY()
-		int32 currentControl;
+		int32 priviousAreaOwner;
+
+	UPROPERTY()
+		float currentControl;
+
+	int32 minControl;
+	int32 maxControl;
+
+	UPROPERTY()
+		TArray<int32> teamsInArea;
 
 	UPROPERTY()
 		FColor currentColour;
 
 	UPROPERTY()
-	bool fullClaim;
+		bool fullClaim;
 
 	UPROPERTY()
 		FName objectiveName;

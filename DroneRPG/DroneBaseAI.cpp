@@ -16,11 +16,12 @@
 #define mDist(a, b) FVector::Dist(a, b)
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 #define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
+#define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
 
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
-	isMovingToObjective = false;
-	minDistance = 1000;
+	minCaptureDistance = 400;
+	targetRange = 1500;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
 
@@ -36,38 +37,41 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 
 void ADroneBaseAI::CalculateObjective()
 {
+	targetObjective = NULL;
+
 	switch (GetCurrentGameMode()) {
 	case EGameModeType::TeamDeathMatch:
 		FindTarget();
 		break;
 	case EGameModeType::Domination:
-		FindObjective();
-		break;
 	case EGameModeType::AttackDefend:
-		FindObjective();
-		break;
 	case EGameModeType::Payload:
-		FindObjective();
-		break;
 	case EGameModeType::Hardpoint:
 		FindObjective();
 		break;
 	default:
-		FindTarget();
+		mAddOnScreenDebugMessage("I have no idea what I'm supposed to be doing!");
 		break;
 	};
 
-	if (targetObjective != NULL)
-		currentState = EActionState::MovingToObjective;
+	//if (targetObjective != NULL)
+		//currentState = EActionState::MovingToObjective;
 }
 
-void ADroneBaseAI::FindObjective() {
+TArray<AActor*> ADroneBaseAI::GetActorsInWorld() {
 	TArray<AActor*> actors;
 
 	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
 	{
 		actors.Add(*actorItr);
 	}
+
+	return actors;
+}
+
+void ADroneBaseAI::FindObjective() {
+	TArray<AActor*> actors = GetActorsInWorld();
+	TArray<AObjective*> objectives;
 
 	// TODO figure out random array sorting
 	//const TArray<AActor*>& actorsSorted = actors;
@@ -77,10 +81,23 @@ void ADroneBaseAI::FindObjective() {
 	{
 		if (actor != GetCharacter() && mIsA(actor, AObjective)) {
 			AObjective* objective = Cast<AObjective>(actor);
+			objectives.Add(objective);
 
-			targetObjective = actor;
-			break;
+			if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
+				targetObjective = actor;
+				break;
+			}
 		}
+	}
+
+	if (targetObjective == NULL && objectives.Num() > 0) {
+		targetObjective = objectives[0];
+		MoveToActor(targetObjective);
+		currentState = EActionState::DefendingObjective;
+	}
+	else if (targetObjective != NULL) {
+		MoveToActor(targetObjective);
+		currentState = EActionState::CapturingObjective;
 	}
 }
 
@@ -90,13 +107,27 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	}
 }
 
-AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<AActor*> actors;
+void ADroneBaseAI::BeginPlay() {
+	Super::BeginPlay();
 
-	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
+	for (AActor* actor : GetActorsInWorld())
 	{
-		actors.Add(*actorItr);
+		if (actor != GetCharacter() && mIsA(actor, AObjective)) {
+			AObjective* objective = Cast<AObjective>(actor);
+			objective->OnObjectiveClaimed.AddDynamic(this, &ADroneBaseAI::ObjectiveTaken);
+		}
 	}
+}
+
+void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
+	if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
+		currentState = EActionState::CapturingObjective;
+		targetObjective = objective;
+	}
+}
+
+AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
+	TArray<AActor*> actors = GetActorsInWorld();
 
 	// TODO figure out random array sorting
 	//const TArray<AActor*>& actorsSorted = actors;
@@ -106,7 +137,10 @@ AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
 	{
 		if (actor != GetCharacter() && mIsA(actor, ADroneRPGCharacter) &&
 			(distance == 0 || mDist(mDroneLocation, actor->GetActorLocation()) <= distance)) {
-			return actor;
+			ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(actor);
+
+			if (drone->GetTeam() != GetDrone()->GetTeam())
+				return actor;
 		}
 	}
 
@@ -115,6 +149,7 @@ AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
 
 void ADroneBaseAI::FindTarget() {
 	targetObjective = FindEnemyTarget();
+	currentState = EActionState::AttackingTarget;
 }
 
 void ADroneBaseAI::RotateToFace() {
@@ -158,14 +193,14 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	case EActionState::SearchingForObjective:
 		CalculateObjective();
 		break;
-	case EActionState::MovingToObjective:
-		MoveToObjective();
-		break;
 	case EActionState::AttackingTarget:
 		AttackingTarget();
 		break;
 	case EActionState::CapturingObjective:
 		CapturingObjective();
+		break;
+	case EActionState::DefendingObjective:
+		DefendingObjective();
 		break;
 	case EActionState::EvadingDamage:
 		EvadingDamage();
@@ -174,7 +209,29 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		ReturningToBase();
 		break;
 	default:
+		// Something went wrong!!
+		mAddOnScreenDebugMessage("I have no idea what I'm supposed to be doing!");
 		break;
+	}
+}
+
+void ADroneBaseAI::DefendingObjective() {
+	AObjective* currentObjective = Cast<AObjective>(targetObjective);
+
+	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
+		MoveToActor(targetObjective);
+		target = NULL;
+	}
+	else if (IsTargetValid()) {
+		if (!AttackTarget(target, false)) {
+			target = NULL;
+		}
+	}
+	else {
+		AActor* targetFound = FindEnemyTarget(targetRange);
+
+		if (targetFound != NULL)
+			target = targetFound;
 	}
 }
 
@@ -203,7 +260,7 @@ bool ADroneBaseAI::IsTargetValid() {
 void ADroneBaseAI::CapturingObjective() {
 	AObjective* currentObjective = Cast<AObjective>(targetObjective);
 
-	if (mDist(mDroneLocation, mObjectiveLocation) >= minDistance) {
+	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToActor(targetObjective);
 		target = NULL;
 	}
@@ -216,7 +273,7 @@ void ADroneBaseAI::CapturingObjective() {
 		}
 	}
 	else {
-		AActor* targetFound = FindEnemyTarget(minDistance);
+		AActor* targetFound = FindEnemyTarget(targetRange);
 
 		if (targetFound != NULL)
 			target = targetFound;
@@ -290,21 +347,3 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 	return false;
 }
 
-void ADroneBaseAI::MoveToObjective()
-{
-	if (mDist(mObjectiveLocation, mDroneLocation) <= 400)
-	{
-		isMovingToObjective = false;
-
-		if (mIsA(targetObjective, ADroneRPGCharacter)) {
-			currentState = EActionState::AttackingTarget;
-		}
-		else {
-			currentState = EActionState::CapturingObjective;
-		}
-	}
-	else if (!isMovingToObjective) {
-		MoveToActor(targetObjective);
-		isMovingToObjective = true;
-	}
-}

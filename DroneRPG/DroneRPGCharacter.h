@@ -32,7 +32,7 @@ class ADroneRPGCharacter : public ACharacter
 
 public:
 	ADroneRPGCharacter();
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float energyRegen;
 
@@ -44,6 +44,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float shieldRegenDelay;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+		int32 team;
 
 	FColor healthStatus;
 
@@ -115,7 +118,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent* CursorToWorld;
 
-	int32 team;
 
 	FDroneStats currentStats;
 	FDroneStats maxStats;

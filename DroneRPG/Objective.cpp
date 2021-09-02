@@ -17,10 +17,13 @@ AObjective::AObjective()
 	objectiveArea->SetupAttachment(GetRootComponent());
 
 	SetAreaOwner(0);
-	currentControl = 75;
+	currentControl = 0;
 	currentColour = FColor::Red;
 	fullClaim = false;
 	objectiveName = "";
+
+	minControl = 25;
+	maxControl = 100;
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
 
@@ -69,66 +72,80 @@ void AObjective::BeginPlay()
 }
 
 void AObjective::CalculateOwnership() {
-	bool team1 = false;
-	bool team2 = false;
+	teamsInArea.Empty();
 
 	for (ADroneRPGCharacter* drone : dronesInArea) {
-		if (drone->GetTeam() == 1) {
-			team1 = true;
-		}
-		else {
-			team2 = true;
+		if (!teamsInArea.Contains(drone->GetTeam())) {
+			teamsInArea.Add(drone->GetTeam());
 		}
 	}
 
-	if (team1 && !team2) {
-		SetAreaOwner(1);
-		mAddOnScreenDebugMessage("Area Owner is now Team 1");
-	}
-	else if (!team1 && team2) {
-		SetAreaOwner(2);
-		mAddOnScreenDebugMessage("Area Owner is now Team 2");
-	}
-	else {
-		SetAreaOwner(0);
-		mAddOnScreenDebugMessage("No Team owns the area");
+	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
+		SetAreaOwner(teamsInArea[0]);
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
+
+		if (OnObjectiveClaimed.IsBound()) {
+			OnObjectiveClaimed.Broadcast(this);
+		}
 	}
 }
 
 void AObjective::UpdateColour() {
-	if (currentControl <= 50 && currentColour != FColor::Blue) {
-		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Blue));
-		currentColour = FColor::Blue;
+	if (currentControl > minControl&& priviousAreaOwner == areaOwner) {
+		if (areaOwner == 1 && currentColour != FColor::Green) {
+			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+			currentColour = FColor::Green;
+		}
+		else if (areaOwner == 2 && currentColour != FColor::Yellow) {
+			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Yellow));
+			currentColour = FColor::Yellow;
+		}
 	}
-	else if (currentControl >= 100 && currentColour != FColor::Green) {
-		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-		currentColour = FColor::Green;
-	}
-	else if (currentControl < 100 && currentControl > 50 && currentColour != FColor::Red) {
+	else if (currentControl <= minControl && currentColour != FColor::Red) {
 		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 		currentColour = FColor::Red;
 	}
 }
+void AObjective::SetAreaOwner(int32 val)
+{
+	priviousAreaOwner = areaOwner;
+	areaOwner = val;
+}
 
 void AObjective::CalculateClaim() {
-	if (GetAreaOwner() == 1 && currentControl > 0) {
-		currentControl--;
-		UpdateColour();
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Current Control %d"), currentControl));
-	}
-	else	if (GetAreaOwner() == 2 && currentControl < 150) {
-		currentControl++;
-		UpdateColour();
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Current Control %d"), currentControl));
-	}
+	if (teamsInArea.Num() == 1) {
+		if (priviousAreaOwner == 0 && areaOwner != 0) {
+			currentControl++;
+			UpdateColour();
 
-	if ((currentControl == 0 || currentControl == 150) && !fullClaim) {
-		captureParticle->SetFloatParameter(TEXT("Size"), 45);
-		fullClaim = true;
-	}
-	else if ((currentControl != 0 || currentControl != 150) && fullClaim) {
-		captureParticle->SetFloatParameter(TEXT("Size"), 25);
-		fullClaim = false;
+			if (currentControl >= minControl) {
+				priviousAreaOwner = areaOwner;
+			}
+		}
+		else if (priviousAreaOwner != areaOwner && currentControl > 0) {
+			currentControl--;
+			UpdateColour();
+
+			if (currentControl == 0)
+				priviousAreaOwner = areaOwner;
+		}
+		else if (priviousAreaOwner == areaOwner && currentControl < maxControl) {
+			currentControl++;
+			UpdateColour();
+		}
+
+		if (currentControl > minControl && !fullClaim) {
+			captureParticle->SetFloatParameter(TEXT("Size"), 45);
+			fullClaim = true;
+
+			if (OnObjectiveClaimed.IsBound()) {
+				OnObjectiveClaimed.Broadcast(this);
+			}
+		}
+		else if (currentControl <= minControl && fullClaim) {
+			captureParticle->SetFloatParameter(TEXT("Size"), 25);
+			fullClaim = false;
+		}
 	}
 }
 
@@ -140,5 +157,5 @@ void AObjective::Tick(float DeltaTime)
 
 bool AObjective::HasCompleteControl(int32 team)
 {
-	return (team == 1 && currentControl == 0) || (team == 2 && currentControl == 150);
+	return currentControl == maxControl && areaOwner == team;
 }

@@ -7,13 +7,14 @@
 #include "DroneBaseAI.generated.h"
 
 class ADroneRPGCharacter;
+class AObjective;
 
 UENUM(BlueprintType)
 enum class  EActionState : uint8 {
 	SearchingForObjective,
-	MovingToObjective,
 	AttackingTarget,
 	CapturingObjective,
+	DefendingObjective,
 	EvadingDamage,
 	ReturingToBase
 };
@@ -33,40 +34,16 @@ class DRONERPG_API ADroneBaseAI : public AAIController
 	GENERATED_BODY()
 public:
 	ADroneBaseAI();
-
-	void CalculateObjective();
-	void FindObjective();
-	void DroneAttacked(AActor* attacker);
-	AActor* FindEnemyTarget(float distance = 0);
-	void FindTarget();
-	void RotateToFace();
-	float minDistance;
-
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void BeginPlay() override;
 
-	void ReturningToBase();
-	void EvadingDamage();
-	void AttackingTarget();
+	UFUNCTION()
+		void ObjectiveTaken(AObjective* objective);
+
+	UFUNCTION()
+		void DroneAttacked(AActor* attacker);
+
 	bool IsTargetValid();
-	void FireShot(FVector FireDirection);
-	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
-	void MoveToObjective();
-	
-	TSubclassOf<class ADroneProjectile> projectileClass;
-
-	/** Handle for efficient management of ShotTimerExpired timer */
-	FTimerHandle TimerHandle_ShotTimerExpired;
-
-	FRotator lookAt;
-	bool bCanFire;
-	bool isFiring;
-	float FireRate;
-	FVector GunOffset;
-	class USoundBase* FireSound;
-
-	void CapturingObjective();
-	/* Handler for the fire timer expiry */
-	void ShotTimerExpired();
 
 	EActionState GetCurrentState() const { return currentState; }
 	void SetCurrentState(EActionState val) { SetPreivousState(currentState); currentState = val; }
@@ -80,13 +57,42 @@ public:
 	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
 	void SetCurrentGameMode(EGameModeType val) { currentGameMode = val; }
 private:
+	TSubclassOf<class ADroneProjectile> projectileClass;
+	FTimerHandle TimerHandle_ShotTimerExpired;
+	class USoundBase* FireSound;
+
+	float minCaptureDistance;
+	float targetRange;
+	float FireRate;
+
+	FVector GunOffset;
+	FRotator lookAt;
+
+	bool bCanFire;
+	bool isFiring;
+
 	AActor* targetObjective;
 	AActor* target;
+
 	EActionState currentState;
 	EActionState preivousState;
 	EGameModeType currentGameMode;
-	bool isMovingToObjective;
 
 	ADroneRPGCharacter* GetDrone();
+	AActor* FindEnemyTarget(float distance = 0);
+	TArray<AActor*> GetActorsInWorld();
+	void FireShot(FVector FireDirection);
 
+	void FindTarget();
+	void CalculateObjective();
+	void RotateToFace();
+	void FindObjective();
+	void ShotTimerExpired();
+	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
+
+	void DefendingObjective();
+	void ReturningToBase();
+	void EvadingDamage();
+	void AttackingTarget();
+	void CapturingObjective();
 };

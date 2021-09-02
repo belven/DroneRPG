@@ -255,10 +255,7 @@ void ADroneRPGCharacter::BeginPlay()
 
 	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
 	healthParticle->SetFloatParameter(TEXT("Size"), 20);
-
-	if (mIsA(GetController(), ADroneBaseAI))
-		SetTeam(2);
-
+	
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
 }
