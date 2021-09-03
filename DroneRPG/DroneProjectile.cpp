@@ -20,6 +20,7 @@ ADroneProjectile::ADroneProjectile()
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->BodyInstance.SetCollisionProfileName("Projectile");
 	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);		// set up a notification for when this component hits something
+	//ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	RootComponent = ProjectileMesh;
 
@@ -53,12 +54,28 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 	// Only add impulse and destroy projectile if we hit a physics
 	if (OtherActor != NULL && OtherActor != this && OtherActor != GetShooter() && OtherActor->GetClass() != ADroneProjectile::StaticClass())
 	{
-		if (OtherActor->IsA(ADroneRPGCharacter::StaticClass())) {
-			ADroneRPGCharacter* target = Cast<ADroneRPGCharacter>(OtherActor);
-			target->RecieveHit(this);
-		}
+		ADroneRPGCharacter* target = Cast<ADroneRPGCharacter>(OtherActor);
+		ADroneRPGCharacter* droneShooter = Cast<ADroneRPGCharacter>(GetShooter());
 
-		Destroy();
+		// Did we hit a drone?
+		if (target != NULL) {
+			
+			// Are we on a different team?
+			if (target->GetTeam() != droneShooter->GetTeam()) {
+				
+				// Deal damage to enemy Drone
+				target->RecieveHit(this);
+				Destroy();
+			}
+			// We've hit an Ally!
+			else {
+				ProjectileMesh->IgnoreActorWhenMoving(target, true);
+			}
+		}
+		// We've hit another projectile
+		else if (OtherActor->IsA(ADroneProjectile::StaticClass())) {
+			ProjectileMesh->IgnoreActorWhenMoving(OtherActor, true);
+		}
 	}
 }
 

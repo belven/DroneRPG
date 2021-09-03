@@ -58,7 +58,7 @@ private:
 		int32 areaOwner;
 
 	UPROPERTY()
-		int32 priviousAreaOwner;
+		int32 preiviousAreaOwner;
 
 	UPROPERTY()
 		float currentControl;

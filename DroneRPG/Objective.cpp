@@ -39,7 +39,10 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	// Check if we have a drone and we don't already have it in the list
 	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
+
+		// Add it to the list and re-calculate ownership
 		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
 		CalculateOwnership();
 		mAddOnScreenDebugMessage("A drone entered the area");
@@ -51,7 +54,10 @@ void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent,
 	UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
+	// Check if we have a drone and we have it in the list
 	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
+
+		// Remove it from the list and re-calculate ownership
 		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
 		mAddOnScreenDebugMessage("A drone left the area");
 		CalculateOwnership();
@@ -61,17 +67,22 @@ void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent,
 void AObjective::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Bind to the box components begin and end overlap events
 	objectiveArea->OnComponentBeginOverlap.AddDynamic(this, &AObjective::BeginOverlap);
 	objectiveArea->OnComponentEndOverlap.AddDynamic(this, &AObjective::EndOverlap);
 
+	// Create our particle system
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
+	// Set up the systems defaults
 	captureParticle->SetFloatParameter(TEXT("Radius"), 400);
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 	captureParticle->SetFloatParameter(TEXT("Size"), 25);
 }
 
 void AObjective::CalculateOwnership() {
+	// Clear the teams list, as we're calculating it again 
 	teamsInArea.Empty();
 
 	for (ADroneRPGCharacter* drone : dronesInArea) {
@@ -80,10 +91,12 @@ void AObjective::CalculateOwnership() {
 		}
 	}
 
+	// IF there's only 1 team in the area, then they have full claim of it
 	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
 		SetAreaOwner(teamsInArea[0]);
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
 
+		// Inform listeners that the objective has changed ownership
 		if (OnObjectiveClaimed.IsBound()) {
 			OnObjectiveClaimed.Broadcast(this);
 		}
@@ -91,7 +104,11 @@ void AObjective::CalculateOwnership() {
 }
 
 void AObjective::UpdateColour() {
-	if (currentControl > minControl&& priviousAreaOwner == areaOwner) {
+	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
+	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
+	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
+
+		// Set the colours correctly based on the team TODO need to make a map of all the team numbers and their colours
 		if (areaOwner == 1 && currentColour != FColor::Green) {
 			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 			currentColour = FColor::Green;
@@ -101,6 +118,7 @@ void AObjective::UpdateColour() {
 			currentColour = FColor::Yellow;
 		}
 	}
+	// If the control is less than the minimum then it's a neutral 
 	else if (currentControl <= minControl && currentColour != FColor::Red) {
 		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 		currentColour = FColor::Red;
@@ -108,33 +126,45 @@ void AObjective::UpdateColour() {
 }
 void AObjective::SetAreaOwner(int32 val)
 {
-	priviousAreaOwner = areaOwner;
+	// Update the preiviousAreaOwner
+	preiviousAreaOwner = areaOwner;
 	areaOwner = val;
 }
 
 void AObjective::CalculateClaim() {
+
+	// If only one team is in the area, then they  can start to claim it
 	if (teamsInArea.Num() == 1) {
-		if (priviousAreaOwner == 0 && areaOwner != 0) {
+
+		// If the preiviousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
+		if (preiviousAreaOwner == 0 && areaOwner != 0) {
 			currentControl++;
 			UpdateColour();
 
+			// Once the control exceeds the minimum control, the new team can have control
 			if (currentControl >= minControl) {
-				priviousAreaOwner = areaOwner;
+				preiviousAreaOwner = areaOwner;
 			}
 		}
-		else if (priviousAreaOwner != areaOwner && currentControl > 0) {
+		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
+		else if (preiviousAreaOwner != areaOwner && currentControl > 0) {
 			currentControl--;
 			UpdateColour();
 
+			// If the control is now 0, then we've removed all existing control and can start to claim it
 			if (currentControl == 0)
-				priviousAreaOwner = areaOwner;
+				preiviousAreaOwner = areaOwner;
 		}
-		else if (priviousAreaOwner == areaOwner && currentControl < maxControl) {
+		// If the preiviousAreaOwner and areaOwner are the same, then that team has control and we can start claming it
+		// Check if we're not at the max control
+		else if (preiviousAreaOwner == areaOwner && currentControl < maxControl) {
 			currentControl++;
 			UpdateColour();
 		}
 
-		if (currentControl > minControl && !fullClaim) {
+		// Check if we have full control and we've not already got full claim
+		// If we have this level of control, the make the particles bigger
+		if (currentControl == maxControl && !fullClaim) {
 			captureParticle->SetFloatParameter(TEXT("Size"), 45);
 			fullClaim = true;
 
@@ -142,7 +172,8 @@ void AObjective::CalculateClaim() {
 				OnObjectiveClaimed.Broadcast(this);
 			}
 		}
-		else if (currentControl <= minControl && fullClaim) {
+		// If the control is less than max then make the particles smaller, makes it easaier to tell
+		else if (currentControl < maxControl && fullClaim) {
 			captureParticle->SetFloatParameter(TEXT("Size"), 25);
 			fullClaim = false;
 		}
