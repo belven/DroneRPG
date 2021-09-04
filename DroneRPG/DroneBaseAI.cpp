@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DroneBaseAI.h"
 #include <EngineUtils.h>
 #include "DroneRPGCharacter.h"
@@ -136,7 +133,7 @@ void ADroneBaseAI::BeginPlay() {
 void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 
 	// Check if the objective isn't owned by us, if it is we don't care!
-	if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
+	if (!objective->HasCompleteControl(GetDrone()->GetTeam()) && currentState != EActionState::CapturingObjective) {
 		currentState = EActionState::CapturingObjective;
 		targetObjective = objective;
 	}

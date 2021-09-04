@@ -79,6 +79,9 @@ void AObjective::BeginPlay()
 	captureParticle->SetFloatParameter(TEXT("Radius"), 400);
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 	captureParticle->SetFloatParameter(TEXT("Size"), 25);
+
+	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
+	UpdateColour();
 }
 
 void AObjective::CalculateOwnership() {
@@ -106,7 +109,7 @@ void AObjective::CalculateOwnership() {
 void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
-	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
+	if (currentControl > minControl && preiviousAreaOwner == areaOwner) {
 
 		// Set the colours correctly based on the team TODO need to make a map of all the team numbers and their colours
 		if (areaOwner == 1 && currentColour != FColor::Green) {
@@ -127,8 +130,6 @@ void AObjective::UpdateColour() {
 
 void AObjective::SetAreaOwner(int32 val)
 {
-	// Update the preiviousAreaOwner
-	preiviousAreaOwner = areaOwner;
 	areaOwner = val;
 }
 
@@ -163,6 +164,8 @@ void AObjective::CalculateClaim() {
 			UpdateColour();
 		}
 
+		currentControl = ClampValue<int32>(currentControl, maxControl, 0);
+
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger
 		if (currentControl == maxControl && !fullClaim) {
@@ -173,12 +176,24 @@ void AObjective::CalculateClaim() {
 				OnObjectiveClaimed.Broadcast(this);
 			}
 		}
-		// If the control is less than max then make the particles smaller, makes it easier to tell
+		// If the control is less than max then make the particles smaller, this makes it easier to tell when it's fully claimed
 		else if (currentControl < maxControl && fullClaim) {
 			captureParticle->SetFloatParameter(TEXT("Size"), 25);
 			fullClaim = false;
 		}
 	}
+
+}
+
+template<class T>
+T AObjective::ClampValue(T value, T max, T min) {
+	if (value < min)
+		value = min;
+
+	if (value > max)
+		value = max;
+
+	return value;
 }
 
 void AObjective::Tick(float DeltaTime)

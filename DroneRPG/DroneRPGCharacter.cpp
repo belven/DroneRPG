@@ -66,7 +66,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
+	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Perspective);
 	TopDownCameraComponent->SetOrthoWidth(4000);
 
 	// Create a decal in the world to show the cursor's location

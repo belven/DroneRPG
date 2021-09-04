@@ -47,6 +47,18 @@ protected:
 	void CalculateOwnership();
 	void UpdateColour();
 	void CalculateClaim();
+	template<class T> T ClampValue(T value, T max, T min);
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
+		int32 areaOwner;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
+		int32 preiviousAreaOwner;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
+		float currentControl;
+
 private:
 	UPROPERTY()
 		UBoxComponent* objectiveArea;
@@ -54,14 +66,6 @@ private:
 	UPROPERTY()
 		TArray<ADroneRPGCharacter*> dronesInArea;
 
-	UPROPERTY()
-		int32 areaOwner;
-
-	UPROPERTY()
-		int32 preiviousAreaOwner;
-
-	UPROPERTY()
-		float currentControl;
 
 	int32 minControl;
 	int32 maxControl;
