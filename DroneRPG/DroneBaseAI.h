@@ -80,8 +80,6 @@ private:
 
 	ADroneRPGCharacter* GetDrone();
 	AActor* FindEnemyTarget(float distance = 0);
-	template<class T> TArray<T*> GetActorsInWorld();
-	template <class T> void ShuffleArray(TArray<T>& arrayIn);
 	void FireShot(FVector FireDirection);
 
 	void FindTarget();

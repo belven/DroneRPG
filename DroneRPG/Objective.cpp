@@ -4,9 +4,7 @@
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
-
-#define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
-#define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
+#include "FunctionLibrary.h"
 
 AObjective::AObjective()
 {
@@ -45,7 +43,7 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		// Add it to the list and re-calculate ownership
 		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
 		CalculateOwnership();
-		mAddOnScreenDebugMessage("A drone entered the area");
+		//mAddOnScreenDebugMessage("A drone entered the area");
 	}
 }
 
@@ -59,7 +57,7 @@ void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent,
 
 		// Remove it from the list and re-calculate ownership
 		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
-		mAddOnScreenDebugMessage("A drone left the area");
+		//mAddOnScreenDebugMessage("A drone left the area");
 		CalculateOwnership();
 	}
 }
@@ -164,7 +162,7 @@ void AObjective::CalculateClaim() {
 			UpdateColour();
 		}
 
-		currentControl = ClampValue<int32>(currentControl, maxControl, 0);
+		currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger
@@ -183,17 +181,6 @@ void AObjective::CalculateClaim() {
 		}
 	}
 
-}
-
-template<class T>
-T AObjective::ClampValue(T value, T max, T min) {
-	if (value < min)
-		value = min;
-
-	if (value > max)
-		value = max;
-
-	return value;
 }
 
 void AObjective::Tick(float DeltaTime)

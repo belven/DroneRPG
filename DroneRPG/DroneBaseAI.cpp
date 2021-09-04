@@ -7,13 +7,9 @@
 #include <Kismet/KismetMathLibrary.h>
 #include <Kismet/KismetArrayLibrary.h>
 #include "Objective.h"
+#include "FunctionLibrary.h"
 
-#define mDroneLocation GetCharacter()->GetActorLocation()
-#define mDroneRotation GetCharacter()->GetActorRotation()
-#define mDist(a, b) FVector::Dist(a, b)
 #define  mObjectiveLocation targetObjective->GetActorLocation()
-#define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
-#define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
 
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
@@ -56,46 +52,18 @@ void ADroneBaseAI::CalculateObjective()
 	};
 }
 
-template <class T>
-TArray<T*> ADroneBaseAI::GetActorsInWorld() {
-	TArray<T*> actors;
-
-	for (TActorIterator<T> actorItr(GetWorld()); actorItr; ++actorItr)
-	{
-		actors.Add(*actorItr);
-	}
-
-	return actors;
-}
-
-template <class T> 
-void ADroneBaseAI::ShuffleArray(TArray<T>& arrayIn) {
-	if (arrayIn.Num() > 0)
-	{
-		int32 LastIndex = arrayIn.Num() - 1;
-		for (int32 i = 0; i <= LastIndex; ++i)
-		{
-			int32 Index = FMath::RandRange(i, LastIndex);
-			if (i != Index)
-			{
-				arrayIn.Swap(i, Index);
-			}
-		}
-	}
-}
-
 void ADroneBaseAI::FindObjective() {
-	TArray<AObjective*> objectives = GetActorsInWorld<AObjective>();
+	TArray<AObjective*> objectives = mGetActorsInWorld<AObjective>(GetWorld());
 
-	ShuffleArray<AObjective*>(objectives);
+	mShuffleArray<AObjective*>(objectives);
 
 	for (AObjective* objective : objectives)
 	{
-			// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
-			if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
-				targetObjective = objective;
-				break;
-			}		
+		// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
+		if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
+			targetObjective = objective;
+			break;
+		}
 	}
 
 	// If the objective is null and we found any objectives, then find one to defend
@@ -127,15 +95,10 @@ void ADroneBaseAI::BeginPlay() {
 
 	// We need to bind to the Objective Claimed method on all the objectives, so we can track when they get taken
 	// This allows the bot to move an objective as an enemy tries to take it
-	for (AActor* actor : GetActorsInWorld<AObjective>())
+	for (AObjective* objective : mGetActorsInWorld<AObjective>(GetWorld()))
 	{
-		// Check if the actor is an Objective
-		if (mIsA(actor, AObjective)) {
-			AObjective* objective = Cast<AObjective>(actor);
-
-			// Bind to the Objective Claimed method on the objective
-			objective->OnObjectiveClaimed.AddDynamic(this, &ADroneBaseAI::ObjectiveTaken);
-		}
+		// Bind to the Objective Claimed method on the objective
+		objective->OnObjectiveClaimed.AddDynamic(this, &ADroneBaseAI::ObjectiveTaken);
 	}
 }
 
@@ -149,38 +112,20 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<AActor*> actors;
+	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
 
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADroneRPGCharacter::StaticClass(), actors);
+	mShuffleArray<ADroneRPGCharacter*>(drones);
 
-	// TODO: figure out random array sorting
-	//const TArray<AActor*>& actorsSorted = actors;
-	//UKismetArrayLibrary::Array_Shuffle(actorsSorted);
-
-	if (actors.Num() > 0)
-	{
-		int32 LastIndex = actors.Num() - 1;
-		for (int32 i = 0; i <= LastIndex; ++i)
-		{
-			int32 Index = FMath::RandRange(i, LastIndex);
-			if (i != Index)
-			{
-				actors.Swap(i, Index);
-			}
-		}
-	}
-
-	for (AActor* actor : actors)
+	for (ADroneRPGCharacter* drone : drones)
 	{
 		// Check if the actor isn't us and is a drone
 		// Check if the distance is 0 OR we're within the given range
-		if (actor != GetCharacter() && mIsA(actor, ADroneRPGCharacter) &&
-			(distance == 0 || mDist(mDroneLocation, actor->GetActorLocation()) <= distance)) {
-			ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(actor);
+		if (drone != GetCharacter() &&
+			(distance == 0 || mDist(mDroneLocation, drone->GetActorLocation()) <= distance)) {
 
 			// Check if the drone found is an enemy
 			if (drone->GetTeam() != GetDrone()->GetTeam())
-				return actor;
+				return drone;
 		}
 	}
 
