@@ -61,6 +61,7 @@ public:
 
 	float ClampValue(float value, float max, float min);
 	void RecieveHit(ADroneProjectile* projectile);
+	bool IsAlive();
 
 	void CalculateHealthColours();
 	void CalculateShieldParticles();
@@ -90,8 +91,6 @@ public:
 	UNiagaraSystem* auraSystem;
 	UNiagaraSystem* trailSystem;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
-		UNiagaraComponent* engineParticle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* shieldParticle;

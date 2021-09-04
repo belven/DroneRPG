@@ -47,7 +47,7 @@ void ADroneBaseAI::CalculateObjective()
 	case EGameModeType::AttackDefend:
 	case EGameModeType::Payload:
 	case EGameModeType::Hardpoint:
-		// In all other cases we will need to find an objective TODO, this may need to change in game modes such as AttackDefend
+		// In all other cases we will need to find an objective TODO:, this may need to change in game modes such as AttackDefend
 		FindObjective();
 		break;
 	default:
@@ -56,10 +56,11 @@ void ADroneBaseAI::CalculateObjective()
 	};
 }
 
-TArray<AActor*> ADroneBaseAI::GetActorsInWorld() {
-	TArray<AActor*> actors;
+template <class T>
+TArray<T*> ADroneBaseAI::GetActorsInWorld() {
+	TArray<T*> actors;
 
-	for (TActorIterator<AActor> actorItr(GetWorld()); actorItr; ++actorItr)
+	for (TActorIterator<T> actorItr(GetWorld()); actorItr; ++actorItr)
 	{
 		actors.Add(*actorItr);
 	}
@@ -67,33 +68,40 @@ TArray<AActor*> ADroneBaseAI::GetActorsInWorld() {
 	return actors;
 }
 
-void ADroneBaseAI::FindObjective() {
-	TArray<AActor*> actors = GetActorsInWorld();
-	TArray<AObjective*> objectives;
-
-	// TODO figure out random array sorting
-	//const TArray<AActor*>& actorsSorted = actors;
-	//UKismetArrayLibrary::Array_Shuffle(actorsSorted);
-
-	for (AActor* actor : actors)
+template <class T> 
+void ADroneBaseAI::ShuffleArray(TArray<T>& arrayIn) {
+	if (arrayIn.Num() > 0)
 	{
-		// Check we're not finding ourselves and the actor is an objective
-		if (actor != GetCharacter() && mIsA(actor, AObjective)) {
-			AObjective* objective = Cast<AObjective>(actor);
-			objectives.Add(objective);
-
-			// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
-			if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
-				targetObjective = actor;
-				break;
+		int32 LastIndex = arrayIn.Num() - 1;
+		for (int32 i = 0; i <= LastIndex; ++i)
+		{
+			int32 Index = FMath::RandRange(i, LastIndex);
+			if (i != Index)
+			{
+				arrayIn.Swap(i, Index);
 			}
 		}
+	}
+}
+
+void ADroneBaseAI::FindObjective() {
+	TArray<AObjective*> objectives = GetActorsInWorld<AObjective>();
+
+	ShuffleArray<AObjective*>(objectives);
+
+	for (AObjective* objective : objectives)
+	{
+			// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
+			if (!objective->HasCompleteControl(GetDrone()->GetTeam())) {
+				targetObjective = objective;
+				break;
+			}		
 	}
 
 	// If the objective is null and we found any objectives, then find one to defend
 	if (targetObjective == NULL && objectives.Num() > 0) {
 
-		// Pick an objective to head to, to defend TODO make this pick a random objective
+		// Pick an objective to head to, to defend TODO: make this pick a random objective
 		targetObjective = objectives[0];
 		MoveToActor(targetObjective);
 		currentState = EActionState::DefendingObjective;
@@ -107,9 +115,10 @@ void ADroneBaseAI::FindObjective() {
 
 void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	// If we don't have a target OR we have one but it's different to the one we have, then target it
-	// TODO, do we need the second part here??
-	if (target == NULL || (target != NULL && target != attacker)) {
-		target = attacker;
+	// TODO:, do we need the second part here??
+	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
+	if (droneTarget == NULL || (droneTarget != attacker && !droneTarget->IsAlive())) {
+		target = droneTarget;
 	}
 }
 
@@ -118,7 +127,7 @@ void ADroneBaseAI::BeginPlay() {
 
 	// We need to bind to the Objective Claimed method on all the objectives, so we can track when they get taken
 	// This allows the bot to move an objective as an enemy tries to take it
-	for (AActor* actor : GetActorsInWorld())
+	for (AActor* actor : GetActorsInWorld<AObjective>())
 	{
 		// Check if the actor is an Objective
 		if (mIsA(actor, AObjective)) {
@@ -140,11 +149,26 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<AActor*> actors = GetActorsInWorld();
+	TArray<AActor*> actors;
 
-	// TODO figure out random array sorting
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADroneRPGCharacter::StaticClass(), actors);
+
+	// TODO: figure out random array sorting
 	//const TArray<AActor*>& actorsSorted = actors;
 	//UKismetArrayLibrary::Array_Shuffle(actorsSorted);
+
+	if (actors.Num() > 0)
+	{
+		int32 LastIndex = actors.Num() - 1;
+		for (int32 i = 0; i <= LastIndex; ++i)
+		{
+			int32 Index = FMath::RandRange(i, LastIndex);
+			if (i != Index)
+			{
+				actors.Swap(i, Index);
+			}
+		}
+	}
 
 	for (AActor* actor : actors)
 	{
@@ -195,7 +219,7 @@ void ADroneBaseAI::RotateToFace() {
 		targetRotation = lookAt;
 	}
 	else {
-		// Set the angle to be forward facing TODO, this doesn't work well and needs to face movement direction!
+		// Set the angle to be forward facing TODO:, this doesn't work well and needs to face movement direction!
 		targetRotation = GetCharacter()->GetActorForwardVector().Rotation();
 		targetRotation.Pitch = mDroneRotation.Pitch;
 		targetRotation.Roll = mDroneRotation.Roll;
@@ -209,7 +233,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// Update Lookat on tick, so it's always facing correctly TODO make it follow the movement direction, if no target etc
+	// Update Lookat on tick, so it's always facing correctly TODO: make it follow the movement direction, if no target etc
 	RotateToFace();
 
 	// Do state machine things!

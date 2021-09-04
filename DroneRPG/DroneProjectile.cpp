@@ -20,6 +20,7 @@ ADroneProjectile::ADroneProjectile()
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->BodyInstance.SetCollisionProfileName("Projectile");
 	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);		// set up a notification for when this component hits something
+	ProjectileMesh->CastShadow = false;
 	//ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	RootComponent = ProjectileMesh;

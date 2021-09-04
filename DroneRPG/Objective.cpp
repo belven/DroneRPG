@@ -13,7 +13,7 @@ AObjective::AObjective()
 	PrimaryActorTick.bCanEverTick = true;
 	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
 	objectiveArea->SetBoxExtent(FVector(700, 700, 100));
-	objectiveArea->SetRelativeLocation(FVector(0, 0, 50)); // TODO not working
+	objectiveArea->SetRelativeLocation(FVector(0, 0, 50)); // TODO: not working
 	objectiveArea->SetupAttachment(GetRootComponent());
 
 	SetAreaOwner(0);
@@ -111,7 +111,7 @@ void AObjective::UpdateColour() {
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
 	if (currentControl > minControl && preiviousAreaOwner == areaOwner) {
 
-		// Set the colours correctly based on the team TODO need to make a map of all the team numbers and their colours
+		// Set the colours correctly based on the team TODO: need to make a map of all the team numbers and their colours
 		if (areaOwner == 1 && currentColour != FColor::Green) {
 			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 			currentColour = FColor::Green;

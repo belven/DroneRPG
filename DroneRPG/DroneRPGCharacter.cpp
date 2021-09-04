@@ -138,7 +138,7 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
-	// Fixed damage for now, need to create different projectiles with different damage TODO
+	// Fixed damage for now, need to create different projectiles with different damage TODO:
 	float damage = 15;
 
 	// Disable our shield regen as we've been hit
@@ -149,13 +149,13 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	if (currentStats.shields <= 0) {
 		currentStats.health -= damage;
 
-		// If we have no health, kill the character TODO set up the concept of respawning the player and making a spectator mode whilst that's happening
+		// If we have no health, kill the character TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
 		if (currentStats.health <= 0)
 			Destroy();
 
 		CalculateHealthColours();
 	}
-	// Otherwise take damage to shields TODO do we want to calculate excess damage i.e. left over damage goes into health after shields?
+	// Otherwise take damage to shields TODO: do we want to calculate excess damage i.e. left over damage goes into health after shields?
 	else {
 		currentStats.shields -= damage;
 		CalculateShieldParticles();
@@ -169,6 +169,11 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 
 	ClampValue(currentStats.health, maxStats.health, 0);
 	ClampValue(currentStats.shields, maxStats.shields, 0);
+}
+
+bool ADroneRPGCharacter::IsAlive()
+{
+	return currentStats.health <= 0;
 }
 
 void ADroneRPGCharacter::CalculateHealthColours() {
@@ -216,7 +221,7 @@ void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
 	if (currentStats.shields < maxStats.shields && canRegenShields) {
 		float value = shieldRegen * DeltaSeconds;
 
-		// Do we have the energy to regen our shields? TODO show how represent energy as a particle etc. Do we want to make energy regen 
+		// Do we have the energy to regen our shields? TODO: show how represent energy as a particle etc. Do we want to make energy regen 
 		if (currentStats.energy > value) {
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -244,24 +249,13 @@ void ADroneRPGCharacter::Tick(float DeltaSeconds)
 
 	CalculateEnergy(DeltaSeconds);
 	CalculateShields(DeltaSeconds);
-
-	// Update the toggle for the engine particle TODO add bool here to stop performing ActivateSystem
-	if (engineParticle != NULL) {
-		if (GetCharacterMovement()->IsMovementInProgress()) {
-			engineParticle->ActivateSystem();
-		}
-		else {
-			engineParticle->DeactivateImmediate();
-		}
-	}
 }
 
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Set up particle effect defaults TODO set up the engineParticle correctly?? Do we have too many particles already and is it even required
-	engineParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(trailSystem, RootComponent, TEXT("engineParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+	// Set up particle effect defaults
 	shieldParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("shieldParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 	healthParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("healthParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
@@ -274,6 +268,7 @@ void ADroneRPGCharacter::BeginPlay()
 	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
 	healthParticle->SetFloatParameter(TEXT("Size"), 20);
 	
+	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
 }
