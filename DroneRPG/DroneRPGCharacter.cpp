@@ -162,7 +162,7 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	}
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
-	if (mIsA(GetController(), ADroneBaseAI)) {
+	if (GetController() != NULL && mIsA(GetController(), ADroneBaseAI)) {
 		ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
 		con->DroneAttacked(projectile->GetShooter());
 	}
