@@ -95,8 +95,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-
-
+	
 	float energy = 150;
 	float health = 150;
 	float shields = 150;
@@ -163,7 +162,7 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	}
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
-	if (mIsA(con, ADroneBaseAI)) {
+	if (mIsA(GetController(), ADroneBaseAI)) {
 		ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
 		con->DroneAttacked(projectile->GetShooter());
 	}
