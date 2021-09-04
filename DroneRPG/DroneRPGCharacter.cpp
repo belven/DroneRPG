@@ -139,38 +139,32 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
+	// Fixed damage for now, need to create different projectiles with different damage TODO
 	float damage = 15;
 
+	// Disable our shield regen as we've been hit
 	canRegenShields = false;
 	mSetTimer(TimerHandle_ShieldRegenRestart, StartShieldRegen, shieldRegenDelay);
 
+	// If we have 0 shields, then take health damage
 	if (currentStats.shields <= 0) {
 		currentStats.health -= damage;
 
+		// If we have no health, kill the character TODO set up the concept of respawning the player and making a spectator mode whilst that's happening
 		if (currentStats.health <= 0)
 			Destroy();
 
-		if (currentStats.health < (maxStats.health * 0.45f) && healthStatus != FColor::Red) {
-			healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-			healthStatus = FColor::Red;
-		}
-		else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange && healthStatus != FColor::Red) {
-			healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Orange));
-			healthStatus = FColor::Orange;
-		}
-		else if (currentStats.health > (maxStats.health * 0.7f) && healthStatus != FColor::Green) {
-			healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-			healthStatus = FColor::Green;
-		}
+		CalculateHealthColours();
 	}
+	// Otherwise take damage to shields TODO do we want to calculate excess damage i.e. left over damage goes into health after shields?
 	else {
 		currentStats.shields -= damage;
 		CalculateShieldParticles();
 	}
 
-	ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
-
-	if (con != NULL) {
+	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
+	if (mIsA(con, ADroneBaseAI)) {
+		ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
 		con->DroneAttacked(projectile->GetShooter());
 	}
 
@@ -178,7 +172,24 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	ClampValue(currentStats.shields, maxStats.shields, 0);
 }
 
+void ADroneRPGCharacter::CalculateHealthColours() {
+	// Update the colours, above 70% Green, above 45% Orange and below 45% Red
+	if (currentStats.health < (maxStats.health * 0.45f) && healthStatus != FColor::Red) {
+		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
+		healthStatus = FColor::Red;
+	}
+	else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange && healthStatus != FColor::Red) {
+		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Orange));
+		healthStatus = FColor::Orange;
+	}
+	else if (currentStats.health > (maxStats.health * 0.7f) && healthStatus != FColor::Green) {
+		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+		healthStatus = FColor::Green;
+	}
+}
+
 void ADroneRPGCharacter::CalculateShieldParticles() {
+	// Change the colour and size of the particles base on shield value, they'll be smaller and darker if we have < 50% shields
 	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical) {
 		shieldParticle->SetFloatParameter(TEXT("Size"), 35);
 		shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Blue));
@@ -190,6 +201,7 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 		shieldsCritical = false;
 	}
 
+	// If we have 0 shields, disable the particle effect
 	if (currentStats.shields <= 0 && shieldsActive) {
 		shieldParticle->DeactivateImmediate();
 		shieldsActive = false;
@@ -201,9 +213,11 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 }
 
 void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
+	// If our shields aren't at max and we haven't recently been hit, regen our shields
 	if (currentStats.shields < maxStats.shields && canRegenShields) {
 		float value = shieldRegen * DeltaSeconds;
 
+		// Do we have the energy to regen our shields? TODO show how represent energy as a particle etc. Do we want to make energy regen 
 		if (currentStats.energy > value) {
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -216,6 +230,7 @@ void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
 }
 
 void ADroneRPGCharacter::CalculateEnergy(float DeltaSeconds) {
+	// If our current energy isn't at max, restore some energy
 	if (currentStats.energy < maxStats.energy) {
 		float value = energyRegen * DeltaSeconds;
 		currentStats.energy += value;
@@ -231,6 +246,7 @@ void ADroneRPGCharacter::Tick(float DeltaSeconds)
 	CalculateEnergy(DeltaSeconds);
 	CalculateShields(DeltaSeconds);
 
+	// Update the toggle for the engine particle TODO add bool here to stop performing ActivateSystem
 	if (engineParticle != NULL) {
 		if (GetCharacterMovement()->IsMovementInProgress()) {
 			engineParticle->ActivateSystem();
@@ -245,6 +261,7 @@ void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Set up particle effect defaults TODO set up the engineParticle correctly?? Do we have too many particles already and is it even required
 	engineParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(trailSystem, RootComponent, TEXT("engineParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 	shieldParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("shieldParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 	healthParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("healthParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);

@@ -62,6 +62,7 @@ public:
 	float ClampValue(float value, float max, float min);
 	void RecieveHit(ADroneProjectile* projectile);
 
+	void CalculateHealthColours();
 	void CalculateShieldParticles();
 
 	void CalculateShields(float DeltaSeconds);

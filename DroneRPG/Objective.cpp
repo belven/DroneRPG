@@ -124,6 +124,7 @@ void AObjective::UpdateColour() {
 		currentColour = FColor::Red;
 	}
 }
+
 void AObjective::SetAreaOwner(int32 val)
 {
 	// Update the preiviousAreaOwner
@@ -155,7 +156,7 @@ void AObjective::CalculateClaim() {
 			if (currentControl == 0)
 				preiviousAreaOwner = areaOwner;
 		}
-		// If the preiviousAreaOwner and areaOwner are the same, then that team has control and we can start claming it
+		// If the preiviousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
 		// Check if we're not at the max control
 		else if (preiviousAreaOwner == areaOwner && currentControl < maxControl) {
 			currentControl++;
@@ -172,7 +173,7 @@ void AObjective::CalculateClaim() {
 				OnObjectiveClaimed.Broadcast(this);
 			}
 		}
-		// If the control is less than max then make the particles smaller, makes it easaier to tell
+		// If the control is less than max then make the particles smaller, makes it easier to tell
 		else if (currentControl < maxControl && fullClaim) {
 			captureParticle->SetFloatParameter(TEXT("Size"), 25);
 			fullClaim = false;
