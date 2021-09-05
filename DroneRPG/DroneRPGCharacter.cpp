@@ -18,12 +18,9 @@
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "DroneProjectile.h"
 #include "DroneBaseAI.h"
+#include "FunctionLibrary.h"
 
-#define MIN(a,b) (a < b) ? (a) : (b)
-#define MAX(a,b) (a > b) ? (a) : (b)
-#define CLAMP(value, max, min) (value = (MAX(MIN(value, max), min)))
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
-#define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -95,7 +92,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
-	
+
 	float energy = 150;
 	float health = 150;
 	float shields = 150;
@@ -137,6 +134,21 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 	return value;
 }
 
+void ADroneRPGCharacter::Respawn() {
+	Destroy();
+}
+
+void ADroneRPGCharacter::KillDrone() {
+	mSetTimer(TimerHandle_Kill, Respawn, 3.0f);
+
+	currentStats.health = 0;
+	currentStats.shields = 0;
+	canRegenShields = false;
+
+	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	meshComponent->SetHiddenInGame(true);
+}
+
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	// Fixed damage for now, need to create different projectiles with different damage TODO:
 	float damage = 15;
@@ -150,8 +162,9 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 		currentStats.health -= damage;
 
 		// If we have no health, kill the character TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
-		if (currentStats.health <= 0)
-			Destroy();
+		if (currentStats.health <= 0) {
+			KillDrone();
+		}
 
 		CalculateHealthColours();
 	}
@@ -173,7 +186,7 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 
 bool ADroneRPGCharacter::IsAlive()
 {
-	return currentStats.health <= 0;
+	return currentStats.health > 0;
 }
 
 void ADroneRPGCharacter::CalculateHealthColours() {
@@ -267,7 +280,7 @@ void ADroneRPGCharacter::BeginPlay()
 
 	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
 	healthParticle->SetFloatParameter(TEXT("Size"), 20);
-	
+
 	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);

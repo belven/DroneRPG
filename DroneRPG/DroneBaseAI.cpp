@@ -69,8 +69,7 @@ void ADroneBaseAI::FindObjective() {
 	// If the objective is null and we found any objectives, then find one to defend
 	if (targetObjective == NULL && objectives.Num() > 0) {
 
-		// Pick an objective to head to, to defend TODO: make this pick a random objective
-		targetObjective = objectives[0];
+		targetObjective = UFunctionLibrary::GetRandomObject<AObjective*>(objectives);
 		MoveToActor(targetObjective);
 		currentState = EActionState::DefendingObjective;
 	}
@@ -85,8 +84,19 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	// If we don't have a target OR we have one but it's different to the one we have, then target it
 	// TODO:, do we need the second part here??
 	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
-	if (droneTarget == NULL || (droneTarget != attacker && !droneTarget->IsAlive())) {
-		target = droneTarget;
+	ADroneRPGCharacter* droneAttacker = Cast<ADroneRPGCharacter>(attacker);
+
+	// We have no target
+	if (droneTarget == NULL) {
+		target = droneAttacker;
+	}
+	else if (droneTarget != droneAttacker) {
+		FHitResult hit = LinetraceToLocation(droneTarget->GetActorLocation());
+
+		// Something else has attacked us and our current target is out of line of sight or dead
+		if (!droneTarget->IsAlive() || hit.GetActor() != droneTarget) {
+			target = droneAttacker;
+		}
 	}
 }
 
@@ -171,16 +181,28 @@ void ADroneBaseAI::RotateToFace() {
 	}
 
 	// Update the rotation
-	GetCharacter()->SetActorRotation(FMath::Lerp(mDroneRotation, targetRotation, 0.10f));
+	//GetCharacter()->SetActorRotation(FMath::Lerp(mDroneRotation, targetRotation, 0.50f));
+	GetCharacter()->SetActorRotation(targetRotation);
 }
 
 void ADroneBaseAI::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	// Update Lookat on tick, so it's always facing correctly TODO: make it follow the movement direction, if no target etc
-	RotateToFace();
+	// We don't do anything if we're dead!
+	if (GetDrone()->IsAlive()) {
+		if (!IsTargetValid()) {
+			target = NULL;
+		}
 
+		// Update Lookat on tick, so it's always facing correctly TODO: make it follow the movement direction, if no target etc
+		RotateToFace();
+
+		PerformActions();
+	}
+}
+
+void ADroneBaseAI::PerformActions() {
 	// Do state machine things!
 	switch (currentState) {
 	case EActionState::SearchingForObjective:
@@ -214,12 +236,12 @@ void ADroneBaseAI::DefendingObjective() {
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToActor(targetObjective);
-		target = NULL;
+		//target = NULL;
 	}
 	// Are we being attacked
 	else if (IsTargetValid()) {
 		if (!AttackTarget(target, false)) {
-			target = NULL;
+			//target = NULL;
 		}
 	}
 	//Is there an enemy nearby the area
@@ -251,8 +273,45 @@ void ADroneBaseAI::AttackingTarget() {
 	}
 }
 
+FHitResult ADroneBaseAI::LinetraceToLocation(FVector location) {
+	FHitResult hit;
+	FCollisionQueryParams params;
+	params.AddIgnoredActor(GetCharacter());
+
+	GetWorld()->LineTraceSingleByChannel(hit, mDroneLocation, location, ECC_Pawn, params);
+
+	return hit;
+}
+
+bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
+{
+	FHitResult hit = LinetraceToLocation(targetToAttack->GetActorLocation());
+
+	// Do we have line of sight to our target?
+	if (hit.GetActor() == targetToAttack)
+	{
+		//GetCharacter()->GetMovementComponent()->StopActiveMovement();
+		FireShot(lookAt.Vector());
+		return true;
+	}
+	// We don't have line of sight
+	else {
+		// Only move to the target if told to do so
+		if (moveIfCantSee)
+			MoveToActor(targetToAttack);
+		return false;
+	}
+	return false;
+}
+
 bool ADroneBaseAI::IsTargetValid() {
-	return target != NULL && !target->IsActorBeingDestroyed();
+	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
+
+	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed()) {
+		return droneTarget->IsAlive();
+	}
+
+	return false;
 }
 
 void ADroneBaseAI::CapturingObjective() {
@@ -261,24 +320,32 @@ void ADroneBaseAI::CapturingObjective() {
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToActor(targetObjective);
-		target = NULL;
 	}
 	// Have we claimed the current objective?
 	else if (currentObjective != NULL && currentObjective->HasCompleteControl(GetDrone()->GetTeam())) {
 		currentState = EActionState::SearchingForObjective;
 	}
-	// Are we being attacked
-	else if (IsTargetValid()) {
+
+	// Do we have a valid target
+	if (IsTargetValid()) {
+
+		// Attempt to attack the target, don't move to the target if we can't see it
+		// TODO make it so we move to the target, as long as we're in range of the objective still
 		if (!AttackTarget(target, false)) {
+			// We're in here due to us loosing line of sight to the target
 			target = NULL;
 		}
 	}
-	//Is there an enemy nearby the area
+	// Is there an enemy nearby the area
 	else {
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
-		if (targetFound != NULL)
-			target = targetFound;
+		if (targetFound != NULL) {
+			FHitResult hit = LinetraceToLocation(targetFound->GetActorLocation());
+
+			if (hit.GetActor() == targetFound)
+				target = targetFound;
+		}
 	}
 }
 
@@ -325,29 +392,4 @@ void ADroneBaseAI::FireShot(FVector FireDirection)
 			}
 		}
 	}
-}
-
-bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
-{
-	FHitResult hit;
-	FCollisionQueryParams params;
-	params.AddIgnoredActor(GetCharacter());
-
-	GetWorld()->LineTraceSingleByChannel(hit, mDroneLocation, targetToAttack->GetActorLocation(), ECC_Pawn, params);
-
-	// Do we have line of sight to our target?
-	if (hit.GetActor() == targetToAttack)
-	{
-		GetCharacter()->GetMovementComponent()->StopActiveMovement();
-		FireShot(lookAt.Vector());
-		return true;
-	}
-	// We don't have line of sight
-	else {
-		// Only move to the target if told to do so
-		if (moveIfCantSee)
-			MoveToActor(targetToAttack);
-		return false;
-	}
-	return false;
 }

@@ -34,6 +34,7 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	void IgnoreActor(AActor* actor);
 
 	/** Function to handle the projectile hitting something */
 	UFUNCTION()
@@ -45,5 +46,6 @@ public:
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
 	AActor* GetShooter();
+	void SetUpCollision();
 	void SetShooter(AActor* val);
 };

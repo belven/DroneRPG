@@ -60,6 +60,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
 	float ClampValue(float value, float max, float min);
+	void Respawn();
+	void KillDrone();
 	void RecieveHit(ADroneProjectile* projectile);
 	bool IsAlive();
 
@@ -85,8 +87,8 @@ public:
 
 	void StartShieldRegen();
 
-	/** Handle for efficient management of ShotTimerExpired timer */
 	FTimerHandle TimerHandle_ShieldRegenRestart;
+	FTimerHandle TimerHandle_Kill;
 
 	UNiagaraSystem* auraSystem;
 	UNiagaraSystem* trailSystem;

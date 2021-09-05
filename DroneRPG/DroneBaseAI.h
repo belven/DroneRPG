@@ -35,6 +35,7 @@ class DRONERPG_API ADroneBaseAI : public AAIController
 public:
 	ADroneBaseAI();
 	virtual void Tick(float DeltaSeconds) override;
+	void PerformActions();
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -93,5 +94,6 @@ private:
 	void ReturningToBase();
 	void EvadingDamage();
 	void AttackingTarget();
+	FHitResult LinetraceToLocation(FVector location);
 	void CapturingObjective();
 };

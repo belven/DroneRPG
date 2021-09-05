@@ -4,6 +4,7 @@
 #include "DroneProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "DroneRPGCharacter.h"
+#include "FunctionLibrary.h"
 
 // Sets default values
 ADroneProjectile::ADroneProjectile()
@@ -42,6 +43,17 @@ ADroneProjectile::ADroneProjectile()
 void ADroneProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	TArray<ADroneProjectile*> projectiles = mGetActorsInWorld<ADroneProjectile>(GetWorld());
+
+	for (ADroneProjectile* projectile : projectiles) {
+		IgnoreActor(projectile); 
+		projectile->IgnoreActor(this);
+	}
+}
+
+void ADroneProjectile::IgnoreActor(AActor* actor) {
+	ProjectileMesh->IgnoreActorWhenMoving(actor, true);
 }
 
 // Called every frame
@@ -60,22 +72,22 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 
 		// Did we hit a drone?
 		if (target != NULL) {
-			
+
 			// Are we on a different team?
 			if (target->GetTeam() != droneShooter->GetTeam()) {
-				
+
 				// Deal damage to enemy Drone
 				target->RecieveHit(this);
 				Destroy();
 			}
 			// We've hit an Ally!
 			else {
-				ProjectileMesh->IgnoreActorWhenMoving(target, true);
+
 			}
 		}
 		// We've hit another projectile
 		else if (OtherActor->IsA(ADroneProjectile::StaticClass())) {
-			ProjectileMesh->IgnoreActorWhenMoving(OtherActor, true);
+
 		}
 	}
 }
@@ -85,8 +97,20 @@ AActor* ADroneProjectile::GetShooter()
 	return shooter;
 }
 
+void ADroneProjectile::SetUpCollision() {
+	ADroneRPGCharacter* droneShooter = Cast<ADroneRPGCharacter>(shooter);
+
+	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+
+	for (ADroneRPGCharacter* drone : drones) {
+		if (drone->GetTeam() == droneShooter->GetTeam()) {
+			ProjectileMesh->IgnoreActorWhenMoving(drone, true);
+		}
+	}
+}
+
 void ADroneProjectile::SetShooter(AActor* val)
 {
 	shooter = val;
-	ProjectileMesh->IgnoreActorWhenMoving(shooter, true);
+	SetUpCollision();
 }

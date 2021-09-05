@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include <EngineUtils.h>
+#include <Engine/World.h>
 #include "FunctionLibrary.generated.h"
 
 #define mDist(a, b) FVector::Dist(a, b)
@@ -24,6 +26,7 @@ public:
 	template <class T> static TArray<T*> GetActorsInWorld(UWorld* world);
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
+	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 };
 
 template <class T>
@@ -65,4 +68,10 @@ void UFunctionLibrary::ShuffleArray(TArray<T>& arrayIn)
 			}
 		}
 	}
+}
+
+template <class T>
+T UFunctionLibrary::GetRandomObject(TArray<T>& arrayIn)
+{
+	return arrayIn[FMath::RandRange(0, arrayIn.Num() - 1)];
 }

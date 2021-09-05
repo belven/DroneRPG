@@ -95,7 +95,7 @@ void AObjective::CalculateOwnership() {
 	// IF there's only 1 team in the area, then they have full claim of it
 	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
 		SetAreaOwner(teamsInArea[0]);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
 
 		// Inform listeners that the objective has changed ownership
 		if (OnObjectiveClaimed.IsBound()) {
@@ -180,7 +180,6 @@ void AObjective::CalculateClaim() {
 			fullClaim = false;
 		}
 	}
-
 }
 
 void AObjective::Tick(float DeltaTime)
