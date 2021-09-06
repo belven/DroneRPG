@@ -9,6 +9,7 @@
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ADroneProjectile;
+class ARespawnPoint;
 
 USTRUCT(BlueprintType)
 struct FDroneStats
@@ -32,6 +33,7 @@ class ADroneRPGCharacter : public ACharacter
 
 public:
 	ADroneRPGCharacter();
+	void SetDefaults();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float energyRegen;
@@ -93,7 +95,6 @@ public:
 	UNiagaraSystem* auraSystem;
 	UNiagaraSystem* trailSystem;
 
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* shieldParticle;
 
@@ -120,6 +121,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent* CursorToWorld;
 
+	ARespawnPoint* GetRespawnPoint();
 
 	FDroneStats currentStats;
 	FDroneStats maxStats;

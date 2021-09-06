@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "DroneRPGCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -19,6 +17,7 @@
 #include "DroneProjectile.h"
 #include "DroneBaseAI.h"
 #include "FunctionLibrary.h"
+#include "RespawnPoint.h"
 
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
 
@@ -55,7 +54,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 2000.f;
+	CameraBoom->TargetArmLength = 5000.f;
 	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
@@ -93,6 +92,18 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
+	SetDefaults();
+
+	energyRegen = 10;
+	shieldRegen = 10;
+
+	shieldRegenDelay = 3.0f;
+	energyRegenDelay = 3.0f;
+
+	SetTeam(1);
+}
+
+void ADroneRPGCharacter::SetDefaults() {
 	float energy = 150;
 	float health = 150;
 	float shields = 150;
@@ -105,18 +116,10 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	currentStats.health = health;
 	currentStats.shields = shields;
 
-	energyRegen = 10;
-	shieldRegen = 10;
-
-	shieldRegenDelay = 3.0f;
-	energyRegenDelay = 3.0f;
-
 	canRegenShields = true;
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
 	shieldsActive = true;
-
-	SetTeam(1);
 }
 
 void ADroneRPGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -135,18 +138,49 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 }
 
 void ADroneRPGCharacter::Respawn() {
-	Destroy();
+	ARespawnPoint* respawn = GetRespawnPoint();
+
+	if (respawn != NULL) {
+		SetDefaults();
+		SetActorLocation(respawn->GetActorLocation());
+
+		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		meshComponent->SetHiddenInGame(false);
+
+		shieldParticle->Activate();
+		healthParticle->Activate();
+
+		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+		shieldParticle->SetFloatParameter(TEXT("Size"), 45);
+		shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
+	}
+}
+
+ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
+{
+	TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
+
+	for (ARespawnPoint* respawnPoint : respawnPoints) {
+		if (respawnPoint->GetTeam() == team) {
+			return respawnPoint;
+		}
+	}
+
+	return NULL;
 }
 
 void ADroneRPGCharacter::KillDrone() {
-	mSetTimer(TimerHandle_Kill, Respawn, 3.0f);
-
 	currentStats.health = 0;
 	currentStats.shields = 0;
 	canRegenShields = false;
 
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	meshComponent->SetHiddenInGame(true);
+
+	shieldParticle->DeactivateImmediate();
+	healthParticle->DeactivateImmediate();
+
+	mSetTimer(TimerHandle_Kill, Respawn, 3.0f);
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
@@ -171,6 +205,14 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	// Otherwise take damage to shields TODO: do we want to calculate excess damage i.e. left over damage goes into health after shields?
 	else {
 		currentStats.shields -= damage;
+
+		// Weaken max shields, to prevent ships being as strong for the whole match
+		if (maxStats.shields > 50) {
+
+			// Take half damage taken away from max shields TODO work out a decent value for this, change it based on projectile?
+			maxStats.shields -= (damage * 0.5);
+			ClampValue(maxStats.shields, maxStats.shields, 50);
+		}
 		CalculateShieldParticles();
 	}
 
@@ -234,7 +276,7 @@ void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
 	if (currentStats.shields < maxStats.shields && canRegenShields) {
 		float value = shieldRegen * DeltaSeconds;
 
-		// Do we have the energy to regen our shields? TODO: show how represent energy as a particle etc. Do we want to make energy regen 
+		// Do we have the energy to regen our shields? TODO: show how represent energy as a particle etc. Do we want to make energy regen stop when used?
 		if (currentStats.energy > value) {
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -290,3 +332,4 @@ void ADroneRPGCharacter::StartShieldRegen()
 {
 	canRegenShields = true;
 }
+

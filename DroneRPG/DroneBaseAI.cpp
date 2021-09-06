@@ -23,6 +23,7 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 	}
 
 	bCanFire = true;
+	canCheckForEnemies = true;
 	GunOffset = FVector(100.f, 0.f, 0.f);
 	FireRate = 0.5;
 	currentGameMode = EGameModeType::Domination;
@@ -82,7 +83,6 @@ void ADroneBaseAI::FindObjective() {
 
 void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	// If we don't have a target OR we have one but it's different to the one we have, then target it
-	// TODO:, do we need the second part here??
 	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
 	ADroneRPGCharacter* droneAttacker = Cast<ADroneRPGCharacter>(attacker);
 
@@ -145,6 +145,7 @@ AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
 
 void ADroneBaseAI::FindTarget() {
 	targetObjective = FindEnemyTarget();
+	target = Cast<ADroneRPGCharacter>(targetObjective);
 	currentState = EActionState::AttackingTarget;
 }
 
@@ -200,6 +201,10 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 		PerformActions();
 	}
+	else
+	{
+		currentState = EActionState::SearchingForObjective;
+	}
 }
 
 void ADroneBaseAI::PerformActions() {
@@ -245,7 +250,9 @@ void ADroneBaseAI::DefendingObjective() {
 		}
 	}
 	//Is there an enemy nearby the area
-	else {
+	else if (canCheckForEnemies) {
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+		canCheckForEnemies = false;
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
 		if (targetFound != NULL)
@@ -262,8 +269,8 @@ void ADroneBaseAI::EvadingDamage() {
 }
 
 void ADroneBaseAI::AttackingTarget() {
-	// Check the target is still valid TODO need to check health etc. here
-	if (targetObjective->IsActorBeingDestroyed()) {
+	// Check the target is still valid
+	if (!IsTargetValid()) {
 		currentState = EActionState::SearchingForObjective;
 		targetObjective = NULL;
 	}
@@ -336,8 +343,10 @@ void ADroneBaseAI::CapturingObjective() {
 			target = NULL;
 		}
 	}
-	// Is there an enemy nearby the area
-	else {
+	//Is there an enemy nearby the area
+	else if (canCheckForEnemies) {
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+		canCheckForEnemies = false;
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
 		if (targetFound != NULL) {
@@ -352,6 +361,11 @@ void ADroneBaseAI::CapturingObjective() {
 void ADroneBaseAI::ShotTimerExpired()
 {
 	bCanFire = true;
+}
+
+void ADroneBaseAI::CanCheckForEnemies()
+{
+	canCheckForEnemies = true;
 }
 
 ADroneRPGCharacter* ADroneBaseAI::GetDrone()

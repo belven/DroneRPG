@@ -60,6 +60,7 @@ public:
 private:
 	TSubclassOf<class ADroneProjectile> projectileClass;
 	FTimerHandle TimerHandle_ShotTimerExpired;
+	FTimerHandle TimerHandle_CanCheckForEnemies;
 	class USoundBase* FireSound;
 
 	float minCaptureDistance;
@@ -71,6 +72,7 @@ private:
 
 	bool bCanFire;
 	bool isFiring;
+	bool canCheckForEnemies;
 
 	AActor* targetObjective;
 	AActor* target;
@@ -88,6 +90,7 @@ private:
 	void RotateToFace();
 	void FindObjective();
 	void ShotTimerExpired();
+	void CanCheckForEnemies();
 	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
 
 	void DefendingObjective();
