@@ -5,12 +5,13 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "FunctionLibrary.h"
+#include <Components/StaticMeshComponent.h>
 
 AObjective::AObjective()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
-	objectiveArea->SetBoxExtent(FVector(700, 700, 100));
+	objectiveArea->SetBoxExtent(FVector(700, 700, 400));
 	objectiveArea->SetRelativeLocation(FVector(0, 0, 50)); // TODO: not working
 	objectiveArea->SetupAttachment(GetRootComponent());
 
@@ -80,6 +81,35 @@ void AObjective::BeginPlay()
 
 	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
 	UpdateColour();
+	ClearOutOverlap(NULL);
+}
+
+void AObjective::RemoveOverlapingComponents(AActor* other) {
+	// TODO use GetComponents method poly instead of GetComponentsByClass
+	TArray<UActorComponent*> actors = other->GetComponentsByClass(UStaticMeshComponent::StaticClass());
+
+	for (UActorComponent* comp : actors) {
+		UStaticMeshComponent* meshComp = Cast<UStaticMeshComponent>(comp);
+
+		if (mDist(meshComp->GetComponentLocation(), GetActorLocation()) < 700) {
+			meshComp->SetHiddenInGame(true);
+			meshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void AObjective::ClearOutOverlap(AActor* other) {
+	if (other != NULL) {
+		RemoveOverlapingComponents(other);
+	}
+	else {
+		TArray<AActor*> actors;
+		GetOverlappingActors(actors);
+
+		for (AActor* a : actors) {
+			RemoveOverlapingComponents(other);
+		}
+	}
 }
 
 void AObjective::CalculateOwnership() {
@@ -107,7 +137,7 @@ void AObjective::CalculateOwnership() {
 void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
-	if (currentControl > minControl && preiviousAreaOwner == areaOwner) {
+	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
 
 		// Set the colours correctly based on the team TODO: need to make a map of all the team numbers and their colours
 		if (areaOwner == 1 && currentColour != FColor::Green) {
@@ -138,7 +168,9 @@ void AObjective::CalculateClaim() {
 
 		// If the preiviousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
 		if (preiviousAreaOwner == 0 && areaOwner != 0) {
-			currentControl++;
+			currentControl += dronesInArea.Num();
+			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
+
 			UpdateColour();
 
 			// Once the control exceeds the minimum control, the new team can have control
@@ -148,7 +180,9 @@ void AObjective::CalculateClaim() {
 		}
 		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
 		else if (preiviousAreaOwner != areaOwner && currentControl > 0) {
-			currentControl--;
+			currentControl -= dronesInArea.Num();
+			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
+
 			UpdateColour();
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
@@ -158,11 +192,12 @@ void AObjective::CalculateClaim() {
 		// If the preiviousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
 		// Check if we're not at the max control
 		else if (preiviousAreaOwner == areaOwner && currentControl < maxControl) {
-			currentControl++;
+			currentControl += dronesInArea.Num();
+			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
+
 			UpdateColour();
 		}
 
-		currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger

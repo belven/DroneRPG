@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Components/BoxComponent.h"
 #include "DroneRPGCharacter.generated.h"
 
 class UNiagaraComponent;
@@ -67,6 +68,11 @@ public:
 	void RecieveHit(ADroneProjectile* projectile);
 	bool IsAlive();
 
+	UFUNCTION()
+		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 	void CalculateHealthColours();
 	void CalculateShieldParticles();
 
@@ -108,7 +114,16 @@ public:
 	void SetCurrentStats(FDroneStats val) { currentStats = val; }
 	FDroneStats GetMaxStats() const { return maxStats; }
 	void SetMaxStats(FDroneStats val) { maxStats = val; }
+
+	TArray<ADroneRPGCharacter*>& GetDronesInArea() { return dronesInArea; }
+	void SetDronesInArea(TArray<ADroneRPGCharacter*> val) { dronesInArea = val; }
 private:
+	UPROPERTY()
+		UBoxComponent* droneArea;
+
+	UPROPERTY()
+		TArray<ADroneRPGCharacter*> dronesInArea;
+
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* TopDownCameraComponent;

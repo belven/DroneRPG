@@ -18,6 +18,7 @@
 #include "DroneBaseAI.h"
 #include "FunctionLibrary.h"
 #include "RespawnPoint.h"
+#include "NavigationSystem.h"
 
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
 
@@ -55,7 +56,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
 	CameraBoom->TargetArmLength = 5000.f;
-	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
+	CameraBoom->SetRelativeRotation(FRotator(-70.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 	// Create a camera...
@@ -95,12 +96,17 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	SetDefaults();
 
 	energyRegen = 10;
-	shieldRegen = 10;
+	shieldRegen = 10; 
 
 	shieldRegenDelay = 3.0f;
 	energyRegenDelay = 3.0f;
 
 	SetTeam(1);
+	GetCharacterMovement()->MaxWalkSpeed = 1500;
+
+	droneArea = CreateDefaultSubobject<UBoxComponent>(TEXT("DroneArea"));
+	droneArea->SetBoxExtent(FVector(3000, 3000, 400));
+	droneArea->SetupAttachment(GetRootComponent());
 }
 
 void ADroneRPGCharacter::SetDefaults() {
@@ -137,12 +143,44 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 	return value;
 }
 
+void ADroneRPGCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	// Check if we have a drone and we don't already have it in the list
+	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
+
+		// Add it to the list and re-calculate ownership
+		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
+	}
+}
+
+void ADroneRPGCharacter::EndOverlap(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	// Check if we have a drone and we have it in the list
+	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
+
+		// Remove it from the list and re-calculate ownership
+		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
+	}
+}
+
 void ADroneRPGCharacter::Respawn() {
 	ARespawnPoint* respawn = GetRespawnPoint();
 
 	if (respawn != NULL) {
 		SetDefaults();
-		SetActorLocation(respawn->GetActorLocation());
+
+		FNavLocation loc;
+		UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(respawn->GetActorLocation(), 500.0f, loc);
+
+		SetActorLocation(loc);
 
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		meshComponent->SetHiddenInGame(false);
@@ -326,10 +364,14 @@ void ADroneRPGCharacter::BeginPlay()
 	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
+
+	// Bind to the box components begin and end overlap events
+	droneArea->OnComponentBeginOverlap.AddDynamic(this, &ADroneRPGCharacter::BeginOverlap);
+	droneArea->OnComponentEndOverlap.AddDynamic(this, &ADroneRPGCharacter::EndOverlap);
+
 }
 
 void ADroneRPGCharacter::StartShieldRegen()
 {
 	canRegenShields = true;
 }
-

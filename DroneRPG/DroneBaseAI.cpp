@@ -14,7 +14,7 @@
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
 	minCaptureDistance = 400;
-	targetRange = 1500;
+	targetRange = 3000;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
 
@@ -122,7 +122,7 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+	TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();//mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
 
 	mShuffleArray<ADroneRPGCharacter*>(drones);
 
@@ -201,8 +201,9 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 		PerformActions();
 	}
-	else
+	else if(currentState != EActionState::SearchingForObjective)
 	{
+		// If this is hit, then we've likely died and need to reset our state!
 		currentState = EActionState::SearchingForObjective;
 	}
 }
@@ -241,17 +242,16 @@ void ADroneBaseAI::DefendingObjective() {
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToActor(targetObjective);
-		//target = NULL;
 	}
 	// Are we being attacked
 	else if (IsTargetValid()) {
 		if (!AttackTarget(target, false)) {
-			//target = NULL;
+
 		}
 	}
 	//Is there an enemy nearby the area
 	else if (canCheckForEnemies) {
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 0.5f);
 		canCheckForEnemies = false;
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
