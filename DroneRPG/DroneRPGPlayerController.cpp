@@ -56,7 +56,8 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 		lookAt.Pitch = mActorRotation.Pitch;
 		lookAt.Roll = mActorRotation.Roll;
 
-		GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
+		//GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
+		GetCharacter()->SetActorRotation(lookAt);
 
 		// Try and fire a shot
 		FireShot(mActorRotation.Vector());
@@ -84,7 +85,7 @@ void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 
 				if (projectile != NULL) {
 					projectile->SetShooter(GetCharacter());
-					World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ADroneRPGPlayerController::ShotTimerExpired, FireRate);
+					mSetTimer(TimerHandle_ShotTimerExpired, &ADroneRPGPlayerController::ShotTimerExpired, FireRate);
 
 					// try and play the sound if specified
 					if (FireSound != nullptr)

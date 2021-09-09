@@ -74,6 +74,7 @@ public:
 		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void CalculateHealthColours();
+	bool HasShields();
 	void CalculateShieldParticles();
 
 	void CalculateShields(float DeltaSeconds);
@@ -98,13 +99,16 @@ public:
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;
 
-	UNiagaraSystem* auraSystem;
-	UNiagaraSystem* trailSystem;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
+		UNiagaraSystem* auraSystem;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
+		UNiagaraSystem* trailSystem;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
 		UNiagaraComponent* shieldParticle;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
 		UNiagaraComponent* healthParticle;
 
 	int32 GetTeam() const { return team; }

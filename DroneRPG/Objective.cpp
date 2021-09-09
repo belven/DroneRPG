@@ -117,7 +117,7 @@ void AObjective::CalculateOwnership() {
 	teamsInArea.Empty();
 
 	for (ADroneRPGCharacter* drone : dronesInArea) {
-		if (!teamsInArea.Contains(drone->GetTeam())) {
+		if (!teamsInArea.Contains(drone->GetTeam()) && drone->IsAlive()) {
 			teamsInArea.Add(drone->GetTeam());
 		}
 	}
@@ -126,11 +126,6 @@ void AObjective::CalculateOwnership() {
 	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
 		SetAreaOwner(teamsInArea[0]);
 		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
-
-		// Inform listeners that the objective has changed ownership
-		if (OnObjectiveClaimed.IsBound()) {
-			OnObjectiveClaimed.Broadcast(this);
-		}
 	}
 }
 
@@ -225,5 +220,5 @@ void AObjective::Tick(float DeltaTime)
 
 bool AObjective::HasCompleteControl(int32 team)
 {
-	return currentControl == maxControl && areaOwner == team;
+	return fullClaim && areaOwner == team;
 }

@@ -18,6 +18,10 @@
 #define mShuffleArray UFunctionLibrary::ShuffleArray
 #define mGetActorsInWorld UFunctionLibrary::GetActorsInWorld
 
+#define mRandomReachablePointInRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(start, radius, loc);
+#define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
+
+
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject
 {

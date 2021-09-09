@@ -8,12 +8,13 @@
 #include <Kismet/KismetArrayLibrary.h>
 #include "Objective.h"
 #include "FunctionLibrary.h"
+#include "NavigationSystem.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
-	minCaptureDistance = 400;
+	minCaptureDistance = 650;
 	targetRange = 3000;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
@@ -24,9 +25,11 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 
 	bCanFire = true;
 	canCheckForEnemies = true;
+	canPerformActions = true;
 	GunOffset = FVector(100.f, 0.f, 0.f);
 	FireRate = 0.5;
 	currentGameMode = EGameModeType::Domination;
+
 }
 
 void ADroneBaseAI::CalculateObjective()
@@ -71,12 +74,12 @@ void ADroneBaseAI::FindObjective() {
 	if (targetObjective == NULL && objectives.Num() > 0) {
 
 		targetObjective = UFunctionLibrary::GetRandomObject<AObjective*>(objectives);
-		MoveToActor(targetObjective);
+		MoveToObjective();
 		currentState = EActionState::DefendingObjective;
 	}
 	// If we have an objective, then it wasn't claimed by this team, so head towards it
 	else if (targetObjective != NULL) {
-		MoveToActor(targetObjective);
+		MoveToObjective();
 		currentState = EActionState::CapturingObjective;
 	}
 }
@@ -113,16 +116,20 @@ void ADroneBaseAI::BeginPlay() {
 }
 
 void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
+	bool hasControl = objective->HasCompleteControl(GetDrone()->GetTeam());
 
 	// Check if the objective isn't owned by us, if it is we don't care!
-	if (!objective->HasCompleteControl(GetDrone()->GetTeam()) && currentState != EActionState::CapturingObjective) {
+	if (!hasControl && currentState != EActionState::CapturingObjective) {
 		currentState = EActionState::CapturingObjective;
 		targetObjective = objective;
+	}
+	else if (hasControl && currentState == EActionState::CapturingObjective && targetObjective == objective) {
+		currentState = EActionState::SearchingForObjective;
 	}
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();//mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+	TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();
 
 	mShuffleArray<ADroneRPGCharacter*>(drones);
 
@@ -161,10 +168,6 @@ void ADroneBaseAI::RotateToFace() {
 	else if (targetObjective != NULL) {
 		targetLocation = mObjectiveLocation;
 	}
-	// All other cases, which there shouldn't be, eyes front!
-	else {
-		targetLocation = GetCharacter()->GetActorForwardVector();
-	}
 
 	// If we set a location, then calculate a loot at rotation
 	if (!targetLocation.IsNearlyZero()) {
@@ -176,7 +179,7 @@ void ADroneBaseAI::RotateToFace() {
 	}
 	else {
 		// Set the angle to be forward facing TODO:, this doesn't work well and needs to face movement direction!
-		targetRotation = GetCharacter()->GetActorForwardVector().Rotation();
+		targetRotation = GetDrone()->GetVelocity().Rotation();
 		targetRotation.Pitch = mDroneRotation.Pitch;
 		targetRotation.Roll = mDroneRotation.Roll;
 	}
@@ -199,9 +202,25 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		// Update Lookat on tick, so it's always facing correctly TODO: make it follow the movement direction, if no target etc
 		RotateToFace();
 
-		PerformActions();
+		if (canPerformActions) {
+			PerformActions();
+		}
+
+		if (GetDrone()->GetVelocity().IsNearlyZero() && IsTargetValid() && !GetDrone()->HasShields()) {
+			//currentState = EActionState::EvadingDamage; TODO move into Evading damage state
+
+			int32 count = 0;
+			FNavLocation loc;
+			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), 1000, loc);
+
+			while (mDist(target->GetActorLocation(), loc) <= 700 && count < 20) {
+				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), 1000, loc);
+				count++;
+			}
+			MoveToLocation(loc);
+		}
 	}
-	else if(currentState != EActionState::SearchingForObjective)
+	else if (currentState != EActionState::SearchingForObjective)
 	{
 		// If this is hit, then we've likely died and need to reset our state!
 		currentState = EActionState::SearchingForObjective;
@@ -209,6 +228,9 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 }
 
 void ADroneBaseAI::PerformActions() {
+	canPerformActions = false;
+	mSetTimer(TimerHandle_CanPerformActions, &ADroneBaseAI::CanPerformActions, 0.3f);
+
 	// Do state machine things!
 	switch (currentState) {
 	case EActionState::SearchingForObjective:
@@ -236,12 +258,18 @@ void ADroneBaseAI::PerformActions() {
 	}
 }
 
+void ADroneBaseAI::MoveToObjective() {
+	FNavLocation loc;
+	mRandomReachablePointInRadius(targetObjective->GetActorLocation(), 600, loc);
+	MoveToLocation(loc);
+}
+
 void ADroneBaseAI::DefendingObjective() {
 	AObjective* currentObjective = Cast<AObjective>(targetObjective);
 
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
-		MoveToActor(targetObjective);
+		MoveToObjective();
 	}
 	// Are we being attacked
 	else if (IsTargetValid()) {
@@ -251,7 +279,7 @@ void ADroneBaseAI::DefendingObjective() {
 	}
 	//Is there an enemy nearby the area
 	else if (canCheckForEnemies) {
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 0.5f);
+		mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.5f);
 		canCheckForEnemies = false;
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
@@ -326,7 +354,7 @@ void ADroneBaseAI::CapturingObjective() {
 
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
-		MoveToActor(targetObjective);
+		MoveToObjective();
 	}
 	// Have we claimed the current objective?
 	else if (currentObjective != NULL && currentObjective->HasCompleteControl(GetDrone()->GetTeam())) {
@@ -345,7 +373,7 @@ void ADroneBaseAI::CapturingObjective() {
 	}
 	//Is there an enemy nearby the area
 	else if (canCheckForEnemies) {
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle_CanCheckForEnemies, this, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+		mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
 		canCheckForEnemies = false;
 		AActor* targetFound = FindEnemyTarget(targetRange);
 
@@ -366,6 +394,11 @@ void ADroneBaseAI::ShotTimerExpired()
 void ADroneBaseAI::CanCheckForEnemies()
 {
 	canCheckForEnemies = true;
+}
+
+void ADroneBaseAI::CanPerformActions()
+{
+	canPerformActions = true;
 }
 
 ADroneRPGCharacter* ADroneBaseAI::GetDrone()
@@ -394,7 +427,7 @@ void ADroneBaseAI::FireShot(FVector FireDirection)
 
 				if (projectile != NULL) {
 					projectile->SetShooter(GetCharacter());
-					World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ADroneBaseAI::ShotTimerExpired, FireRate);
+					mSetTimer(TimerHandle_ShotTimerExpired, &ADroneBaseAI::ShotTimerExpired, FireRate);
 
 					// try and play the sound if specified
 					if (FireSound != nullptr)

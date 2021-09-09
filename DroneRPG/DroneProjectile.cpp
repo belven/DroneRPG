@@ -35,7 +35,6 @@ ADroneProjectile::ADroneProjectile()
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
 
-	// Die after 3 seconds by default
 	InitialLifeSpan = 2.0f;
 }
 

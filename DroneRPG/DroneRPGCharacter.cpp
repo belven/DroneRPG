@@ -20,7 +20,7 @@
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
 
-#define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, &ADroneRPGCharacter::method, delay)
+#define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -96,7 +96,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	SetDefaults();
 
 	energyRegen = 10;
-	shieldRegen = 10; 
+	shieldRegen = 10;
 
 	shieldRegenDelay = 3.0f;
 	energyRegenDelay = 3.0f;
@@ -143,12 +143,7 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 	return value;
 }
 
-void ADroneRPGCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
+void ADroneRPGCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Check if we have a drone and we don't already have it in the list
 	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
@@ -158,10 +153,7 @@ void ADroneRPGCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	}
 }
 
-void ADroneRPGCharacter::EndOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
+void ADroneRPGCharacter::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Check if we have a drone and we have it in the list
 	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
@@ -178,15 +170,15 @@ void ADroneRPGCharacter::Respawn() {
 		SetDefaults();
 
 		FNavLocation loc;
-		UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(respawn->GetActorLocation(), 500.0f, loc);
+		mRandomReachablePointInRadius(respawn->GetActorLocation(), 500.0f, loc);
 
 		SetActorLocation(loc);
 
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		meshComponent->SetHiddenInGame(false);
 
-		shieldParticle->Activate();
-		healthParticle->Activate();
+		shieldParticle->SetHiddenInGame(false);
+		healthParticle->SetHiddenInGame(false);
 
 		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 		shieldParticle->SetFloatParameter(TEXT("Size"), 45);
@@ -208,6 +200,7 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 }
 
 void ADroneRPGCharacter::KillDrone() {
+	// TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
 	currentStats.health = 0;
 	currentStats.shields = 0;
 	canRegenShields = false;
@@ -215,10 +208,10 @@ void ADroneRPGCharacter::KillDrone() {
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	meshComponent->SetHiddenInGame(true);
 
-	shieldParticle->DeactivateImmediate();
-	healthParticle->DeactivateImmediate();
+	shieldParticle->SetHiddenInGame(true);
+	healthParticle->SetHiddenInGame(true);
 
-	mSetTimer(TimerHandle_Kill, Respawn, 3.0f);
+	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
@@ -227,22 +220,21 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
-	mSetTimer(TimerHandle_ShieldRegenRestart, StartShieldRegen, shieldRegenDelay);
+	mSetTimer(TimerHandle_ShieldRegenRestart, &ADroneRPGCharacter::StartShieldRegen, shieldRegenDelay);
 
-	// If we have 0 shields, then take health damage
-	if (currentStats.shields <= 0) {
-		currentStats.health -= damage;
 
-		// If we have no health, kill the character TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
-		if (currentStats.health <= 0) {
-			KillDrone();
+	// Take damage to shields
+	if (HasShields()) {
+
+		// We have less shields than damage, so remove are shields from the damage, to allow us to take it as health
+		if (currentStats.shields < damage) {
+			damage -= currentStats.shields;
+			currentStats.shields = 0;
 		}
-
-		CalculateHealthColours();
-	}
-	// Otherwise take damage to shields TODO: do we want to calculate excess damage i.e. left over damage goes into health after shields?
-	else {
-		currentStats.shields -= damage;
+		// We have more shields than damage dealt, so take it all to shields
+		else {
+			currentStats.shields -= damage;
+		}
 
 		// Weaken max shields, to prevent ships being as strong for the whole match
 		if (maxStats.shields > 50) {
@@ -252,6 +244,18 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 			ClampValue(maxStats.shields, maxStats.shields, 50);
 		}
 		CalculateShieldParticles();
+	}
+
+	// If we have 0 shields, then take health damage
+	if (currentStats.shields <= 0) {
+		currentStats.health -= damage;
+
+		// If we have no health, kill the character 
+		if (currentStats.health <= 0) {
+			KillDrone();
+		}
+
+		CalculateHealthColours();
 	}
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
@@ -285,6 +289,10 @@ void ADroneRPGCharacter::CalculateHealthColours() {
 	}
 }
 
+bool ADroneRPGCharacter::HasShields() {
+	return currentStats.shields > 0;
+}
+
 void ADroneRPGCharacter::CalculateShieldParticles() {
 	// Change the colour and size of the particles base on shield value, they'll be smaller and darker if we have < 50% shields
 	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical) {
@@ -300,11 +308,11 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 
 	// If we have 0 shields, disable the particle effect
 	if (currentStats.shields <= 0 && shieldsActive) {
-		shieldParticle->DeactivateImmediate();
+		shieldParticle->SetHiddenInGame(true);
 		shieldsActive = false;
 	}
 	else if (currentStats.shields > 0 && !shieldsActive) {
-		shieldParticle->ActivateSystem();
+		shieldParticle->SetHiddenInGame(false);
 		shieldsActive = true;
 	}
 }
@@ -349,8 +357,8 @@ void ADroneRPGCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// Set up particle effect defaults
-	shieldParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("shieldParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
-	healthParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("healthParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+	shieldParticle = mSpawnSystemAttached(auraSystem, TEXT("shieldParticle"));
+	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
 
 	shieldParticle->SetFloatParameter(TEXT("Radius"), 125);
 	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
@@ -368,7 +376,6 @@ void ADroneRPGCharacter::BeginPlay()
 	// Bind to the box components begin and end overlap events
 	droneArea->OnComponentBeginOverlap.AddDynamic(this, &ADroneRPGCharacter::BeginOverlap);
 	droneArea->OnComponentEndOverlap.AddDynamic(this, &ADroneRPGCharacter::EndOverlap);
-
 }
 
 void ADroneRPGCharacter::StartShieldRegen()

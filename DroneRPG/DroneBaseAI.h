@@ -36,6 +36,7 @@ public:
 	ADroneBaseAI();
 	virtual void Tick(float DeltaSeconds) override;
 	void PerformActions();
+	void MoveToObjective();
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -61,6 +62,7 @@ private:
 	TSubclassOf<class ADroneProjectile> projectileClass;
 	FTimerHandle TimerHandle_ShotTimerExpired;
 	FTimerHandle TimerHandle_CanCheckForEnemies;
+	FTimerHandle TimerHandle_CanPerformActions;
 	class USoundBase* FireSound;
 
 	float minCaptureDistance;
@@ -73,6 +75,7 @@ private:
 	bool bCanFire;
 	bool isFiring;
 	bool canCheckForEnemies;
+	bool canPerformActions;
 
 	AActor* targetObjective;
 	AActor* target;
@@ -91,6 +94,7 @@ private:
 	void FindObjective();
 	void ShotTimerExpired();
 	void CanCheckForEnemies();
+	void CanPerformActions();
 	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
 
 	void DefendingObjective();
