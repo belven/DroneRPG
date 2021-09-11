@@ -19,6 +19,7 @@
 #include "FunctionLibrary.h"
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
+#include "Weapon.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -126,6 +127,7 @@ void ADroneRPGCharacter::SetDefaults() {
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
 	shieldsActive = true;
+
 }
 
 void ADroneRPGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -216,7 +218,7 @@ void ADroneRPGCharacter::KillDrone() {
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	// Fixed damage for now, need to create different projectiles with different damage TODO:
-	float damage = 15;
+	float damage = projectile->GetDamage();
 
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
@@ -376,6 +378,9 @@ void ADroneRPGCharacter::BeginPlay()
 	// Bind to the box components begin and end overlap events
 	droneArea->OnComponentBeginOverlap.AddDynamic(this, &ADroneRPGCharacter::BeginOverlap);
 	droneArea->OnComponentEndOverlap.AddDynamic(this, &ADroneRPGCharacter::EndOverlap);
+
+
+	SetWeapon(UWeapon::CreateWeapon(0.3f, 30.0f, this));
 }
 
 void ADroneRPGCharacter::StartShieldRegen()

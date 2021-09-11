@@ -19,6 +19,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	AActor* shooter;
+	float damage;
 
 	/** Sphere collision component */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
@@ -48,4 +49,7 @@ public:
 	AActor* GetShooter();
 	void SetUpCollision();
 	void SetShooter(AActor* val);
+
+	float GetDamage() const { return damage; }
+	void SetDamage(float val) { damage = val; }
 };

@@ -20,23 +20,7 @@ protected:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float MoveSpeed;
 
-	TSubclassOf<class ADroneProjectile> projectileClass;
-
-	/** Handle for efficient management of ShotTimerExpired timer */
-	FTimerHandle TimerHandle_ShotTimerExpired;
-
-	bool bCanFire;
 	bool isFiring;
-
-	float FireRate;
-
-	FVector GunOffset;
-
-	class USoundBase* FireSound;
-
-	/* Handler for the fire timer expiry */
-	void ShotTimerExpired();
-
 
 	// Static names for axis bindings
 	static const FName MoveForwardBinding;

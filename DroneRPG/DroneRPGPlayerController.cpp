@@ -9,6 +9,8 @@
 #include <Kismet/GameplayStatics.h>
 #include <Kismet/KismetMathLibrary.h>
 #include "DroneProjectile.h"
+#include "FunctionLibrary.h"
+#include "Weapon.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()
@@ -20,18 +22,9 @@ const FName ADroneRPGPlayerController::FireRightBinding("FireRight");
 
 ADroneRPGPlayerController::ADroneRPGPlayerController()
 {
-	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
-
-	if (ProjectileClassFound.Succeeded()) {
-		projectileClass = ProjectileClassFound.Class;
-	}
-
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
-	bCanFire = true;
-	GunOffset = FVector(100.f, 0.f, 0.f);
-	FireRate = 0.5;
 }
 
 ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
@@ -67,35 +60,9 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 {
 	// If it's ok to fire again
-	if (isFiring && bCanFire)
+	if (isFiring)
 	{
-		// If we are pressing fire stick in a direction
-		if (FireDirection.SizeSquared() > 0.0f)
-		{
-			const FRotator FireRotation = FireDirection.Rotation();
-
-			// Spawn projectile at an offset from this pawn
-			const FVector gunLocation = mActorLocation + FireRotation.RotateVector(GunOffset);
-
-			UWorld* const World = GetWorld();
-			if (World != NULL)
-			{
-				// spawn the projectile
-				ADroneProjectile* projectile = World->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation);
-
-				if (projectile != NULL) {
-					projectile->SetShooter(GetCharacter());
-					mSetTimer(TimerHandle_ShotTimerExpired, &ADroneRPGPlayerController::ShotTimerExpired, FireRate);
-
-					// try and play the sound if specified
-					if (FireSound != nullptr)
-					{
-						UGameplayStatics::PlaySoundAtLocation(this, FireSound, mActorLocation);
-					}
-					bCanFire = false;
-				}
-			}
-		}
+		GetDrone()->GetWeapon()->FireShot(FireDirection);
 	}
 }
 
@@ -106,6 +73,7 @@ void ADroneRPGPlayerController::UseTool() {
 void ADroneRPGPlayerController::StopUsingTool() {
 	isFiring = false;
 }
+
 void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds)
 {
 	// Find movement direction
@@ -126,11 +94,6 @@ void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds)
 	}
 }
 
-void ADroneRPGPlayerController::ShotTimerExpired()
-{
-	bCanFire = true;
-}
-
 void ADroneRPGPlayerController::SetupInputComponent()
 {
 	// set up gameplay key bindings
@@ -145,5 +108,3 @@ void ADroneRPGPlayerController::SetupInputComponent()
 	InputComponent->BindAxis(FireForwardBinding);
 	InputComponent->BindAxis(FireRightBinding);
 }
-
-

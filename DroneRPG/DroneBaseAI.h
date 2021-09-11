@@ -59,20 +59,13 @@ public:
 	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
 	void SetCurrentGameMode(EGameModeType val) { currentGameMode = val; }
 private:
-	TSubclassOf<class ADroneProjectile> projectileClass;
-	FTimerHandle TimerHandle_ShotTimerExpired;
 	FTimerHandle TimerHandle_CanCheckForEnemies;
 	FTimerHandle TimerHandle_CanPerformActions;
-	class USoundBase* FireSound;
 
 	float minCaptureDistance;
 	float targetRange;
-	float FireRate;
-
-	FVector GunOffset;
 	FRotator lookAt;
 
-	bool bCanFire;
 	bool isFiring;
 	bool canCheckForEnemies;
 	bool canPerformActions;

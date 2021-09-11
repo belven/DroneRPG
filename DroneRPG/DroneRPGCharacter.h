@@ -11,6 +11,7 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 class ADroneProjectile;
 class ARespawnPoint;
+class UWeapon;
 
 USTRUCT(BlueprintType)
 struct FDroneStats
@@ -121,9 +122,15 @@ public:
 
 	TArray<ADroneRPGCharacter*>& GetDronesInArea() { return dronesInArea; }
 	void SetDronesInArea(TArray<ADroneRPGCharacter*> val) { dronesInArea = val; }
+
+	UWeapon* GetWeapon() const { return weapon; }
+	void SetWeapon(UWeapon* val) { weapon = val; }
 private:
 	UPROPERTY()
 		UBoxComponent* droneArea;
+
+	UPROPERTY()
+		UWeapon* weapon;
 
 	UPROPERTY()
 		TArray<ADroneRPGCharacter*> dronesInArea;

@@ -9,6 +9,7 @@
 #include "Objective.h"
 #include "FunctionLibrary.h"
 #include "NavigationSystem.h"
+#include "Weapon.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
@@ -17,19 +18,9 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 	minCaptureDistance = 650;
 	targetRange = 3000;
 
-	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
-
-	if (ProjectileClassFound.Succeeded()) {
-		projectileClass = ProjectileClassFound.Class;
-	}
-
-	bCanFire = true;
 	canCheckForEnemies = true;
 	canPerformActions = true;
-	GunOffset = FVector(100.f, 0.f, 0.f);
-	FireRate = 0.5;
 	currentGameMode = EGameModeType::Domination;
-
 }
 
 void ADroneBaseAI::CalculateObjective()
@@ -386,11 +377,6 @@ void ADroneBaseAI::CapturingObjective() {
 	}
 }
 
-void ADroneBaseAI::ShotTimerExpired()
-{
-	bCanFire = true;
-}
-
 void ADroneBaseAI::CanCheckForEnemies()
 {
 	canCheckForEnemies = true;
@@ -408,35 +394,5 @@ ADroneRPGCharacter* ADroneBaseAI::GetDrone()
 
 void ADroneBaseAI::FireShot(FVector FireDirection)
 {
-	// If it's ok to fire again
-	if (bCanFire)
-	{
-		// If we are pressing fire stick in a direction
-		if (FireDirection.SizeSquared() > 0.0f)
-		{
-			const FRotator FireRotation = FireDirection.Rotation();
-
-			// Spawn projectile at an offset from this pawn
-			const FVector gunLocation = mDroneLocation + FireRotation.RotateVector(GunOffset);
-
-			UWorld* const World = GetWorld();
-			if (World != NULL)
-			{
-				// spawn the projectile
-				ADroneProjectile* projectile = World->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation);
-
-				if (projectile != NULL) {
-					projectile->SetShooter(GetCharacter());
-					mSetTimer(TimerHandle_ShotTimerExpired, &ADroneBaseAI::ShotTimerExpired, FireRate);
-
-					// try and play the sound if specified
-					if (FireSound != nullptr)
-					{
-						UGameplayStatics::PlaySoundAtLocation(this, FireSound, mDroneLocation);
-					}
-					bCanFire = false;
-				}
-			}
-		}
-	}
+	GetDrone()->GetWeapon()->FireShot(FireDirection);
 }
