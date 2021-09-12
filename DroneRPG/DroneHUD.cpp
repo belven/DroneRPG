@@ -32,6 +32,7 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective) {
 
 	int32 vpX;
 	int32 vpY;
+	int32 offset = 30;
 
 	FVector screenPos = Project(objective->GetActorLocation());
 
@@ -40,8 +41,8 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective) {
 
 	con->GetViewportSize(vpX, vpY);
 
-	float clampY = mClampValue<float>(screenY, vpY - 50, 50);
-	float clampX = mClampValue<float>(screenX, vpX - 50, 50);
+	float clampY = mClampValue<float>(screenY, vpY - offset, offset);
+	float clampX = mClampValue<float>(screenX, vpX - offset, offset);
 
 	if (clampY != screenY || clampX != screenX) {
 		float x = clampX;
@@ -62,16 +63,17 @@ void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone) {
 
 	int32 vpX;
 	int32 vpY;
-	
+	int32 offset = 30;
+
 	FVector screenPos = Project(drone->GetActorLocation());
-	   
+
 	float screenX = screenPos.X;
 	float screenY = screenPos.Y;
 
 	con->GetViewportSize(vpX, vpY);
 
-	float clampY = mClampValue<float>(screenY, vpY - 50, 50);
-	float clampX = mClampValue<float>(screenX, vpX - 50, 50);
+	float clampY = mClampValue<float>(screenY, vpY - offset, offset);
+	float clampX = mClampValue<float>(screenX, vpX - offset, offset);
 
 	if (clampY == screenY && clampX == screenX) {
 		float x = clampX;

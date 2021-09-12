@@ -81,19 +81,17 @@ void AObjective::BeginPlay()
 
 	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
 	UpdateColour();
-	ClearOutOverlap(NULL);
+	//ClearOutOverlap(NULL);
 }
 
 void AObjective::RemoveOverlapingComponents(AActor* other) {
-	// TODO use GetComponents method poly instead of GetComponentsByClass
-	TArray<UActorComponent*> actors = other->GetComponentsByClass(UStaticMeshComponent::StaticClass());
+	TArray<UStaticMeshComponent*> comps;
+	other->GetComponents<UStaticMeshComponent>(comps);
 
-	for (UActorComponent* comp : actors) {
-		UStaticMeshComponent* meshComp = Cast<UStaticMeshComponent>(comp);
-
-		if (mDist(meshComp->GetComponentLocation(), GetActorLocation()) < 700) {
-			meshComp->SetHiddenInGame(true);
-			meshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	for (UStaticMeshComponent* comp : comps) {
+		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < 1500) {
+			comp->SetHiddenInGame(true);
+			comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 }
