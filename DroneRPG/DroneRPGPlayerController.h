@@ -14,6 +14,7 @@ class ADroneRPGPlayerController : public APlayerController
 public:
 	ADroneRPGPlayerController();
 
+	UFUNCTION(BlueprintCallable, Category = "Drone Controller")
 	class ADroneRPGCharacter* GetDrone();
 protected:
 	/* The speed our ship moves around the level */

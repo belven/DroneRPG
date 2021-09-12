@@ -52,7 +52,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		int32 team;
 
-	FColor healthStatus;
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		FColor GetHealthStatus() const { return healthStatus; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		void SetHealthStatus(FColor val) { healthStatus = val; }
 
 	bool canRegenShields;
 	bool shieldsCritical;
@@ -67,7 +72,9 @@ public:
 	void Respawn();
 	void KillDrone();
 	void RecieveHit(ADroneProjectile* projectile);
-	bool IsAlive();
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		bool IsAlive();
 
 	UFUNCTION()
 		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -151,5 +158,6 @@ private:
 
 	FDroneStats currentStats;
 	FDroneStats maxStats;
+	FColor healthStatus;
 };
 

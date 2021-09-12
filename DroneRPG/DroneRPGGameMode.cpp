@@ -4,6 +4,7 @@
 #include "DroneRPGPlayerController.h"
 #include "DroneRPGCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include <GameFramework/HUD.h>
 
 ADroneRPGGameMode::ADroneRPGGameMode()
 {
@@ -16,5 +17,7 @@ ADroneRPGGameMode::ADroneRPGGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
-	//DefaultPawnClass = ADroneRPGCharacter::StaticClass();
+	
+	static ConstructorHelpers::FClassFinder<AHUD> hud(TEXT("Blueprint'/Game/TopDownCPP/Blueprints/BaseHud.BaseHud_C'"));
+	HUDClass = hud.Class;
 }

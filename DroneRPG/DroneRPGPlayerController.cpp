@@ -35,7 +35,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (GetCharacter() != NULL) {
+	if (GetCharacter() != NULL && GetDrone()->IsAlive()) {
 		CalculateMovement(DeltaTime);
 
 		// Create fire direction vector

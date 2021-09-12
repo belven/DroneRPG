@@ -45,6 +45,9 @@ public:
 
 	FName GetObjectiveName() const { return objectiveName; }
 	void SetObjectiveName(FName val) { objectiveName = val; }
+
+	FColor GetCurrentColour() const { return currentColour; }
+	void SetCurrentColour(FColor val) { currentColour = val; }
 protected:
 	virtual void BeginPlay() override;
 
