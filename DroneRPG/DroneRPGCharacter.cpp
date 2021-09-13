@@ -57,7 +57,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
 	CameraBoom->TargetArmLength = 5000.f;
-	CameraBoom->SetRelativeRotation(FRotator(-70.f, 0.f, 0.f));
+	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 	// Create a camera...
@@ -65,7 +65,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Perspective);
-	TopDownCameraComponent->SetOrthoWidth(4000);
+	TopDownCameraComponent->SetOrthoWidth(10000);
 
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
@@ -130,6 +130,10 @@ void ADroneRPGCharacter::SetDefaults() {
 
 }
 
+bool ADroneRPGCharacter::IsHealthy() {
+	return healthStatus == FColor::Green;
+}
+
 void ADroneRPGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -169,7 +173,7 @@ void ADroneRPGCharacter::Respawn() {
 	ARespawnPoint* respawn = GetRespawnPoint();
 
 	if (respawn != NULL) {
-		SetDefaults();
+		FullHeal();
 
 		FNavLocation loc;
 		mRandomReachablePointInRadius(respawn->GetActorLocation(), 500.0f, loc);
@@ -181,10 +185,6 @@ void ADroneRPGCharacter::Respawn() {
 
 		shieldParticle->SetHiddenInGame(false);
 		healthParticle->SetHiddenInGame(false);
-
-		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-		shieldParticle->SetFloatParameter(TEXT("Size"), 45);
-		shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
 	}
 }
 
@@ -217,7 +217,6 @@ void ADroneRPGCharacter::KillDrone() {
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
-	// Fixed damage for now, need to create different projectiles with different damage TODO:
 	float damage = projectile->GetDamage();
 
 	// Disable our shield regen as we've been hit
@@ -273,6 +272,13 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 bool ADroneRPGCharacter::IsAlive()
 {
 	return currentStats.health > 0;
+}
+
+void ADroneRPGCharacter::FullHeal() {
+	SetDefaults();
+	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
+	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
 }
 
 void ADroneRPGCharacter::CalculateHealthColours() {

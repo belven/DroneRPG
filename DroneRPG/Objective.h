@@ -64,6 +64,8 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		float currentControl;
+
+	TMap<int32, FColor> teamColours;
 private:
 	UPROPERTY()
 		UBoxComponent* objectiveArea;

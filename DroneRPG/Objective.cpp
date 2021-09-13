@@ -6,13 +6,13 @@
 #include "NiagaraSystem.h"
 #include "FunctionLibrary.h"
 #include <Components/StaticMeshComponent.h>
+#include "NavigationSystem.h"
 
 AObjective::AObjective()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
 	objectiveArea->SetBoxExtent(FVector(700, 700, 400));
-	objectiveArea->SetRelativeLocation(FVector(0, 0, 50)); // TODO: not working
 	objectiveArea->SetupAttachment(GetRootComponent());
 
 	SetAreaOwner(0);
@@ -29,6 +29,9 @@ AObjective::AObjective()
 	if (auraParticleSystem.Succeeded()) {
 		auraSystem = auraParticleSystem.Object;
 	}
+
+	teamColours.Add(1, FColor::Green);
+	teamColours.Add(2, FColor::Yellow);
 }
 
 void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -131,15 +134,11 @@ void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
 	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
+		FColor teamColour = *teamColours.Find(areaOwner);
 
-		// Set the colours correctly based on the team TODO: need to make a map of all the team numbers and their colours
-		if (areaOwner == 1 && currentColour != FColor::Green) {
-			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-			currentColour = FColor::Green;
-		}
-		else if (areaOwner == 2 && currentColour != FColor::Yellow) {
-			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Yellow));
-			currentColour = FColor::Yellow;
+		if (currentColour != teamColour) {
+			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
+			currentColour = teamColour;
 		}
 	}
 	// If the control is less than the minimum then it's a neutral 

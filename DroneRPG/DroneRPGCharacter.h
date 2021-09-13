@@ -68,7 +68,6 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
-	float ClampValue(float value, float max, float min);
 	void Respawn();
 	void KillDrone();
 	void RecieveHit(ADroneProjectile* projectile);
@@ -76,17 +75,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		bool IsAlive();
 
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		bool IsHealthy();
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		void FullHeal();
+
 	UFUNCTION()
 		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
 		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	void CalculateHealthColours();
 	bool HasShields();
-	void CalculateShieldParticles();
+	ARespawnPoint* GetRespawnPoint();
 
-	void CalculateShields(float DeltaSeconds);
-	void CalculateEnergy(float DeltaSeconds);
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -102,7 +104,6 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void StartShieldRegen();
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;
@@ -133,6 +134,13 @@ public:
 	UWeapon* GetWeapon() const { return weapon; }
 	void SetWeapon(UWeapon* val) { weapon = val; }
 private:
+	void CalculateHealthColours();
+	void CalculateShieldParticles();
+	void CalculateShields(float DeltaSeconds);
+	void CalculateEnergy(float DeltaSeconds);
+	void StartShieldRegen();
+	float ClampValue(float value, float max, float min);
+
 	UPROPERTY()
 		UBoxComponent* droneArea;
 
@@ -154,7 +162,6 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent* CursorToWorld;
 
-	ARespawnPoint* GetRespawnPoint();
 
 	FDroneStats currentStats;
 	FDroneStats maxStats;

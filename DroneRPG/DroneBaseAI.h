@@ -92,8 +92,10 @@ private:
 
 	void DefendingObjective();
 	void ReturningToBase();
+	bool ShootAttacker();
 	void EvadingDamage();
 	void AttackingTarget();
 	FHitResult LinetraceToLocation(FVector location);
 	void CapturingObjective();
+	bool GetEnemiesInArea();
 };

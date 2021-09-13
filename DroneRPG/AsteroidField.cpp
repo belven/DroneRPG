@@ -20,7 +20,7 @@ AAsteroidField::AAsteroidField()
 	if (asteroidTwo.Succeeded())
 		meshes.Add(asteroidTwo.Object, 100);
 
-	//PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	minDist = 300;
 	radius = 5000;
 
@@ -51,9 +51,9 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 
 	if (!loc.IsNearlyZero()) {
 		float rand = FMath::RandRange(minScale, maxScale);
-		float x = FMath::RandRange(rand * 0.9f, maxScale * 1.1f);
-		float y = FMath::RandRange(rand * 0.9f, maxScale * 1.1f);
-		float z = FMath::RandRange(rand * 0.9f, maxScale * 1.1f);
+		float x = FMath::RandRange(rand * 0.9f, rand * 1.1f);
+		float y = FMath::RandRange(rand * 0.9f, rand * 1.1f);
+		float z = FMath::RandRange(rand * 0.9f, rand * 1.1f);
 
 		FTransform trans(UKismetMathLibrary::RandomRotator(), FVector::ZeroVector, FVector(x, y, z));
 

@@ -10,6 +10,7 @@
 #include "FunctionLibrary.h"
 #include "NavigationSystem.h"
 #include "Weapon.h"
+#include "RespawnPoint.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
@@ -169,7 +170,6 @@ void ADroneBaseAI::RotateToFace() {
 		targetRotation = lookAt;
 	}
 	else {
-		// Set the angle to be forward facing TODO:, this doesn't work well and needs to face movement direction!
 		targetRotation = GetDrone()->GetVelocity().Rotation();
 		targetRotation.Pitch = mDroneRotation.Pitch;
 		targetRotation.Roll = mDroneRotation.Roll;
@@ -190,25 +190,17 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 			target = NULL;
 		}
 
-		// Update Lookat on tick, so it's always facing correctly TODO: make it follow the movement direction, if no target etc
 		RotateToFace();
+
+		if (currentState != EActionState::ReturingToBase && !GetDrone()->IsHealthy()) {
+			currentState = EActionState::ReturingToBase;
+		}
+		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturingToBase && !GetDrone()->HasShields()) {
+			currentState = EActionState::EvadingDamage;
+		}
 
 		if (canPerformActions) {
 			PerformActions();
-		}
-
-		if (GetDrone()->GetVelocity().IsNearlyZero() && IsTargetValid() && !GetDrone()->HasShields()) {
-			//currentState = EActionState::EvadingDamage; TODO move into Evading damage state
-
-			int32 count = 0;
-			FNavLocation loc;
-			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), 1000, loc);
-
-			while (mDist(target->GetActorLocation(), loc) <= 700 && count < 20) {
-				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), 1000, loc);
-				count++;
-			}
-			MoveToLocation(loc);
 		}
 	}
 	else if (currentState != EActionState::SearchingForObjective)
@@ -262,29 +254,63 @@ void ADroneBaseAI::DefendingObjective() {
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToObjective();
 	}
-	// Are we being attacked
-	else if (IsTargetValid()) {
-		if (!AttackTarget(target, false)) {
 
-		}
-	}
-	//Is there an enemy nearby the area
-	else if (canCheckForEnemies) {
-		mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.5f);
-		canCheckForEnemies = false;
-		AActor* targetFound = FindEnemyTarget(targetRange);
-
-		if (targetFound != NULL)
-			target = targetFound;
+	// Do we have a valid target
+	// Is there an enemy nearby the area
+	if (!ShootAttacker() && canCheckForEnemies) {
+		GetEnemiesInArea();
 	}
 }
 
 void ADroneBaseAI::ReturningToBase() {
+	if (!GetDrone()->IsHealthy()) {
+		MoveToLocation(GetDrone()->GetRespawnPoint()->GetActorLocation());
+	}
+	else {
+		currentState = EActionState::SearchingForObjective;
+	}
 
+	// Do we have a valid target
+	// Is there an enemy nearby the area
+	if (!ShootAttacker() && canCheckForEnemies) {
+		GetEnemiesInArea();
+	}
+}
+
+bool ADroneBaseAI::ShootAttacker() {
+	if (IsTargetValid()) {
+		// Attempt to attack the target, don't move to the target if we can't see it
+		if (!AttackTarget(target, false)) {
+			// We're in here due to us loosing line of sight to the target
+			target = NULL;
+		}
+		else {
+			return true;
+		}
+	}
+	return false;
 }
 
 void ADroneBaseAI::EvadingDamage() {
-	//if(GetDrone()->GetCurrentStats() < ) etc
+	if (!GetDrone()->HasShields() && IsTargetValid()) {
+		if (GetDrone()->GetVelocity().IsNearlyZero()) {
+			int32 closeDistance = 1500;
+			int32 count = 0;
+			FNavLocation loc;
+			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
+
+			while (mDist(target->GetActorLocation(), loc) <= closeDistance && count < 20) {
+				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
+				count++;
+			}
+			MoveToLocation(loc);
+		}
+
+		ShootAttacker();
+	}
+	else {
+		currentState = EActionState::SearchingForObjective;
+	}
 }
 
 void ADroneBaseAI::AttackingTarget() {
@@ -353,28 +379,27 @@ void ADroneBaseAI::CapturingObjective() {
 	}
 
 	// Do we have a valid target
-	if (IsTargetValid()) {
+	// Is there an enemy nearby the area
+	if (!ShootAttacker() && canCheckForEnemies) {
+		GetEnemiesInArea();
+	}
+}
 
-		// Attempt to attack the target, don't move to the target if we can't see it
-		// TODO make it so we move to the target, as long as we're in range of the objective still
-		if (!AttackTarget(target, false)) {
-			// We're in here due to us loosing line of sight to the target
-			target = NULL;
+bool ADroneBaseAI::GetEnemiesInArea() {
+	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+	canCheckForEnemies = false;
+	AActor* targetFound = FindEnemyTarget(targetRange);
+
+	if (targetFound != NULL) {
+		FHitResult hit = LinetraceToLocation(targetFound->GetActorLocation());
+
+		if (hit.GetActor() == targetFound) {
+			target = targetFound;
+			return true;
 		}
 	}
-	//Is there an enemy nearby the area
-	else if (canCheckForEnemies) {
-		mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
-		canCheckForEnemies = false;
-		AActor* targetFound = FindEnemyTarget(targetRange);
 
-		if (targetFound != NULL) {
-			FHitResult hit = LinetraceToLocation(targetFound->GetActorLocation());
-
-			if (hit.GetActor() == targetFound)
-				target = targetFound;
-		}
-	}
+	return false;
 }
 
 void ADroneBaseAI::CanCheckForEnemies()

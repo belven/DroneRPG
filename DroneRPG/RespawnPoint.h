@@ -7,6 +7,7 @@
 #include "RespawnPoint.generated.h"
 
 class ADroneRPGCharacter;
+class UBoxComponent;
 
 UCLASS()
 class DRONERPG_API ARespawnPoint : public AActor
@@ -25,8 +26,17 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		int32 team;
+
+	UPROPERTY()
+		UBoxComponent* respawnArea;
 public:
-	// Called every frame
+
+	UFUNCTION()
+		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 	virtual void Tick(float DeltaTime) override;
 
 	int32 GetTeam() const { return team; }
