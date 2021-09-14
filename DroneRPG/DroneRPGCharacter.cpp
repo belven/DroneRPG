@@ -20,6 +20,7 @@
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
 #include "Weapon.h"
+#include "Shotgun.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -44,12 +45,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	if (auraParticleSystem.Succeeded()) {
 		auraSystem = auraParticleSystem.Object;
-	}
-
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> TrailParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/TrailParticleSystem"));
-
-	if (TrailParticleSystem.Succeeded()) {
-		trailSystem = TrailParticleSystem.Object;
 	}
 
 	// Create a camera boom...
@@ -87,6 +82,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	{
 		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
 	}
+
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
 
@@ -102,12 +98,12 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	shieldRegenDelay = 3.0f;
 	energyRegenDelay = 3.0f;
 
+	smallShieldParticle = 25;
+	largeShieldParticle = 45;
+	healthParticleSize = 20;
+
 	SetTeam(1);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
-
-	droneArea = CreateDefaultSubobject<UBoxComponent>(TEXT("DroneArea"));
-	droneArea->SetBoxExtent(FVector(3000, 3000, 400));
-	droneArea->SetupAttachment(GetRootComponent());
 }
 
 void ADroneRPGCharacter::SetDefaults() {
@@ -127,16 +123,14 @@ void ADroneRPGCharacter::SetDefaults() {
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
 	shieldsActive = true;
+}
 
+FColor ADroneRPGCharacter::GetTeamColour() {
+	return *UFunctionLibrary::GetTeamColours().Find(GetTeam());
 }
 
 bool ADroneRPGCharacter::IsHealthy() {
 	return healthStatus == FColor::Green;
-}
-
-void ADroneRPGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
@@ -170,29 +164,31 @@ void ADroneRPGCharacter::EndOverlap(UPrimitiveComponent* OverlappedComponent, AA
 }
 
 void ADroneRPGCharacter::Respawn() {
+	// Get our teams respawn point
 	ARespawnPoint* respawn = GetRespawnPoint();
 
+	// Did we find a respawn point?
 	if (respawn != NULL) {
-		FullHeal();
-
+		// Move us to the respawn point 
 		FNavLocation loc;
-		mRandomReachablePointInRadius(respawn->GetActorLocation(), 500.0f, loc);
-
+		mRandomReachablePointInRadius(respawn->GetActorLocation(), 1000.0f, loc);
 		SetActorLocation(loc);
+
+		// Fully Heal the drone
+		FullHeal();
 
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		meshComponent->SetHiddenInGame(false);
-
-		shieldParticle->SetHiddenInGame(false);
-		healthParticle->SetHiddenInGame(false);
 	}
 }
 
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
+	// Get all the respawn points
 	TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
 
 	for (ARespawnPoint* respawnPoint : respawnPoints) {
+		// Check if the respawn point belongs to our team 
 		if (respawnPoint->GetTeam() == team) {
 			return respawnPoint;
 		}
@@ -202,6 +198,9 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 }
 
 void ADroneRPGCharacter::KillDrone() {
+	if (DroneDied.IsBound())
+		DroneDied.Broadcast(this);
+
 	// TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
 	currentStats.health = 0;
 	currentStats.shields = 0;
@@ -222,7 +221,6 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
 	mSetTimer(TimerHandle_ShieldRegenRestart, &ADroneRPGCharacter::StartShieldRegen, shieldRegenDelay);
-
 
 	// Take damage to shields
 	if (HasShields()) {
@@ -253,6 +251,9 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 
 		// If we have no health, kill the character 
 		if (currentStats.health <= 0) {
+			deaths++;
+			ADroneRPGCharacter* attacker = Cast<ADroneRPGCharacter>(projectile->GetShooter());
+			attacker->SetKills(attacker->GetKills() + 1);
 			KillDrone();
 		}
 
@@ -277,8 +278,10 @@ bool ADroneRPGCharacter::IsAlive()
 void ADroneRPGCharacter::FullHeal() {
 	SetDefaults();
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
-	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
+	shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
+
+	shieldParticle->SetHiddenInGame(false);
+	healthParticle->SetHiddenInGame(false);
 }
 
 void ADroneRPGCharacter::CalculateHealthColours() {
@@ -304,13 +307,13 @@ bool ADroneRPGCharacter::HasShields() {
 void ADroneRPGCharacter::CalculateShieldParticles() {
 	// Change the colour and size of the particles base on shield value, they'll be smaller and darker if we have < 50% shields
 	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical) {
-		shieldParticle->SetFloatParameter(TEXT("Size"), 35);
-		shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Blue));
+		shieldParticle->SetFloatParameter(TEXT("Size"), smallShieldParticle);
+		//shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Blue));
 		shieldsCritical = true;
 	}
 	else if (currentStats.shields > (maxStats.shields * 0.5f) && shieldsCritical) {
-		shieldParticle->SetFloatParameter(TEXT("Size"), 45);
-		shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
+		shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
+		//shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
 		shieldsCritical = false;
 	}
 
@@ -371,22 +374,20 @@ void ADroneRPGCharacter::BeginPlay()
 	shieldParticle->SetFloatParameter(TEXT("Radius"), 125);
 	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
 
-	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
+	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(GetTeamColour()));
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 
-	shieldParticle->SetFloatParameter(TEXT("Size"), 45);
-	healthParticle->SetFloatParameter(TEXT("Size"), 20);
+	shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
+	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
 
 	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
 	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
 	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
 
-	// Bind to the box components begin and end overlap events
-	droneArea->OnComponentBeginOverlap.AddDynamic(this, &ADroneRPGCharacter::BeginOverlap);
-	droneArea->OnComponentEndOverlap.AddDynamic(this, &ADroneRPGCharacter::EndOverlap);
-
-
-	SetWeapon(UWeapon::CreateWeapon(0.3f, 30.0f, this));
+	kills = 0;
+	deaths = 0;
+	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
+	SetWeapon(UFunctionLibrary::GetWeapon(type, 0.3f, 30.0f, this));
 }
 
 void ADroneRPGCharacter::StartShieldRegen()

@@ -33,9 +33,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 		void DrawObjectiveIndicators(AObjective* objective);
-	void DrawEnemyIndicators(ADroneRPGCharacter* drone);
 
-	float ClampValueMinus(float value, float max, float modifier = 50.0f);
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+		void DrawEnemyIndicators(ADroneRPGCharacter* drone);
+
 protected:
 	ADroneRPGCharacter* playerDrone;
 

@@ -7,6 +7,8 @@
 #include "Components/BoxComponent.h"
 #include "DroneRPGCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDroneDied, ADroneRPGCharacter*, drone);
+
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ADroneProjectile;
@@ -34,43 +36,26 @@ class ADroneRPGCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	ADroneRPGCharacter();
-	void SetDefaults();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float energyRegen;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float shieldRegen;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float energyRegenDelay;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		float shieldRegenDelay;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		int32 team;
 
+	FDroneDied DroneDied;
 
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-		FColor GetHealthStatus() const { return healthStatus; }
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-		void SetHealthStatus(FColor val) { healthStatus = val; }
-
-	bool canRegenShields;
-	bool shieldsCritical;
-	bool shieldsActive;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* meshComponent;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
-
+	ADroneRPGCharacter();
 	void Respawn();
 	void KillDrone();
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	void RecieveHit(ADroneProjectile* projectile);
+
+	UFUNCTION()
+		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		void SetDefaults();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		bool IsAlive();
@@ -81,90 +66,103 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		void FullHeal();
 
-	UFUNCTION()
-		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		bool HasShields();
 
-	bool HasShields();
-	ARespawnPoint* GetRespawnPoint();
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		ARespawnPoint* GetRespawnPoint();
 
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		FColor GetTeamColour();
 
-	// Called every frame.
-	virtual void Tick(float DeltaSeconds) override;
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		FColor GetHealthStatus() const { return healthStatus; }
 
-	/** Returns TopDownCameraComponent subobject **/
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		void SetHealthStatus(FColor val) { healthStatus = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		int32 GetKills() const { return kills; }
+	void SetKills(int32 val) { kills = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		int32 GetDeaths() const { return deaths; }
+	void SetDeaths(int32 val) { deaths = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		int32 GetTeam() const { return team; }
+	void SetTeam(int32 val) { team = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		FDroneStats GetCurrentStats() const { return currentStats; }
+	void SetCurrentStats(FDroneStats val) { currentStats = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		FDroneStats GetMaxStats() const { return maxStats; }
+	void SetMaxStats(FDroneStats val) { maxStats = val; }
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+		UWeapon* GetWeapon() const { return weapon; }
+	void SetWeapon(UWeapon* val) { weapon = val; }
+
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
-
-	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
-	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+private:
+	bool canRegenShields;
+	bool shieldsCritical;
+	bool shieldsActive;
 
-	virtual void BeginPlay() override;
+	float energyRegen;
+	float shieldRegen;
+	float energyRegenDelay;
+	float shieldRegenDelay;
 
+	float smallShieldParticle;
+	float largeShieldParticle;
+	float healthParticleSize;
+
+	FDroneStats currentStats;
+	FDroneStats maxStats;
+	FColor healthStatus;
+
+	int32 kills;
+	int32 deaths;
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
-		UNiagaraSystem* auraSystem;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
-		UNiagaraSystem* trailSystem;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
-		UNiagaraComponent* shieldParticle;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Particle")
-		UNiagaraComponent* healthParticle;
-
-	int32 GetTeam() const { return team; }
-	void SetTeam(int32 val) { team = val; }
-
-	FDroneStats GetCurrentStats() const { return currentStats; }
-	void SetCurrentStats(FDroneStats val) { currentStats = val; }
-	FDroneStats GetMaxStats() const { return maxStats; }
-	void SetMaxStats(FDroneStats val) { maxStats = val; }
-
-	TArray<ADroneRPGCharacter*>& GetDronesInArea() { return dronesInArea; }
-	void SetDronesInArea(TArray<ADroneRPGCharacter*> val) { dronesInArea = val; }
-
-	UWeapon* GetWeapon() const { return weapon; }
-	void SetWeapon(UWeapon* val) { weapon = val; }
-private:
-	void CalculateHealthColours();
-	void CalculateShieldParticles();
-	void CalculateShields(float DeltaSeconds);
-	void CalculateEnergy(float DeltaSeconds);
-	void StartShieldRegen();
-	float ClampValue(float value, float max, float min);
-
-	UPROPERTY()
-		UBoxComponent* droneArea;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+		UStaticMeshComponent* meshComponent;
+	
 	UPROPERTY()
 		UWeapon* weapon;
 
 	UPROPERTY()
 		TArray<ADroneRPGCharacter*> dronesInArea;
 
-	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* TopDownCameraComponent;
 
-	/** Camera boom positioning the camera above the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 
-	/** A decal that projects to the cursor location. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UDecalComponent* CursorToWorld;
 
+	UPROPERTY()
+		UNiagaraSystem* auraSystem;
+	
+	UPROPERTY()
+		UNiagaraComponent* shieldParticle;
 
-	FDroneStats currentStats;
-	FDroneStats maxStats;
-	FColor healthStatus;
+	UPROPERTY()
+		UNiagaraComponent* healthParticle;
+
+	void CalculateHealthColours();
+	void CalculateShieldParticles();
+	void CalculateShields(float DeltaSeconds);
+	void CalculateEnergy(float DeltaSeconds);
+	void StartShieldRegen();
+	float ClampValue(float value, float max, float min);
 };
-

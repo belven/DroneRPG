@@ -6,6 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "Weapon.generated.h"
 
+#define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation)
+
 class ADroneRPGCharacter;
 class ADroneProjectile;
 
@@ -15,7 +17,8 @@ enum class  EWeaponType : uint8 {
 	Rocket,
 	Mine,
 	Rail_Gun,
-	Shotgun
+	Shotgun,
+	End
 };
 
 UCLASS()
@@ -32,9 +35,9 @@ public:
 
 	EWeaponType GetWeaponType() const { return weaponType; }
 	void SetWeaponType(EWeaponType val) { weaponType = val; }
-	void FireShot(FVector FireDirection);
 
-private:
+	virtual void FireShot(FVector FireDirection);
+protected:
 	float fireRate;
 	float damage;
 	bool canFire;

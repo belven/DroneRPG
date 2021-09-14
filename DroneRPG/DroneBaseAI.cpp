@@ -121,8 +121,9 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();
-
+	//TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();
+	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+	
 	mShuffleArray<ADroneRPGCharacter*>(drones);
 
 	for (ADroneRPGCharacter* drone : drones)
@@ -264,7 +265,8 @@ void ADroneBaseAI::DefendingObjective() {
 
 void ADroneBaseAI::ReturningToBase() {
 	if (!GetDrone()->IsHealthy()) {
-		MoveToLocation(GetDrone()->GetRespawnPoint()->GetActorLocation());
+		FVector loc = GetDrone()->GetRespawnPoint()->GetActorLocation();
+		MoveToLocation(loc);
 	}
 	else {
 		currentState = EActionState::SearchingForObjective;
@@ -342,7 +344,6 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 	// Do we have line of sight to our target?
 	if (hit.GetActor() == targetToAttack)
 	{
-		//GetCharacter()->GetMovementComponent()->StopActiveMovement();
 		FireShot(lookAt.Vector());
 		return true;
 	}
@@ -386,7 +387,7 @@ void ADroneBaseAI::CapturingObjective() {
 }
 
 bool ADroneBaseAI::GetEnemiesInArea() {
-	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 1.0f);
+	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.3f);
 	canCheckForEnemies = false;
 	AActor* targetFound = FindEnemyTarget(targetRange);
 

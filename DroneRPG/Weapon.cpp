@@ -1,13 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Weapon.h"
 #include "DroneProjectile.h"
 #include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
 #include "FunctionLibrary.h"
 
-#define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation);
 
 UWeapon::UWeapon()
 {
@@ -49,7 +45,7 @@ void UWeapon::FireShot(FVector FireDirection)
 			const FRotator FireRotation = FireDirection.Rotation();
 			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 
-			ADroneProjectile* projectile = mSpawnProjectile
+			ADroneProjectile* projectile = mSpawnProjectile;
 			projectile->SetShooter(owner);
 			projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
 			mSetTimerWolrd(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);

@@ -11,58 +11,51 @@
 AObjective::AObjective()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
-	objectiveArea->SetBoxExtent(FVector(700, 700, 400));
-	objectiveArea->SetupAttachment(GetRootComponent());
 
-	SetAreaOwner(0);
+	areaOwner = 0;
 	currentControl = 0;
-	currentColour = FColor::Red;
-	fullClaim = false;
-	objectiveName = "";
-
 	minControl = 25;
-	maxControl = 100;
+	maxControl = 150;
+	fullClaim = false;
+	currentColour = FColor::Red;
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
+	objectiveSize = 2000;
+
+	smallParticle = 50;
+	bigParticle = 75;
+
+	objectiveName = "";
+	
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
 	if (auraParticleSystem.Succeeded()) {
 		auraSystem = auraParticleSystem.Object;
 	}
 
-	teamColours.Add(1, FColor::Green);
-	teamColours.Add(2, FColor::Yellow);
+	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
+	objectiveArea->SetBoxExtent(FVector(objectiveSize, objectiveSize, 400));
+	objectiveArea->SetupAttachment(GetRootComponent());
 }
 
-void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex,
-	bool bFromSweep,
-	const FHitResult& SweepResult)
+void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Check if we have a drone and we don't already have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
-
+	if (mIsA(OtherActor, ADroneRPGCharacter)) {
 		// Add it to the list and re-calculate ownership
-		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
-		CalculateOwnership();
-		//mAddOnScreenDebugMessage("A drone entered the area");
+		Add(Cast<ADroneRPGCharacter>(OtherActor));
 	}
 }
 
-void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
+void AObjective::DroneDied(ADroneRPGCharacter* drone) {
+	Remove(drone);
+}
+
+void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Check if we have a drone and we have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
-
+	if (mIsA(OtherActor, ADroneRPGCharacter)) {
 		// Remove it from the list and re-calculate ownership
-		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
-		//mAddOnScreenDebugMessage("A drone left the area");
-		CalculateOwnership();
+		Remove(Cast<ADroneRPGCharacter>(OtherActor));
 	}
 }
 
@@ -78,13 +71,14 @@ void AObjective::BeginPlay()
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
 	// Set up the systems defaults
-	captureParticle->SetFloatParameter(TEXT("Radius"), 400);
+	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(objectiveSize, objectiveSize, 400));
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-	captureParticle->SetFloatParameter(TEXT("Size"), 25);
+	captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
+
+	CalculateOwnership();
 
 	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
 	UpdateColour();
-	//ClearOutOverlap(NULL);
 }
 
 void AObjective::RemoveOverlapingComponents(AActor* other) {
@@ -92,7 +86,7 @@ void AObjective::RemoveOverlapingComponents(AActor* other) {
 	other->GetComponents<UStaticMeshComponent>(comps);
 
 	for (UStaticMeshComponent* comp : comps) {
-		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < 1500) {
+		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < objectiveSize * 1.5) {
 			comp->SetHiddenInGame(true);
 			comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
@@ -123,10 +117,9 @@ void AObjective::CalculateOwnership() {
 		}
 	}
 
-	// IF there's only 1 team in the area, then they have full claim of it
+	// If there's only 1 team in the area, then they have full claim of it
 	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
 		SetAreaOwner(teamsInArea[0]);
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Team %d owns the area"), GetAreaOwner()));
 	}
 }
 
@@ -134,7 +127,7 @@ void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
 	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
-		FColor teamColour = *teamColours.Find(areaOwner);
+		FColor teamColour = *UFunctionLibrary::GetTeamColours().Find(areaOwner);
 
 		if (currentColour != teamColour) {
 			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
@@ -190,11 +183,10 @@ void AObjective::CalculateClaim() {
 			UpdateColour();
 		}
 
-
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger
 		if (currentControl == maxControl && !fullClaim) {
-			captureParticle->SetFloatParameter(TEXT("Size"), 45);
+			captureParticle->SetFloatParameter(TEXT("Size"), bigParticle);
 			fullClaim = true;
 
 			if (OnObjectiveClaimed.IsBound()) {
@@ -203,9 +195,27 @@ void AObjective::CalculateClaim() {
 		}
 		// If the control is less than max then make the particles smaller, this makes it easier to tell when it's fully claimed
 		else if (currentControl < maxControl && fullClaim) {
-			captureParticle->SetFloatParameter(TEXT("Size"), 25);
+			captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
 			fullClaim = false;
 		}
+	}
+}
+
+void AObjective::Add(ADroneRPGCharacter* drone)
+{
+	if (!dronesInArea.Contains(drone) && drone->IsAlive()) {
+		dronesInArea.Add(drone);
+		drone->DroneDied.AddDynamic(this, &AObjective::DroneDied);
+		CalculateOwnership();
+	}
+}
+
+void AObjective::Remove(ADroneRPGCharacter* drone)
+{
+	if (dronesInArea.Contains(drone)) {
+		dronesInArea.Remove(drone);
+		drone->DroneDied.RemoveDynamic(this, &AObjective::DroneDied);
+		CalculateOwnership();
 	}
 }
 
@@ -218,4 +228,9 @@ void AObjective::Tick(float DeltaTime)
 bool AObjective::HasCompleteControl(int32 team)
 {
 	return fullClaim && areaOwner == team;
+}
+
+float AObjective::GetCurrentControlPercent()
+{
+	return (currentControl / maxControl) * 100;
 }

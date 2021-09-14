@@ -33,6 +33,9 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+		void DroneDied(ADroneRPGCharacter* drone);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* captureParticle;
 
@@ -48,6 +51,11 @@ public:
 
 	FColor GetCurrentColour() const { return currentColour; }
 	void SetCurrentColour(FColor val) { currentColour = val; }
+
+	float GetCurrentControl() const { return currentControl; }
+	int32 GetMaxControl() const { return maxControl; }
+	float GetCurrentControlPercent();
+	TArray<ADroneRPGCharacter*> GetDronesInArea() const { return dronesInArea; }
 protected:
 	virtual void BeginPlay() override;
 
@@ -55,6 +63,9 @@ protected:
 	void CalculateOwnership();
 	void UpdateColour();
 	void CalculateClaim();
+
+	void Add(ADroneRPGCharacter* drone);
+	void Remove(ADroneRPGCharacter* drone);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		int32 areaOwner;
@@ -65,7 +76,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		float currentControl;
 
-	TMap<int32, FColor> teamColours;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
+		float objectiveSize;
 private:
 	UPROPERTY()
 		UBoxComponent* objectiveArea;
@@ -75,6 +87,8 @@ private:
 
 	int32 minControl;
 	int32 maxControl;
+	int32 smallParticle;
+	int32 bigParticle;
 
 	UPROPERTY()
 		TArray<int32> teamsInArea;
@@ -88,5 +102,6 @@ private:
 	UPROPERTY()
 		FName objectiveName;
 
-	UNiagaraSystem* auraSystem;
+	UPROPERTY()
+		UNiagaraSystem* auraSystem;
 };

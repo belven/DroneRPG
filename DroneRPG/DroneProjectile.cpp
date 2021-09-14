@@ -46,7 +46,7 @@ void ADroneProjectile::BeginPlay()
 	TArray<ADroneProjectile*> projectiles = mGetActorsInWorld<ADroneProjectile>(GetWorld());
 
 	for (ADroneProjectile* projectile : projectiles) {
-		IgnoreActor(projectile); 
+		IgnoreActor(projectile);
 		projectile->IgnoreActor(this);
 	}
 }
@@ -59,6 +59,12 @@ void ADroneProjectile::IgnoreActor(AActor* actor) {
 void ADroneProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	ADroneRPGCharacter* target;
+	lookAt = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target->GetActorLocation());
+	lookAt.Pitch = mDroneRotation.Pitch;
+	lookAt.Roll = mDroneRotation.Roll;
+	SetActorRotation(lookAt); 
 }
 
 void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -78,10 +84,6 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 				// Deal damage to enemy Drone
 				target->RecieveHit(this);
 				Destroy();
-			}
-			// We've hit an Ally!
-			else {
-
 			}
 		}
 		else {

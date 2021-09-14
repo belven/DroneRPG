@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include <EngineUtils.h>
 #include <Engine/World.h>
+#include "Weapon.h"
 #include "FunctionLibrary.generated.h"
 
 #define mDist(a, b) FVector::Dist(a, b)
@@ -32,6 +33,10 @@ public:
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
+	static TMap<int32, FColor> GetTeamColours();
+	static TMap<int32, FColor> teamColours;
+	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	template<class T> static T GetRandomEnum(T end);
 };
 
 template <class T>
@@ -80,3 +85,10 @@ T UFunctionLibrary::GetRandomObject(TArray<T>& arrayIn)
 {
 	return arrayIn[FMath::RandRange(0, arrayIn.Num() - 1)];
 }
+
+template<class T>
+T UFunctionLibrary::GetRandomEnum(T end)
+{
+	return static_cast<T>(rand() % ((int)end - 1));
+}
+

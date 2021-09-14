@@ -97,5 +97,4 @@ FVector AAsteroidField::GetAsteroidLocation() {
 void AAsteroidField::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }

@@ -13,9 +13,8 @@ ARespawnPoint::ARespawnPoint()
 	PrimaryActorTick.bCanEverTick = true;
 
 	respawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("RespawnArea"));
-	respawnArea->SetBoxExtent(FVector(700, 700, 400));
+	respawnArea->SetBoxExtent(FVector(1000, 1000, 400));
 	respawnArea->SetupAttachment(GetRootComponent());
-
 }
 
 // Called when the game starts or when spawned
@@ -24,7 +23,6 @@ void ARespawnPoint::BeginPlay()
 	Super::BeginPlay();
 	respawnArea->OnComponentBeginOverlap.AddDynamic(this, &ARespawnPoint::BeginOverlap);
 	respawnArea->OnComponentEndOverlap.AddDynamic(this, &ARespawnPoint::EndOverlap);
-
 }
 
 void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -54,7 +52,6 @@ void ARespawnPoint::RespawnCharacter(ADroneRPGCharacter* character) {
 
 }
 
-// Called every frame
 void ARespawnPoint::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
