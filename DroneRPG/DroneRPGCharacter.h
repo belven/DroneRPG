@@ -119,10 +119,13 @@ private:
 	float shieldRegen;
 	float energyRegenDelay;
 	float shieldRegenDelay;
-	float wipeValue;
 
-	float smallShieldParticle;
-	float largeShieldParticle;
+	float wipeValue;
+	float maxWipe;
+	float minWipe;
+
+	float smallShieldExp;
+	float largeShieldExp;
 	float healthParticleSize;
 
 	FDroneStats currentStats;
@@ -131,6 +134,7 @@ private:
 
 	int32 kills;
 	int32 deaths;
+	int32 meshIndex;
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;
@@ -138,8 +142,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* meshComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* shieldMeshComp;
+	UPROPERTY(VisibleAnywhere,  BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+		UInstancedStaticMeshComponent* shieldMeshComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMesh* shieldMesh;
