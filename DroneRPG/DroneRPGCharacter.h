@@ -139,7 +139,10 @@ private:
 		UStaticMeshComponent* meshComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* shieldMesh;
+		UStaticMeshComponent* shieldMeshComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+		UStaticMesh* shieldMesh;
 
 	UPROPERTY()
 		UWeapon* weapon;
@@ -176,6 +179,10 @@ private:
 
 	void CalculateHealthColours();
 	void CalculateShieldParticles();
+
+	void SetMaterialColour(FName param, FLinearColor value);
+	void SetMaterialFloat(FName param, float value);
+
 	void CalculateShields(float DeltaSeconds);
 	void CalculateEnergy(float DeltaSeconds);
 	void StartShieldRegen();
