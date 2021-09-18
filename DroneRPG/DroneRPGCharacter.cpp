@@ -21,8 +21,10 @@
 #include "NavigationSystem.h"
 #include "Weapon.h"
 #include "Shotgun.h"
+#include "Materials/MaterialInstanceConstant.h"
+#include <Materials/MaterialLayersFunctions.h>
 
-#define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
+#define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -45,6 +47,13 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	if (auraParticleSystem.Succeeded()) {
 		auraSystem = auraParticleSystem.Object;
+	}
+
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> shieldParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/Shiled.Shiled'"));
+
+	if (shieldParticleSystem.Succeeded()) {
+		shieldSystem = shieldParticleSystem.Object;
 	}
 
 	// Create a camera boom...
@@ -77,6 +86,30 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 		meshComponent->SetupAttachment(RootComponent);
 	}
 
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> shield(TEXT("StaticMesh'/Game/StarterContent/Shapes/Shape_Sphere.Shape_Sphere'"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldIsntance(TEXT("MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
+
+	if (shield.Succeeded() && shieldIsntance.Succeeded()) {
+		shieldMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("shieldMesh"));
+		shieldMesh->SetWorldScale3D(FVector(3));
+		shieldMesh->SetStaticMesh(shield.Object);
+		shieldMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		//shieldMesh->SetFlags(RF_Transient);
+		//shieldMesh->SetRelativeLocation(FVector(40, -25, 0));
+
+		shieldDynamicMaterial = CreateDefaultSubobject<UMaterialInstanceDynamic>(TEXT("shieldDynamicMaterial"));
+
+		matInstanceConst = shieldIsntance.Object;
+		shieldDynamicMaterial->Parent = matInstanceConst;
+		shieldDynamicMaterial->SetVectorParameterValue(TEXT("Emissive Color"), FLinearColor(FColor::Green));
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Wipe"), 0.2);
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Exp"), 10);
+		//shieldDynamicMaterial->SetFlags(RF_Transient);
+		shieldMesh->GetStaticMesh()->SetMaterial(0, shieldDynamicMaterial);
+
+		shieldMesh->SetupAttachment(RootComponent);
+	}
+
 	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/TopDownCPP/Blueprints/M_Cursor_Decal.M_Cursor_Decal'"));
 	if (DecalMaterialAsset.Succeeded())
 	{
@@ -104,6 +137,62 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	SetTeam(1);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
+}
+
+void ADroneRPGCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Set up particle effect defaults
+	shieldParticle = mSpawnSystemAttached(shieldSystem, TEXT("shieldParticle"));
+	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
+
+	shieldParticle->SetFloatParameter(TEXT("Radius"), 125);
+	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
+
+	FColor col = GetTeamColour();
+	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(col));
+	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+
+	shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
+	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
+
+	if (shieldDynamicMaterial != NULL) {
+		shieldParticle->SetHiddenInGame(true);
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Exp"), 10);
+
+		FLinearColor col2 = FLinearColor(col);
+		col2.R *= 300;
+		col2.G *= 300;
+		col2.B *= 300;
+		col2.A = 0;
+		shieldDynamicMaterial->SetVectorParameterValue(TEXT("Emissive Color"), col2);
+	}
+
+	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
+	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
+	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
+
+	kills = 0;
+	deaths = 0;
+	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
+	SetWeapon(UFunctionLibrary::GetWeapon(type, 0.3f, 30.0f, this));
+
+	Respawn();
+}
+
+void ADroneRPGCharacter::PulseShield() {
+	const float increment = 0.02;
+	const float max = 0.3;
+	const float min = -0.3;
+
+	wipeValue += increment;
+
+	if (wipeValue >= max)
+		wipeValue = min;
+
+	if (shieldDynamicMaterial != NULL)
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Wipe"), wipeValue);
 }
 
 void ADroneRPGCharacter::SetDefaults() {
@@ -308,22 +397,24 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 	// Change the colour and size of the particles base on shield value, they'll be smaller and darker if we have < 50% shields
 	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical) {
 		shieldParticle->SetFloatParameter(TEXT("Size"), smallShieldParticle);
-		//shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Blue));
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Exp"), 20);
 		shieldsCritical = true;
 	}
 	else if (currentStats.shields > (maxStats.shields * 0.5f) && shieldsCritical) {
 		shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
-		//shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Cyan));
+		shieldDynamicMaterial->SetScalarParameterValue(TEXT("Exp"), 10);
 		shieldsCritical = false;
 	}
 
 	// If we have 0 shields, disable the particle effect
 	if (currentStats.shields <= 0 && shieldsActive) {
 		shieldParticle->SetHiddenInGame(true);
+		shieldMesh->SetHiddenInGame(true);
 		shieldsActive = false;
 	}
 	else if (currentStats.shields > 0 && !shieldsActive) {
-		shieldParticle->SetHiddenInGame(false);
+		shieldParticle->SetHiddenInGame(true);
+		shieldMesh->SetHiddenInGame(false);
 		shieldsActive = true;
 	}
 }
@@ -358,36 +449,10 @@ void ADroneRPGCharacter::CalculateEnergy(float DeltaSeconds) {
 void ADroneRPGCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	PulseShield();
 
 	CalculateEnergy(DeltaSeconds);
 	CalculateShields(DeltaSeconds);
-}
-
-void ADroneRPGCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// Set up particle effect defaults
-	shieldParticle = mSpawnSystemAttached(auraSystem, TEXT("shieldParticle"));
-	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
-
-	shieldParticle->SetFloatParameter(TEXT("Radius"), 125);
-	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
-
-	shieldParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(GetTeamColour()));
-	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-
-	shieldParticle->SetFloatParameter(TEXT("Size"), largeShieldParticle);
-	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
-
-	// TODO: figure out why this parameter isn't being used correctly! This makes the particles only appear on the top of the sphere
-	//shieldParticle->SetBoolParameter(TEXT("Hem Z"), true);
-	//healthParticle->SetBoolParameter(TEXT("Hem Z"), true);
-
-	kills = 0;
-	deaths = 0;
-	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(UFunctionLibrary::GetWeapon(type, 0.3f, 30.0f, this));
 }
 
 void ADroneRPGCharacter::StartShieldRegen()

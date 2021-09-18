@@ -24,6 +24,13 @@ ADroneBaseAI::ADroneBaseAI() : Super()
 	currentGameMode = EGameModeType::Domination;
 }
 
+void ADroneBaseAI::CheckLastLocation() {
+	if (lastLocation == mDroneLocation) {
+		GetDrone()->Respawn();
+	}
+	lastLocation = FVector::ZeroVector;
+}
+
 void ADroneBaseAI::CalculateObjective()
 {
 	// Set objective to NULL, as it may still be set from a previous Calculate Objective
@@ -187,8 +194,13 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 	// We don't do anything if we're dead!
 	if (GetDrone()->IsAlive()) {
-		if (!IsTargetValid()) {
+		if (target != NULL && !IsTargetValid()) {
 			target = NULL;
+		}
+
+		if (lastLocation.IsZero()) {
+			lastLocation = mDroneLocation;
+			mSetTimer(TimerHandle_CheckLastLocation, &ADroneBaseAI::CheckLastLocation, 15.0f);
 		}
 
 		RotateToFace();

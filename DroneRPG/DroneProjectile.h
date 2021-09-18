@@ -8,6 +8,9 @@
 
 class UProjectileMovementComponent;
 class UStaticMeshComponent;
+class ADroneRPGCharacter;
+class UNiagaraComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class DRONERPG_API ADroneProjectile : public AActor
@@ -18,7 +21,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	AActor* shooter;
+	ADroneRPGCharacter* shooter;
 	float damage;
 
 	/** Sphere collision component */
@@ -46,9 +49,16 @@ public:
 	/** Returns ProjectileMovement subobject **/
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
-	AActor* GetShooter();
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+		ADroneRPGCharacter* GetShooter();
 	void SetUpCollision();
-	void SetShooter(AActor* val);
+	void SetShooter(ADroneRPGCharacter* val);
+
+	UPROPERTY()
+		UNiagaraSystem* trailSystem;
+
+	UPROPERTY()
+		UNiagaraComponent* trialParticle;
 
 	float GetDamage() const { return damage; }
 	void SetDamage(float val) { damage = val; }

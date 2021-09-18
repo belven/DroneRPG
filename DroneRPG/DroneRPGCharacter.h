@@ -14,6 +14,7 @@ class UNiagaraSystem;
 class ADroneProjectile;
 class ARespawnPoint;
 class UWeapon;
+class UMaterialInstanceConstant;
 
 USTRUCT(BlueprintType)
 struct FDroneStats
@@ -45,6 +46,7 @@ public:
 	void Respawn();
 	void KillDrone();
 	virtual void BeginPlay() override;
+	void PulseShield();
 	virtual void Tick(float DeltaSeconds) override;
 	void RecieveHit(ADroneProjectile* projectile);
 
@@ -117,6 +119,7 @@ private:
 	float shieldRegen;
 	float energyRegenDelay;
 	float shieldRegenDelay;
+	float wipeValue;
 
 	float smallShieldParticle;
 	float largeShieldParticle;
@@ -134,9 +137,18 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 		UStaticMeshComponent* meshComponent;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
+		UStaticMeshComponent* shieldMesh;
+
 	UPROPERTY()
 		UWeapon* weapon;
+
+	UPROPERTY()
+		UMaterialInstanceDynamic* shieldDynamicMaterial;
+
+	UPROPERTY()
+		UMaterialInstanceConstant* matInstanceConst;
 
 	UPROPERTY()
 		TArray<ADroneRPGCharacter*> dronesInArea;
@@ -152,7 +164,10 @@ private:
 
 	UPROPERTY()
 		UNiagaraSystem* auraSystem;
-	
+
+	UPROPERTY()
+		UNiagaraSystem* shieldSystem;
+
 	UPROPERTY()
 		UNiagaraComponent* shieldParticle;
 

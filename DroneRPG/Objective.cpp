@@ -86,7 +86,7 @@ void AObjective::RemoveOverlapingComponents(AActor* other) {
 	other->GetComponents<UStaticMeshComponent>(comps);
 
 	for (UStaticMeshComponent* comp : comps) {
-		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < objectiveSize * 1.5) {
+		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < objectiveSize) {
 			comp->SetHiddenInGame(true);
 			comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}

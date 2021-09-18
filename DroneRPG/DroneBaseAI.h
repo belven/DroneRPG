@@ -47,6 +47,9 @@ public:
 
 	bool IsTargetValid();
 
+	UFUNCTION()
+		void CheckLastLocation();
+
 	EActionState GetCurrentState() const { return currentState; }
 	void SetCurrentState(EActionState val) { SetPreivousState(currentState); currentState = val; }
 
@@ -61,10 +64,12 @@ public:
 private:
 	FTimerHandle TimerHandle_CanCheckForEnemies;
 	FTimerHandle TimerHandle_CanPerformActions;
+	FTimerHandle TimerHandle_CheckLastLocation;
 
 	float minCaptureDistance;
 	float targetRange;
 	FRotator lookAt;
+	FVector lastLocation;
 
 	bool isFiring;
 	bool canCheckForEnemies;
