@@ -106,8 +106,8 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	shieldRegenDelay = 3.0f;
 	energyRegenDelay = 3.0f;
 
-	smallShieldExp = 30;
-	largeShieldExp = 15;
+	smallShieldExp = 40;
+	largeShieldExp = 20;
 	maxWipe = 0.2;
 	minWipe = -0.2;
 
@@ -137,12 +137,10 @@ void ADroneRPGCharacter::BeginPlay()
 		shieldMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		shieldMeshComp->SetupAttachment(RootComponent);
 		shieldMeshComp->RegisterComponent();
-		FTransform trans = GetActorTransform();
-		trans.AddToTranslation(FVector(0, 0, 25));
-		meshIndex = shieldMeshComp->AddInstanceWorldSpace(trans);
 
-		//UMaterialInstanceDynamic* mat = UMaterialInstanceDynamic::Create(matInstanceConst, this, TEXT("Shield Dyn Mat"));
-		//shieldMeshComp->SetMaterial(0, mat);
+		FTransform trans = GetActorTransform();
+		trans.AddToTranslation(FVector(0, 0, 30));
+		meshIndex = shieldMeshComp->AddInstanceWorldSpace(trans);
 
 		FLinearColor col2 = FLinearColor(col);
 		col2.R *= 300;
@@ -150,7 +148,7 @@ void ADroneRPGCharacter::BeginPlay()
 		col2.B *= 300;
 		col2.A = 0;
 
-		SetMaterialFloat(TEXT("Wipe"), -0.25);
+		SetMaterialFloat(TEXT("Wipe"), minWipe);
 		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 		SetMaterialColour(TEXT("Emissive Color"), col2);
 	}
