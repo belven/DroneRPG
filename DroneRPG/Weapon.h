@@ -28,7 +28,9 @@ class DRONERPG_API UWeapon : public UObject
 public:
 	UWeapon();
 
-	static UWeapon* CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	 template <class T> static T* CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+
+	 virtual float GetRange();
 
 	ADroneRPGCharacter* GetOwner() const { return owner; }
 	void SetOwner(ADroneRPGCharacter* val) { owner = val; }
@@ -36,7 +38,8 @@ public:
 	EWeaponType GetWeaponType() const { return weaponType; }
 	void SetWeaponType(EWeaponType val) { weaponType = val; }
 
-	virtual void FireShot(FVector FireDirection);
+	virtual void FireShot(FVector FireDirection, AActor* target = NULL);
+	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target);
 protected:
 	float fireRate;
 	float damage;

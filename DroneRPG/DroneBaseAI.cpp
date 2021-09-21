@@ -128,7 +128,6 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	//TArray<ADroneRPGCharacter*> drones = GetDrone()->GetDronesInArea();
 	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
 	
 	mShuffleArray<ADroneRPGCharacter*>(drones);
@@ -208,8 +207,9 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		if (currentState != EActionState::ReturingToBase && !GetDrone()->IsHealthy()) {
 			currentState = EActionState::ReturingToBase;
 		}
-		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturingToBase && !GetDrone()->HasShields()) {
+		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturingToBase && IsTargetValid()) {
 			currentState = EActionState::EvadingDamage;
+			GetDrone()->GetMovementComponent()->StopActiveMovement();
 		}
 
 		if (canPerformActions) {
@@ -306,12 +306,12 @@ bool ADroneBaseAI::ShootAttacker() {
 }
 
 void ADroneBaseAI::EvadingDamage() {
-	if (!GetDrone()->HasShields() && IsTargetValid()) {
+	if (IsTargetValid()) {
 		if (GetDrone()->GetVelocity().IsNearlyZero()) {
 			int32 closeDistance = 1500;
 			int32 count = 0;
 			FNavLocation loc;
-			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
+			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance * 2, loc);
 
 			while (mDist(target->GetActorLocation(), loc) <= closeDistance && count < 20) {
 				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
@@ -372,7 +372,8 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 bool ADroneBaseAI::IsTargetValid() {
 	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
 
-	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed()) {
+	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed() 
+		&& mDist(droneTarget->GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange()) {
 		return droneTarget->IsAlive();
 	}
 
@@ -401,7 +402,7 @@ void ADroneBaseAI::CapturingObjective() {
 bool ADroneBaseAI::GetEnemiesInArea() {
 	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.3f);
 	canCheckForEnemies = false;
-	AActor* targetFound = FindEnemyTarget(targetRange);
+	AActor* targetFound = FindEnemyTarget(GetDrone()->GetWeapon()->GetRange());
 
 	if (targetFound != NULL) {
 		FHitResult hit = LinetraceToLocation(targetFound->GetActorLocation());
@@ -432,5 +433,5 @@ ADroneRPGCharacter* ADroneBaseAI::GetDrone()
 
 void ADroneBaseAI::FireShot(FVector FireDirection)
 {
-	GetDrone()->GetWeapon()->FireShot(FireDirection);
+	GetDrone()->GetWeapon()->FireShot(FireDirection, target);
 }

@@ -11,6 +11,9 @@
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
+const float ADroneProjectile::Default_Initial_Speed = 4000.0f;
+const float ADroneProjectile::Default_Initial_Lifespan = 1.5f;
+
 // Sets default values
 ADroneProjectile::ADroneProjectile()
 {
@@ -40,13 +43,13 @@ ADroneProjectile::ADroneProjectile()
 	// Use a ProjectileMovementComponent to govern this projectile's movement
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement0"));
 	ProjectileMovement->UpdatedComponent = ProjectileMesh;
-	ProjectileMovement->InitialSpeed = 5000.f;
-	ProjectileMovement->MaxSpeed = 5000.f;
+	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
+	ProjectileMovement->MaxSpeed = Default_Initial_Speed;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
 
-	InitialLifeSpan = 2.0f;
+	InitialLifeSpan = Default_Initial_Lifespan;
 	RootComponent->SetHiddenInGame(true);
 }
 
@@ -75,11 +78,6 @@ void ADroneProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//ADroneRPGCharacter* target;
-	//lookAt = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target->GetActorLocation());
-	//lookAt.Pitch = mDroneRotation.Pitch;
-	//lookAt.Roll = mDroneRotation.Roll;
-	//SetActorRotation(lookAt); 
 }
 
 void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -87,16 +85,16 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 	// Only add impulse and destroy projectile if we hit a physics
 	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter && OtherActor->GetClass() != ADroneProjectile::StaticClass())
 	{
-		ADroneRPGCharacter* target = Cast<ADroneRPGCharacter>(OtherActor);
+		ADroneRPGCharacter* droneHit = Cast<ADroneRPGCharacter>(OtherActor);
 
 		// Did we hit a drone?
-		if (target != NULL) {
+		if (droneHit != NULL) {
 
 			// Are we on a different team?
-			if (target->GetTeam() != shooter->GetTeam()) {
+			if (droneHit->GetTeam() != shooter->GetTeam()) {
 
 				// Deal damage to enemy Drone
-				target->RecieveHit(this);
+				droneHit->RecieveHit(this);
 				Destroy();
 			}
 		}
@@ -126,4 +124,9 @@ void ADroneProjectile::SetShooter(ADroneRPGCharacter* val)
 	shooter = val;
 	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(GetShooter()->GetTeamColour()));
 	SetUpCollision();
+}
+
+void ADroneProjectile::SetTarget(ADroneRPGCharacter* val)
+{
+	target = val;
 }

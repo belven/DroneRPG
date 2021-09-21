@@ -32,34 +32,39 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 		UProjectileMovementComponent* ProjectileMovement;
 
-public:
-	// Sets default values for this actor's properties
-	ADroneProjectile();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	void IgnoreActor(AActor* actor);
-
-	/** Function to handle the projectile hitting something */
-	UFUNCTION()
-		void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	/** Returns ProjectileMesh subobject **/
-	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
-	/** Returns ProjectileMovement subobject **/
-	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
-
-	UFUNCTION(BlueprintCallable, Category = "Projectile")
-		ADroneRPGCharacter* GetShooter();
-	void SetUpCollision();
-	void SetShooter(ADroneRPGCharacter* val);
-
 	UPROPERTY()
 		UNiagaraSystem* trailSystem;
 
 	UPROPERTY()
 		UNiagaraComponent* trialParticle;
 
+	void SetUpCollision();
+	void IgnoreActor(AActor* actor);
+
+	ADroneRPGCharacter* target;
+
+public:
+	ADroneProjectile();
+
+	static const float Default_Initial_Speed;
+	static const float Default_Initial_Lifespan;
+
+	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+		virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
+	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+		ADroneRPGCharacter* GetShooter();
+	void SetShooter(ADroneRPGCharacter* val);
+
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	float GetDamage() const { return damage; }
 	void SetDamage(float val) { damage = val; }
+
+	ADroneRPGCharacter* GetTarget() const { return target; }
+	virtual void SetTarget(ADroneRPGCharacter* val);
 };

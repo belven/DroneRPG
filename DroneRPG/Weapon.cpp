@@ -20,9 +20,10 @@ UWeapon::UWeapon()
 	}
 }
 
-UWeapon* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+template<class T>
+T* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
 {
-	UWeapon* weapon = NewObject<UWeapon>(UWeapon::StaticClass());
+	T* weapon = NewObject<T>(T::StaticClass());
 
 	weapon->fireRate = inFireRate;
 	weapon->damage = inDamage;
@@ -31,12 +32,24 @@ UWeapon* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharac
 	return weapon;
 }
 
+float UWeapon::GetRange()
+{
+	return ADroneProjectile::Default_Initial_Speed * ADroneProjectile::Default_Initial_Lifespan; 
+}
+
 void UWeapon::ShotTimerExpired()
 {
 	canFire = true;
 }
 
-void UWeapon::FireShot(FVector FireDirection)
+ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target) {
+	ADroneProjectile* projectile = mSpawnProjectile;
+	projectile->SetShooter(owner);
+	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
+	return projectile;
+}
+
+void UWeapon::FireShot(FVector FireDirection, AActor* target)
 {
 	if (canFire)
 	{
@@ -44,10 +57,8 @@ void UWeapon::FireShot(FVector FireDirection)
 		{
 			const FRotator FireRotation = FireDirection.Rotation();
 			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
-
-			ADroneProjectile* projectile = mSpawnProjectile;
-			projectile->SetShooter(owner);
-			projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
+			SpawnProjectile(gunLocation, FireRotation, target);
+			
 			mSetTimerWolrd(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
 
 			if (FireSound != nullptr)
