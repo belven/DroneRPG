@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Weapon.h"
 #include "DroneRPGPlayerController.generated.h"
 
 UCLASS()
@@ -23,6 +24,13 @@ protected:
 
 	bool isFiring;
 
+	void One();
+	void Two();
+	void Three();
+	void Four();
+	void Five();
+
+	void SetWeapon(EWeaponType type);
 	// Static names for axis bindings
 	static const FName MoveForwardBinding;
 	static const FName MoveRightBinding;

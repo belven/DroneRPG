@@ -19,6 +19,8 @@ class ADroneRPGCharacter;
 
 #define mClampValue UFunctionLibrary::ClampValue
 #define mShuffleArray UFunctionLibrary::ShuffleArray
+#define mGetWeapon UFunctionLibrary::GetWeapon
+
 #define mGetActorsInWorld UFunctionLibrary::GetActorsInWorld
 #define mGetClosestActorInWorld UFunctionLibrary::GetClosestActorInWorld
 #define mGetClosestActorInArray UFunctionLibrary::GetClosestActorInArray

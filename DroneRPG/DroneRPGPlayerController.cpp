@@ -15,6 +15,35 @@
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()
 
+void ADroneRPGPlayerController::One()
+{
+	SetWeapon((EWeaponType)1);
+}
+
+void ADroneRPGPlayerController::Two()
+{
+	SetWeapon((EWeaponType)2);
+}
+
+void ADroneRPGPlayerController::Three()
+{
+	SetWeapon((EWeaponType)3);
+}
+
+void ADroneRPGPlayerController::Four()
+{
+	SetWeapon((EWeaponType)4);
+}
+
+void ADroneRPGPlayerController::Five()
+{
+	SetWeapon((EWeaponType)5);
+}
+
+void ADroneRPGPlayerController::SetWeapon(EWeaponType type) {
+	GetDrone()->SetWeapon(mGetWeapon(type, 0.3f, 0.3f, GetDrone()));
+}
+
 const FName ADroneRPGPlayerController::MoveForwardBinding("MoveForward");
 const FName ADroneRPGPlayerController::MoveRightBinding("MoveRight");
 const FName ADroneRPGPlayerController::FireForwardBinding("FireForward");
@@ -101,6 +130,12 @@ void ADroneRPGPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("UseTool", IE_Pressed, this, &ADroneRPGPlayerController::UseTool);
 	InputComponent->BindAction("UseTool", IE_Released, this, &ADroneRPGPlayerController::StopUsingTool);
+
+	InputComponent->BindAction("One", IE_Pressed, this, &ADroneRPGPlayerController::One);
+	InputComponent->BindAction("Two", IE_Pressed, this, &ADroneRPGPlayerController::Two);
+	InputComponent->BindAction("Three", IE_Pressed, this, &ADroneRPGPlayerController::Three);
+	InputComponent->BindAction("Four", IE_Pressed, this, &ADroneRPGPlayerController::Four);
+	InputComponent->BindAction("Five", IE_Pressed, this, &ADroneRPGPlayerController::Five);
 
 	// set up game play key bindings
 	InputComponent->BindAxis(MoveForwardBinding);
