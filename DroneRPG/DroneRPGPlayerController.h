@@ -21,6 +21,9 @@ protected:
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float MoveSpeed;
+	bool moveCamera;
+	TArray<ADroneRPGCharacter*> drones;
+	int32 droneIndex;
 
 	bool isFiring;
 
@@ -29,6 +32,8 @@ protected:
 	void Three();
 	void Four();
 	void Five();
+
+	FTimerHandle TimerHandle_CameraTimer;
 
 	void SetWeapon(EWeaponType type);
 	// Static names for axis bindings
@@ -43,4 +48,7 @@ protected:
 	void StopUsingTool();
 	void CalculateMovement(float DeltaSeconds);
 	virtual void SetupInputComponent() override;
+	void CanMoveCamera();
+private:
+	void ChangeView();
 };

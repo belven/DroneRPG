@@ -11,6 +11,7 @@
 #include "NavigationSystem.h"
 #include "Weapon.h"
 #include "RespawnPoint.h"
+#include "GameFramework/SpringArmComponent.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
@@ -93,10 +94,8 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 		target = droneAttacker;
 	}
 	else if (droneTarget != droneAttacker) {
-		FHitResult hit = LinetraceToLocation(droneTarget->GetActorLocation());
-
 		// Something else has attacked us and our current target is out of line of sight or dead
-		if (!droneTarget->IsAlive() || hit.GetActor() != droneTarget) {
+		if (!droneTarget->IsAlive() || !CanSee(droneTarget, mDroneLocation)) {
 			target = droneAttacker;
 		}
 	}
@@ -129,7 +128,7 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
 	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
-	
+
 	mShuffleArray<ADroneRPGCharacter*>(drones);
 
 	for (ADroneRPGCharacter* drone : drones)
@@ -223,9 +222,16 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	}
 }
 
+void ADroneBaseAI::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	//GetDrone()->GetCameraBoom()->TargetArmLength = GetDrone()->GetWeapon()->GetRange() * 1.3;
+	GetDrone()->GetCameraBoom()->TargetArmLength = 10000;
+}
+
 void ADroneBaseAI::PerformActions() {
 	canPerformActions = false;
-	mSetTimer(TimerHandle_CanPerformActions, &ADroneBaseAI::CanPerformActions, 0.3f);
+	mSetTimer(TimerHandle_CanPerformActions, &ADroneBaseAI::CanPerformActions, 0.1f);
 
 	// Do state machine things!
 	switch (currentState) {
@@ -308,12 +314,12 @@ bool ADroneBaseAI::ShootAttacker() {
 void ADroneBaseAI::EvadingDamage() {
 	if (IsTargetValid()) {
 		if (GetDrone()->GetVelocity().IsNearlyZero()) {
-			int32 closeDistance = 1500;
+			int32 closeDistance = GetDrone()->GetWeapon()->GetRange() * 0.8;
 			int32 count = 0;
 			FNavLocation loc;
-			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance * 2, loc);
+			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
 
-			while (mDist(target->GetActorLocation(), loc) <= closeDistance && count < 20) {
+			while (mDist(target->GetActorLocation(), loc) <= closeDistance / 2 && !CanSee(target, loc) && count < 20) {
 				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
 				count++;
 			}
@@ -339,22 +345,31 @@ void ADroneBaseAI::AttackingTarget() {
 	}
 }
 
-FHitResult ADroneBaseAI::LinetraceToLocation(FVector location) {
+FHitResult ADroneBaseAI::LinetraceToLocation(FVector startLoc, FVector endLocation) {
 	FHitResult hit;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(GetCharacter());
 
-	GetWorld()->LineTraceSingleByChannel(hit, mDroneLocation, location, ECC_Pawn, params);
+	GetWorld()->LineTraceSingleByChannel(hit, startLoc, endLocation, ECC_Pawn, params);
 
 	return hit;
 }
 
-bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
-{
-	FHitResult hit = LinetraceToLocation(targetToAttack->GetActorLocation());
+bool ADroneBaseAI::CanSee(AActor* other, FVector startLoc) {
+	FHitResult hit = LinetraceToLocation(startLoc, other->GetActorLocation());
 
 	// Do we have line of sight to our target?
-	if (hit.GetActor() == targetToAttack)
+	if (hit.GetActor() == other)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
+{
+	// Do we have line of sight to our target?
+	if (CanSee(targetToAttack, mDroneLocation))
 	{
 		FireShot(lookAt.Vector());
 		return true;
@@ -372,7 +387,7 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 bool ADroneBaseAI::IsTargetValid() {
 	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
 
-	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed() 
+	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed()
 		&& mDist(droneTarget->GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange()) {
 		return droneTarget->IsAlive();
 	}
@@ -400,14 +415,12 @@ void ADroneBaseAI::CapturingObjective() {
 }
 
 bool ADroneBaseAI::GetEnemiesInArea() {
-	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.3f);
+	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.1f);
 	canCheckForEnemies = false;
 	AActor* targetFound = FindEnemyTarget(GetDrone()->GetWeapon()->GetRange());
 
 	if (targetFound != NULL) {
-		FHitResult hit = LinetraceToLocation(targetFound->GetActorLocation());
-
-		if (hit.GetActor() == targetFound) {
+		if (CanSee(targetFound, mDroneLocation)) {
 			target = targetFound;
 			return true;
 		}

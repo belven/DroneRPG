@@ -11,8 +11,8 @@
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
-const float ADroneProjectile::Default_Initial_Speed = 4000.0f;
-const float ADroneProjectile::Default_Initial_Lifespan = 1.5f;
+const float ADroneProjectile::Default_Initial_Speed = 7000.0f;
+const float ADroneProjectile::Default_Initial_Lifespan = 1.2f;
 
 // Sets default values
 ADroneProjectile::ADroneProjectile()
@@ -23,7 +23,7 @@ ADroneProjectile::ADroneProjectile()
 	// Static reference to the mesh to use for the projectile
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ProjectileMeshAsset(TEXT("StaticMesh'/Game/StarterContent/Shapes/Shape_NarrowCapsule.Shape_NarrowCapsule'"));
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem>trailParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/TrailParticleSystem_2.TrailParticleSystem_2'"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> trailParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/TrailParticleSystem_2.TrailParticleSystem_2'"));
 
 	if (trailParticleSystem.Succeeded()) {
 		trailSystem = trailParticleSystem.Object;

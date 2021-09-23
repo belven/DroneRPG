@@ -29,7 +29,7 @@
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(80.0f, 96.0f);
+	GetCapsuleComponent()->InitCapsuleSize(120.0f, 250.0f);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -53,8 +53,8 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 5000.f;
-	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
+	CameraBoom->TargetArmLength = 6000.f;
+	CameraBoom->SetRelativeRotation(FRotator(-75.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 	// Create a camera...
@@ -110,6 +110,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	largeShieldExp = 20;
 	maxWipe = 0.2;
 	minWipe = -0.2;
+	wipeValue = FMath::RandRange(minWipe, maxWipe);
 
 	healthParticleSize = 20;
 
@@ -127,7 +128,9 @@ void ADroneRPGCharacter::BeginPlay()
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
 
+
 	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
+	//shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shape_Sphere'"));
 
 	if (shieldMesh != NULL) {
 		FColor col = GetTeamColour();
@@ -156,7 +159,7 @@ void ADroneRPGCharacter::BeginPlay()
 	kills = 0;
 	deaths = 0;
 	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(UFunctionLibrary::GetWeapon(type, 0.3f, 30.0f, this));
+	SetWeapon(mGetDefaultWeapon(type, this));
 
 	Respawn();
 }
@@ -346,7 +349,7 @@ void ADroneRPGCharacter::FullHeal() {
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 
 	SetMaterialFloat(TEXT("Exp"), largeShieldExp);
-	
+
 	shieldMeshComp->SetHiddenInGame(false);
 	healthParticle->SetHiddenInGame(false);
 }
@@ -395,15 +398,11 @@ void ADroneRPGCharacter::CalculateShieldParticles() {
 
 void ADroneRPGCharacter::SetMaterialColour(FName param, FLinearColor value)
 {
-	/*if (shieldDynamicMaterial != NULL)
-		shieldDynamicMaterial->SetVectorParameterValue(param, value);*/
 	shieldMeshComp->SetVectorParameterValueOnMaterials(param, FVector(value.R, value.G, value.B));
 }
 
 void ADroneRPGCharacter::SetMaterialFloat(FName param, float value)
 {
-	/*if (shieldDynamicMaterial != NULL)
-		shieldDynamicMaterial->SetScalarParameterValue(param, value);*/
 	shieldMeshComp->SetScalarParameterValueOnMaterials(param, value);
 }
 

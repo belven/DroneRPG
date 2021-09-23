@@ -10,7 +10,7 @@
 ARespawnPoint::ARespawnPoint()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	respawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("RespawnArea"));
 	respawnArea->SetBoxExtent(FVector(1000, 1000, 400));

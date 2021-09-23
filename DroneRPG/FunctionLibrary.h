@@ -20,6 +20,7 @@ class ADroneRPGCharacter;
 #define mClampValue UFunctionLibrary::ClampValue
 #define mShuffleArray UFunctionLibrary::ShuffleArray
 #define mGetWeapon UFunctionLibrary::GetWeapon
+#define mGetDefaultWeapon UFunctionLibrary::GetDefaultWeapon
 
 #define mGetActorsInWorld UFunctionLibrary::GetActorsInWorld
 #define mGetClosestActorInWorld UFunctionLibrary::GetClosestActorInWorld
@@ -53,6 +54,7 @@ public:
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 
 	static TMap<int32, FColor> GetTeamColours();
+	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
 	static TMap<int32, FColor> teamColours;
 	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
 	template<class T> static T GetRandomEnum(T end);

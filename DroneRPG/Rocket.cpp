@@ -3,18 +3,25 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "DroneRPGCharacter.h"
 #include <Kismet/KismetMathLibrary.h>
+#include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 
 const float ARocket::Default_Initial_Speed = 1000.0f;
-const float ARocket::Default_Initial_Lifespan = 5.0f;
+const float ARocket::Default_Initial_Lifespan = 3.5f;
 
 ARocket::ARocket() : Super()
 {
 	const float speed = 3000.0f;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = speed;
-	ProjectileMovement->HomingAccelerationMagnitude = 40000;
+	ProjectileMovement->HomingAccelerationMagnitude = 15000;
 	InitialLifeSpan = Default_Initial_Lifespan;
 	canCheckForEnemies = true;
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> rocketTrailSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/Rocket_Trail.Rocket_Trail'"));
+
+	if (rocketTrailSystem.Succeeded()) {
+		trailSystem = rocketTrailSystem.Object;
+	}
 }
 
 void ARocket::SetTarget(ADroneRPGCharacter* val)

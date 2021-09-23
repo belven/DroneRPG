@@ -35,6 +35,7 @@ class DRONERPG_API ADroneBaseAI : public AAIController
 public:
 	ADroneBaseAI();
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void OnPossess(APawn* InPawn) override;
 	void PerformActions();
 	void MoveToObjective();
 	virtual void BeginPlay() override;
@@ -100,7 +101,8 @@ private:
 	bool ShootAttacker();
 	void EvadingDamage();
 	void AttackingTarget();
-	FHitResult LinetraceToLocation(FVector location);
+	FHitResult LinetraceToLocation(FVector startLoc, FVector endLocation);
+	bool CanSee(AActor* other, FVector startLoc);
 	void CapturingObjective();
 	bool GetEnemiesInArea();
 };

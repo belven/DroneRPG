@@ -5,6 +5,7 @@
 #include <EngineUtils.h>
 #include <Kismet/KismetMathLibrary.h>
 #include "Objective.h"
+#include "RespawnPoint.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 
@@ -28,6 +29,28 @@ AAsteroidField::AAsteroidField()
 	maxScale = 2.0f;
 }
 
+void AAsteroidField::RemoveOverlapingComponents(AActor* other) {
+	TArray<UInstancedStaticMeshComponent*> comps;
+	GetComponents<UInstancedStaticMeshComponent>(comps);
+
+	for (UInstancedStaticMeshComponent* comp : comps) {
+		for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) {
+			FTransform trans;
+
+			comp->GetInstanceTransform(i, trans);
+			if (mDist(trans.GetLocation(), other->GetActorLocation()) < minDist) {
+				comp->RemoveInstance(i);
+			}
+		}
+	}
+}
+
+void AAsteroidField::ClearOutOverlap(AActor* other) {
+	if (other != NULL) {
+		RemoveOverlapingComponents(other);
+	}
+}
+
 void AAsteroidField::BeginPlay()
 {
 	Super::BeginPlay();
@@ -39,38 +62,58 @@ void AAsteroidField::BeginPlay()
 	}
 
 	TArray<AObjective*> objectives = mGetActorsInWorld<AObjective>(GetWorld());
-	
+
 	for (AObjective* objective : objectives)
 	{
-		objective->ClearOutOverlap(this);
+		ClearOutOverlap(objective);
+	}
+
+	TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
+
+	for (ARespawnPoint* respawnPoint : respawnPoints)
+	{
+		ClearOutOverlap(respawnPoint);
 	}
 }
 
 void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
+	UInstancedStaticMeshComponent* comp;
+
+	if (!meshInstances.Contains(mesh)) {
+		comp = NewObject<UInstancedStaticMeshComponent>(this);
+		comp->SetStaticMesh(mesh);
+		comp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		comp->SetupAttachment(RootComponent);
+		comp->RegisterComponent();
+		meshInstances.Add(mesh, comp);
+	}
+	else {
+		comp = *meshInstances.Find(mesh);
+	}
+
 	FVector loc = GetAsteroidLocation();
 
 	if (!loc.IsNearlyZero()) {
 		float rand = FMath::RandRange(minScale, maxScale);
-		float x = FMath::RandRange(rand * 0.9f, rand * 1.1f);
-		float y = FMath::RandRange(rand * 0.9f, rand * 1.1f);
-		float z = FMath::RandRange(rand * 0.9f, rand * 1.1f);
+		float min = rand * 0.9f;
+		float max = rand * 1.1f;
+		float x = FMath::RandRange(min, max);
+		float y = FMath::RandRange(min, max);
+		float z = FMath::RandRange(min, max);
 
-		FTransform trans(UKismetMathLibrary::RandomRotator(), FVector::ZeroVector, FVector(x, y, z));
+		FTransform trans(UKismetMathLibrary::RandomRotator(), loc, FVector(x, y, z));
 
-		UStaticMeshComponent* asteroidMesh = mAddComponentByClass(UStaticMeshComponent, trans);
-
-		asteroidMesh->SetStaticMesh(mesh);
-		asteroidMesh->SetWorldLocation(loc);
+		comp->AddInstanceWorldSpace(trans);
 	}
 }
 
 FVector AAsteroidField::GetAsteroidLocation() {
-	FNavLocation loc;
 	bool locTooClose = true;
 	int32 count = 0;
+	FNavLocation loc;
 
-	TArray<UStaticMeshComponent*> comps;
-	GetComponents<UStaticMeshComponent>(comps);
+	TArray<UInstancedStaticMeshComponent*> comps;
+	GetComponents<UInstancedStaticMeshComponent>(comps);
 
 	mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
 
@@ -78,11 +121,17 @@ FVector AAsteroidField::GetAsteroidLocation() {
 		locTooClose = false;
 		count++;
 
-		for (UStaticMeshComponent* comp : comps) {
-			if (mDist(comp->GetComponentLocation(), loc) <= minDist) {
-				locTooClose = true;
-				mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
-				break;
+		for (UInstancedStaticMeshComponent* comp : comps) {
+			for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) {
+				FTransform trans;
+
+				comp->GetInstanceTransform(i, trans);
+
+				if (mDist(trans.GetLocation(), loc) <= minDist) {
+					locTooClose = true;
+					mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
+					break;
+				}
 			}
 		}
 	}

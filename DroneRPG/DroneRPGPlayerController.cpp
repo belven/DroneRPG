@@ -54,6 +54,7 @@ ADroneRPGPlayerController::ADroneRPGPlayerController()
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
+	moveCamera = true;
 }
 
 ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
@@ -63,6 +64,10 @@ ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
 void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+
+	if (moveCamera) {
+		ChangeView();
+	}
 
 	if (GetCharacter() != NULL && GetDrone()->IsAlive()) {
 		CalculateMovement(DeltaTime);
@@ -91,7 +96,10 @@ void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 	// If it's ok to fire again
 	if (isFiring)
 	{
-		GetDrone()->GetWeapon()->FireShot(FireDirection);
+		FHitResult Hit;
+		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
+		ADroneRPGCharacter* target = mGetClosestEnemyInRadius(GetDrone()->GetWorld(), 2000, Hit.ImpactPoint, GetDrone()->GetTeam());
+		GetDrone()->GetWeapon()->FireShot(FireDirection, target);
 	}
 }
 
@@ -142,4 +150,34 @@ void ADroneRPGPlayerController::SetupInputComponent()
 	InputComponent->BindAxis(MoveRightBinding);
 	InputComponent->BindAxis(FireForwardBinding);
 	InputComponent->BindAxis(FireRightBinding);
+}
+
+void ADroneRPGPlayerController::CanMoveCamera() {
+	moveCamera = true;
+}
+
+void ADroneRPGPlayerController::ChangeView()
+{
+	moveCamera = false;
+
+	if (drones.IsEmpty()) {
+		drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+	}
+
+	ADroneRPGCharacter* drone = drones[droneIndex];
+
+	if (drone == GetDrone()) {
+		droneIndex++;
+
+		if (droneIndex > drones.Num() - 1)
+			droneIndex = 0;
+	}
+
+	SetViewTargetWithBlend(drone, 2.0f, EViewTargetBlendFunction::VTBlend_Linear, 1, false);
+	droneIndex++;
+
+	if (droneIndex > drones.Num() - 1)
+		droneIndex = 0;
+
+	mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::CanMoveCamera, 8.0f);
 }

@@ -10,10 +10,12 @@ UCLASS()
 class DRONERPG_API AAsteroidField : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AAsteroidField();
 
+	void RemoveOverlapingComponents(AActor* other);
+	void ClearOutOverlap(AActor* other);
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asteroid Field")
@@ -35,4 +37,5 @@ protected:
 	FVector GetAsteroidLocation();
 private:
 	TMap<UStaticMesh*, int32> meshes;
+	TMap<UStaticMesh*, UInstancedStaticMeshComponent*> meshInstances;
 };

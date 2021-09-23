@@ -38,6 +38,22 @@ TMap<int32, FColor> UFunctionLibrary::GetTeamColours()
 	return teamColours;
 }
 
+UWeapon* UFunctionLibrary::GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner)
+{
+	switch (type) {
+	case EWeaponType::Rail_Gun:
+	case EWeaponType::Laser:
+		return ULaser::CreateLaser(0.3f, 25.0f, inOwner);
+	case EWeaponType::Rocket:
+		return URocketLauncher::CreateRocketLauncher(1.5f, 50.0f, inOwner);
+	case EWeaponType::Mine:
+	case EWeaponType::Shotgun:
+		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+		break;
+	}
+	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
+}
+
 UWeapon* UFunctionLibrary::GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
 {
 	switch (type) {
