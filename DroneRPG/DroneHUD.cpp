@@ -14,6 +14,7 @@ TArray<ADroneRPGCharacter*> ADroneHUD::GetDrones()
 
 void ADroneHUD::DrawHUD() {
 	Super::DrawHUD();
+	DrawScore();
 
 	// Get all the enemy drones in the game and display indicators where appropriate
 	for (ADroneRPGCharacter* drone : GetEnemyDrones()) {
@@ -25,6 +26,33 @@ void ADroneHUD::DrawHUD() {
 	for (AObjective* objective : mGetActorsInWorld<AObjective>(GetWorld()))
 	{
 		DrawObjectiveIndicators(objective);
+	}
+}
+
+void ADroneHUD::DrawScore() {
+	ADroneRPGPlayerController* con = mGetController;
+	TMap<int32, int32> totalScore;
+
+	int32 y = 20;
+	int32 vpX;
+	int32 vpY;
+
+	// Get the viewport (current window) size
+	con->GetViewportSize(vpX, vpY);
+
+	for (ADroneRPGCharacter* drone : mGetActorsInWorld<ADroneRPGCharacter>(GetWorld())) {
+		totalScore.FindOrAdd(drone->GetTeam()) += drone->GetKills();
+	}
+
+	for (auto& pair : totalScore) {
+		FColor tc = *UFunctionLibrary::GetTeamColours().Find(pair.Key);
+		TArray< FStringFormatArg > args;
+		args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
+		args.Add(FStringFormatArg(pair.Value));
+
+		// Write some text below the drone that states it's current kills and deaths
+		DrawText(FString::Format(TEXT("{0} = {1}"), args), FLinearColor(tc), vpX / 2, y);
+		y += 20;
 	}
 }
 
@@ -65,11 +93,11 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective) {
 		}
 		else {
 			TArray< FStringFormatArg > args;
-			args.Add(FStringFormatArg(objective->GetCurrentControlPercent()));
-			args.Add(FStringFormatArg(objective->GetDronesInArea().Num()));
+			FString control = FString::FormatAsNumber((int32)FMath::RoundHalfToEven(objective->GetCurrentControlPercent()));
+			args.Add(FStringFormatArg(control));
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}% {1}"), args), FLinearColor(FColor::Red), clampX, clampY + 30);
+			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(objective->GetCurrentColour()), clampX, clampY + 30);
 		}
 	}
 }
@@ -107,14 +135,14 @@ void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone) {
 			float endY = y;
 
 			// Draw a Line above the drone that has it's team colour
-			DrawLine(startX, startY, endX, endY, FLinearColor(drone->GetTeamColour()), 5.0f);
+			//DrawLine(startX, startY, endX, endY, FLinearColor(drone->GetTeamColour()), 5.0f);
 
 			TArray< FStringFormatArg > args;
 			args.Add(FStringFormatArg(drone->GetKills()));
 			args.Add(FStringFormatArg(drone->GetDeaths()));
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("K {0} / D {1}"), args), FLinearColor(FColor::Red), clampX, clampY + 30);
+			DrawText(FString::Format(TEXT("{0}/{1}"), args), FLinearColor(FColor::Red), clampX, clampY + 30);
 		}
 	}
 }

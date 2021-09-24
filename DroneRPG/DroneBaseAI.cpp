@@ -127,24 +127,13 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+	TArray<ADroneRPGCharacter*> drones = mGetEnemysInRadius(distance, mDroneLocation, GetDrone()->GetTeam());
 
-	mShuffleArray<ADroneRPGCharacter*>(drones);
+	if (drones.Num() > 0) {
+		mShuffleArray<ADroneRPGCharacter*>(drones);
+		return UFunctionLibrary::GetRandomObject<ADroneRPGCharacter*>(drones);
+	} 
 
-	for (ADroneRPGCharacter* drone : drones)
-	{
-		// Check if the actor isn't us and is a drone
-		// Check if the distance is 0 OR we're within the given range
-		if (drone != GetCharacter() &&
-			(distance == 0 || mDist(mDroneLocation, drone->GetActorLocation()) <= distance)) {
-
-			// Check if the drone found is an enemy
-			if (drone->GetTeam() != GetDrone()->GetTeam())
-				return drone;
-		}
-	}
-
-	// In all other cases, return NULL
 	return NULL;
 }
 
@@ -160,7 +149,7 @@ void ADroneBaseAI::RotateToFace() {
 
 	// If we have a target, turn to face it
 	if (IsTargetValid()) {
-		targetLocation = target->GetTargetLocation();
+		targetLocation = GetPredictedLocation(target);
 	}
 	// Otherwise, if we have an objective to head to, face that
 	else if (targetObjective != NULL) {
@@ -170,7 +159,8 @@ void ADroneBaseAI::RotateToFace() {
 	// If we set a location, then calculate a loot at rotation
 	if (!targetLocation.IsNearlyZero()) {
 		// Calculate the angle to look at our target
-		lookAt = UKismetMathLibrary::FindLookAtRotation(mDroneLocation, targetLocation);
+
+		lookAt = UKismetMathLibrary::FindLookAtRotation( mDroneLocation, targetLocation);
 		lookAt.Pitch = mDroneRotation.Pitch;
 		lookAt.Roll = mDroneRotation.Roll;
 		targetRotation = lookAt;
@@ -364,6 +354,14 @@ bool ADroneBaseAI::CanSee(AActor* other, FVector startLoc) {
 		return true;
 	}
 	return false;
+}
+
+FVector ADroneBaseAI::GetPredictedLocation(AActor* actor) {
+	FVector loc;
+	float time = mDist(mDroneLocation, actor->GetActorLocation()) / ADroneProjectile::Default_Initial_Speed;
+	time = FMath::RandRange(time * 0.9f, time * 1.1f);
+	loc = actor->GetActorLocation() + (actor->GetVelocity() * time);
+	return loc;
 }
 
 bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)

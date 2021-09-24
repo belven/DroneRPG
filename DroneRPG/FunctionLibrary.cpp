@@ -6,12 +6,13 @@
 #include "RocketLauncher.h"
 
 TMap<int32, FColor> UFunctionLibrary::teamColours = UFunctionLibrary::GetTeamColours();
+TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = UFunctionLibrary::GetDrones();
 
-TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemysInRadius(UWorld* world, float radius, FVector loc, int32 team)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemysInRadius(float radius, FVector loc, int32 team)
 {
 	TArray<ADroneRPGCharacter*> drones;
 
-	for (ADroneRPGCharacter* drone : mGetActorsInRadius<ADroneRPGCharacter>(world, radius, loc))
+	for (ADroneRPGCharacter* drone : mGetDronesInRadius(radius, loc))
 	{
 		// Check if the drone found is an enemy
 		if (team != drone->GetTeam()) {
@@ -22,9 +23,78 @@ TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemysInRadius(UWorld* world, 
 	return drones;
 }
 
-ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(UWorld* world, float radius, FVector loc, int32 team)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, FVector loc)
 {
-	return mGetClosestActorInArray<ADroneRPGCharacter>(mGetEnemysInRadius(world, radius, loc, team), loc);
+	TArray<ADroneRPGCharacter*> dronesInRange;
+
+	for (ADroneRPGCharacter* drone : GetDrones())
+	{
+		float dist = mDist(drone->GetActorLocation(), loc);
+
+		if (radius == 0 || dist <= radius) {
+			dronesInRange.Add(drone);
+		}
+	}
+
+	return dronesInRange;
+}
+
+
+ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(float radius, FVector loc, int32 team)
+{
+	return mGetClosestActorInArray<ADroneRPGCharacter>(mGetEnemysInRadius(radius, loc, team), loc);
+}
+
+TArray <ADroneRPGCharacter*>& UFunctionLibrary::GetDrones()
+{
+	return UFunctionLibrary::dronesInGame;
+}
+
+FString UFunctionLibrary::GetColourString(FColor color)
+{
+	FString colourString = "";
+
+	if (color == FColor::Red) {
+		colourString = "Red";
+	}
+	else if (color == FColor::Green) {
+		colourString = "Green";
+	}
+	else if (color == FColor::Yellow) {
+		colourString = "Yellow";
+	}
+	else if (color == FColor::Silver) {
+		colourString = "Silver";
+	}
+	else if (color == FColor::Black) {
+		colourString = "Black";
+	}
+	else if (color == FColor::Blue) {
+		colourString = "Blue";
+	}
+	else if (color == FColor::Magenta) {
+		colourString = "Magenta";
+	}
+	else if (color == FColor::Cyan) {
+		colourString = "Cyan";
+	}
+	else if (color == FColor::Emerald) {
+		colourString = "Emerald";
+	}
+	else if (color == FColor::Purple) {
+		colourString = "Purple";
+	}
+	else if (color == FColor::Orange) {
+		colourString = "Orange";
+	}
+	else if (color == FColor::Turquoise) {
+		colourString = "Turquoise";
+	}
+	else if (color == FColor::White) {
+		colourString = "White";
+	}
+
+	return colourString;
 }
 
 TMap<int32, FColor> UFunctionLibrary::GetTeamColours()
@@ -32,7 +102,7 @@ TMap<int32, FColor> UFunctionLibrary::GetTeamColours()
 	if (UFunctionLibrary::teamColours.IsEmpty()) {
 		teamColours.Add(1, FColor::Blue);
 		teamColours.Add(2, FColor::Yellow);
-		teamColours.Add(3, FColor::Silver);
+		teamColours.Add(3, FColor::White);
 		teamColours.Add(4, FColor::Magenta);
 	}
 	return teamColours;

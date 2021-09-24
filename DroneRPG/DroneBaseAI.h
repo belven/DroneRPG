@@ -103,6 +103,7 @@ private:
 	void AttackingTarget();
 	FHitResult LinetraceToLocation(FVector startLoc, FVector endLocation);
 	bool CanSee(AActor* other, FVector startLoc);
+	FVector GetPredictedLocation(AActor* actor);
 	void CapturingObjective();
 	bool GetEnemiesInArea();
 };

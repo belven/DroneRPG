@@ -116,6 +116,17 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	SetTeam(1);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
+
+	if (!UFunctionLibrary::GetDrones().Contains(this))
+		UFunctionLibrary::GetDrones().Add(this);
+}
+
+void ADroneRPGCharacter::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	if (UFunctionLibrary::GetDrones().Contains(this))
+		UFunctionLibrary::GetDrones().Remove(this);
 }
 
 void ADroneRPGCharacter::BeginPlay()

@@ -11,11 +11,11 @@
 AObjective::AObjective()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.TickInterval = 1;
 	areaOwner = 0;
 	currentControl = 0;
-	minControl = 25;
-	maxControl = 150;
+	minControl = 3;
+	maxControl = 10;
 	fullClaim = false;
 	currentColour = FColor::Red;
 

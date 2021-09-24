@@ -32,6 +32,9 @@ public:
 		virtual void DrawHUD() override;
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")
+		void DrawScore();
+
+	UFUNCTION(BlueprintCallable, Category = "HUD")
 		void DrawObjectiveIndicators(AObjective* objective);
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")

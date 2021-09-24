@@ -59,7 +59,7 @@ void ARocket::Tick(float DeltaTime)
 void ARocket::FindTarget()
 {
 	if ((target == NULL || !target->IsAlive()) && GetShooter() != NULL) {
-		SetTarget(mGetClosestEnemyInRadius(GetWorld(), 4000, GetActorLocation(), GetShooter()->GetTeam()));
+		SetTarget(mGetClosestEnemyInRadius(4000, GetActorLocation(), GetShooter()->GetTeam()));
 	}
 }
 

@@ -43,6 +43,7 @@ public:
 	FDroneDied DroneDied;
 
 	ADroneRPGCharacter();
+	virtual void BeginDestroy() override;
 	void Respawn();
 	void KillDrone();
 	virtual void BeginPlay() override;

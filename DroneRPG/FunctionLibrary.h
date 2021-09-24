@@ -26,6 +26,8 @@ class ADroneRPGCharacter;
 #define mGetClosestActorInWorld UFunctionLibrary::GetClosestActorInWorld
 #define mGetClosestActorInArray UFunctionLibrary::GetClosestActorInArray
 #define mGetActorsInRadius UFunctionLibrary::GetActorsInRadius
+#define mGetDronesInRadius UFunctionLibrary::GetDronesInRadius
+#define mGetDrones UFunctionLibrary::GetDrones
 
 #define mGetEnemysInRadius UFunctionLibrary::GetEnemysInRadius
 #define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius
@@ -40,22 +42,28 @@ class DRONERPG_API UFunctionLibrary : public UObject
 {
 	GENERATED_BODY()
 public:
+	static TArray<ADroneRPGCharacter*> dronesInGame;
 	template <class T> static TArray<T*> GetActorsInWorld(UWorld* world);
 	template <class T> static TArray <T*> GetActorsInRadius(UWorld* world, float radius, FVector loc);
 
 	template <class T> static T* GetClosestActorInWorld(UWorld* world, FVector loc);
 	template <class T> static T* GetClosestActorInArray(TArray<T*> actorArray, FVector loc);
 
-	static TArray <ADroneRPGCharacter*> GetEnemysInRadius(UWorld* world, float radius, FVector loc, int32 team);
-	static ADroneRPGCharacter* GetClosestEnemyInRadius(UWorld* world, float radius, FVector loc, int32 team);
+	static TArray <ADroneRPGCharacter*> GetEnemysInRadius(float radius, FVector loc, int32 team);
+	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, FVector loc, int32 team);
+
+	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, FVector loc);
+	static TArray <ADroneRPGCharacter*>& GetDrones();
 
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
-
+	
 	static TMap<int32, FColor> GetTeamColours();
-	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
 	static TMap<int32, FColor> teamColours;
+
+	static FString GetColourString(FColor color);
+	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
 	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
 	template<class T> static T GetRandomEnum(T end);
 };

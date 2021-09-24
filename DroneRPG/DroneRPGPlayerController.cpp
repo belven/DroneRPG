@@ -98,7 +98,7 @@ void ADroneRPGPlayerController::FireShot(FVector FireDirection)
 	{
 		FHitResult Hit;
 		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
-		ADroneRPGCharacter* target = mGetClosestEnemyInRadius(GetDrone()->GetWorld(), 2000, Hit.ImpactPoint, GetDrone()->GetTeam());
+		ADroneRPGCharacter* target = mGetClosestEnemyInRadius(2000, Hit.ImpactPoint, GetDrone()->GetTeam());
 		GetDrone()->GetWeapon()->FireShot(FireDirection, target);
 	}
 }
@@ -173,7 +173,7 @@ void ADroneRPGPlayerController::ChangeView()
 			droneIndex = 0;
 	}
 
-	SetViewTargetWithBlend(drone, 2.0f, EViewTargetBlendFunction::VTBlend_Linear, 1, false);
+	SetViewTargetWithBlend(drone, 1.0f, EViewTargetBlendFunction::VTBlend_EaseInOut, 1, false);
 	droneIndex++;
 
 	if (droneIndex > drones.Num() - 1)
