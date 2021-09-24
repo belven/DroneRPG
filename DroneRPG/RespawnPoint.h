@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "KeyActor.h"
 #include "RespawnPoint.generated.h"
 
 class ADroneRPGCharacter;
 class UBoxComponent;
 
 UCLASS()
-class DRONERPG_API ARespawnPoint : public AActor
+class DRONERPG_API ARespawnPoint : public AKeyActor
 {
 	GENERATED_BODY()
 

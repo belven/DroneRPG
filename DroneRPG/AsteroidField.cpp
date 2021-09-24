@@ -4,8 +4,7 @@
 #include "NavigationSystem.h"
 #include <EngineUtils.h>
 #include <Kismet/KismetMathLibrary.h>
-#include "Objective.h"
-#include "RespawnPoint.h"
+#include "KeyActor.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 
@@ -22,33 +21,32 @@ AAsteroidField::AAsteroidField()
 		meshes.Add(asteroidTwo.Object, 100);
 
 	PrimaryActorTick.bCanEverTick = false;
-	minDist = 300;
-	radius = 5000;
+	minDist = 2000;
+	radius = 20000;
 
 	minScale = 1.0f;
 	maxScale = 2.0f;
 }
 
-void AAsteroidField::RemoveOverlapingComponents(AActor* other) {
+void AAsteroidField::RemoveOverlapingComponents(AActor* other, float size) {
 	TArray<UInstancedStaticMeshComponent*> comps;
 	GetComponents<UInstancedStaticMeshComponent>(comps);
 
 	for (UInstancedStaticMeshComponent* comp : comps) {
 		for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) {
 			FTransform trans;
+			float dist = MAX(minDist, size);
 
 			comp->GetInstanceTransform(i, trans);
-			if (mDist(trans.GetLocation(), other->GetActorLocation()) < minDist) {
+			if (IsAsteroidTooClose(trans, other->GetActorLocation(), size)) {
 				comp->RemoveInstance(i);
 			}
 		}
 	}
 }
 
-void AAsteroidField::ClearOutOverlap(AActor* other) {
-	if (other != NULL) {
-		RemoveOverlapingComponents(other);
-	}
+void AAsteroidField::ClearOutOverlap(AActor* other, float size) {
+	RemoveOverlapingComponents(other, size);
 }
 
 void AAsteroidField::BeginPlay()
@@ -61,18 +59,11 @@ void AAsteroidField::BeginPlay()
 		}
 	}
 
-	TArray<AObjective*> objectives = mGetActorsInWorld<AObjective>(GetWorld());
+	TArray<AKeyActor*> keyActors = mGetActorsInWorld<AKeyActor>(GetWorld());
 
-	for (AObjective* objective : objectives)
+	for (AKeyActor* keyActor : keyActors)
 	{
-		ClearOutOverlap(objective);
-	}
-
-	TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
-
-	for (ARespawnPoint* respawnPoint : respawnPoints)
-	{
-		ClearOutOverlap(respawnPoint);
+		ClearOutOverlap(keyActor, keyActor->GetSize());
 	}
 }
 
@@ -107,6 +98,15 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 	}
 }
 
+bool AAsteroidField::IsAsteroidTooClose(FTransform asteroidTrans, FVector otherLoc, float inDist) {
+	float dist = mDist(asteroidTrans.GetLocation(), otherLoc);
+
+	// Adds 1/2 of the scale to the distance, as asteroidTrans.Location is the center and the asteroid could be very large
+	float scaleMinDist = (1 + (asteroidTrans.GetMaximumAxisScale() / 20));
+	float tooCloseDist = MAX(minDist, inDist) * scaleMinDist;
+	return dist <= tooCloseDist;
+}
+
 FVector AAsteroidField::GetAsteroidLocation() {
 	bool locTooClose = true;
 	int32 count = 0;
@@ -127,7 +127,7 @@ FVector AAsteroidField::GetAsteroidLocation() {
 
 				comp->GetInstanceTransform(i, trans);
 
-				if (mDist(trans.GetLocation(), loc) <= minDist) {
+				if (IsAsteroidTooClose(trans, loc, minDist)) {
 					locTooClose = true;
 					mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
 					break;
@@ -139,6 +139,8 @@ FVector AAsteroidField::GetAsteroidLocation() {
 	if (count == 20) {
 		return FVector::ZeroVector;
 	}
+
+	loc.Location.Z += 350;
 
 	return loc;
 }

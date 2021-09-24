@@ -14,8 +14,8 @@ class DRONERPG_API AAsteroidField : public AActor
 public:
 	AAsteroidField();
 
-	void RemoveOverlapingComponents(AActor* other);
-	void ClearOutOverlap(AActor* other);
+	void RemoveOverlapingComponents(AActor* other, float size = 0);
+	void ClearOutOverlap(AActor* other, float size = 0);
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Asteroid Field")
@@ -34,6 +34,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	void SpawnAsteroid(UStaticMesh* mesh);
+	bool IsAsteroidTooClose(FTransform asteroidTrans, FVector otherLoc, float inDist);
 	FVector GetAsteroidLocation();
 private:
 	TMap<UStaticMesh*, int32> meshes;

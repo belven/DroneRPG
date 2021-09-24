@@ -17,6 +17,7 @@
 
 ADroneBaseAI::ADroneBaseAI() : Super()
 {
+	PrimaryActorTick.TickInterval = 0.1;
 	minCaptureDistance = 650;
 	targetRange = 3000;
 
@@ -132,7 +133,7 @@ AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
 	if (drones.Num() > 0) {
 		mShuffleArray<ADroneRPGCharacter*>(drones);
 		return UFunctionLibrary::GetRandomObject<ADroneRPGCharacter*>(drones);
-	} 
+	}
 
 	return NULL;
 }
@@ -160,7 +161,7 @@ void ADroneBaseAI::RotateToFace() {
 	if (!targetLocation.IsNearlyZero()) {
 		// Calculate the angle to look at our target
 
-		lookAt = UKismetMathLibrary::FindLookAtRotation( mDroneLocation, targetLocation);
+		lookAt = UKismetMathLibrary::FindLookAtRotation(mDroneLocation, targetLocation);
 		lookAt.Pitch = mDroneRotation.Pitch;
 		lookAt.Roll = mDroneRotation.Roll;
 		targetRotation = lookAt;
@@ -221,7 +222,7 @@ void ADroneBaseAI::OnPossess(APawn* InPawn)
 
 void ADroneBaseAI::PerformActions() {
 	canPerformActions = false;
-	mSetTimer(TimerHandle_CanPerformActions, &ADroneBaseAI::CanPerformActions, 0.1f);
+	mSetTimer(TimerHandle_CanPerformActions, &ADroneBaseAI::CanPerformActions, FMath::RandRange(0.1f, 0.15f));
 
 	// Do state machine things!
 	switch (currentState) {
@@ -251,8 +252,19 @@ void ADroneBaseAI::PerformActions() {
 }
 
 void ADroneBaseAI::MoveToObjective() {
+	float distance;
+
+	AKeyActor* keyActor = Cast<AKeyActor>(targetObjective);
+
+	if (keyActor != NULL) {
+		distance = keyActor->GetSize() * 0.7f;
+	}
+	else {
+		distance = 600;
+	}
+
 	FNavLocation loc;
-	mRandomReachablePointInRadius(targetObjective->GetActorLocation(), 600, loc);
+	mRandomReachablePointInRadius(targetObjective->GetActorLocation(), distance, loc);
 	MoveToLocation(loc);
 }
 

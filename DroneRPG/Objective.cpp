@@ -8,7 +8,7 @@
 #include <Components/StaticMeshComponent.h>
 #include "NavigationSystem.h"
 
-AObjective::AObjective()
+AObjective::AObjective() : Super()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
@@ -19,7 +19,7 @@ AObjective::AObjective()
 	fullClaim = false;
 	currentColour = FColor::Red;
 
-	objectiveSize = 2000;
+	keyActorSize = 2000;
 
 	smallParticle = 50;
 	bigParticle = 75;
@@ -33,7 +33,7 @@ AObjective::AObjective()
 	}
 
 	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
-	objectiveArea->SetBoxExtent(FVector(objectiveSize, objectiveSize, 400));
+	objectiveArea->SetBoxExtent(FVector(GetSize(), GetSize(), 400));
 	objectiveArea->SetupAttachment(GetRootComponent());
 }
 
@@ -71,7 +71,7 @@ void AObjective::BeginPlay()
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
 	// Set up the systems defaults
-	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(objectiveSize, objectiveSize, 400));
+	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 	captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
 
@@ -86,7 +86,7 @@ void AObjective::RemoveOverlapingComponents(AActor* other) {
 	other->GetComponents<UStaticMeshComponent>(comps);
 
 	for (UStaticMeshComponent* comp : comps) {
-		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < objectiveSize) {
+		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < GetSize()) {
 			comp->SetHiddenInGame(true);
 			comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}

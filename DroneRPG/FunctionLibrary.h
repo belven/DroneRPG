@@ -11,6 +11,9 @@
 
 class ADroneRPGCharacter;
 
+#define MIN(a,b) (a < b) ? (a) : (b)
+#define MAX(a,b) (a > b) ? (a) : (b)
+
 #define mDist(a, b) FVector::Dist(a, b)
 #define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
 #define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
@@ -27,7 +30,7 @@ class ADroneRPGCharacter;
 #define mGetClosestActorInArray UFunctionLibrary::GetClosestActorInArray
 #define mGetActorsInRadius UFunctionLibrary::GetActorsInRadius
 #define mGetDronesInRadius UFunctionLibrary::GetDronesInRadius
-#define mGetDrones UFunctionLibrary::GetDrones
+#define mGetDrones UFunctionLibrary::GetDrones()
 
 #define mGetEnemysInRadius UFunctionLibrary::GetEnemysInRadius
 #define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius

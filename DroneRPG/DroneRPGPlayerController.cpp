@@ -156,28 +156,26 @@ void ADroneRPGPlayerController::CanMoveCamera() {
 	moveCamera = true;
 }
 
+void ADroneRPGPlayerController::IncrementDrone() {
+	droneIndex++;
+
+	if (droneIndex > mGetDrones.Num() - 1)
+		droneIndex = 0;
+}
+
 void ADroneRPGPlayerController::ChangeView()
 {
 	moveCamera = false;
 
-	if (drones.IsEmpty()) {
-		drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
-	}
+	ADroneRPGCharacter* drone = mGetDrones[droneIndex];
 
-	ADroneRPGCharacter* drone = drones[droneIndex];
-
-	if (drone == GetDrone()) {
-		droneIndex++;
-
-		if (droneIndex > drones.Num() - 1)
-			droneIndex = 0;
+	if (drone->GetController() == this) {
+		IncrementDrone();
 	}
 
 	SetViewTargetWithBlend(drone, 1.0f, EViewTargetBlendFunction::VTBlend_EaseInOut, 1, false);
-	droneIndex++;
 
-	if (droneIndex > drones.Num() - 1)
-		droneIndex = 0;
+	IncrementDrone();
 
 	mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::CanMoveCamera, 8.0f);
 }

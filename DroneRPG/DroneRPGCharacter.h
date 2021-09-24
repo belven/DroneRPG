@@ -46,6 +46,7 @@ public:
 	virtual void BeginDestroy() override;
 	void Respawn();
 	void KillDrone();
+	void DamageDrone(float damage);
 	virtual void BeginPlay() override;
 	void PulseShield();
 	virtual void Tick(float DeltaSeconds) override;

@@ -29,7 +29,10 @@
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(120.0f, 250.0f);
+	const float capWidth = 120.0f;
+	const float capHeight = 400.0f;
+
+	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -74,7 +77,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	if (DroneMesh.Succeeded())
 	{
 		meshComponent->SetStaticMesh(DroneMesh.Object);
-		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		meshComponent->SetRelativeLocation(FVector(40, -25, 100));
 		meshComponent->SetupAttachment(RootComponent);
 	}
@@ -116,9 +119,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	SetTeam(1);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
-
-	if (!UFunctionLibrary::GetDrones().Contains(this))
-		UFunctionLibrary::GetDrones().Add(this);
 }
 
 void ADroneRPGCharacter::BeginDestroy()
@@ -132,6 +132,9 @@ void ADroneRPGCharacter::BeginDestroy()
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!UFunctionLibrary::GetDrones().Contains(this))
+		UFunctionLibrary::GetDrones().Add(this);
 
 	// Set up particle effect defaults
 	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
@@ -176,7 +179,7 @@ void ADroneRPGCharacter::BeginPlay()
 }
 
 void ADroneRPGCharacter::PulseShield() {
-	const float increment = 0.02;
+	const float increment = 0.005;
 
 	wipeValue += increment;
 
@@ -252,7 +255,7 @@ void ADroneRPGCharacter::Respawn() {
 		// Move us to the respawn point 
 		FNavLocation loc;
 		mRandomReachablePointInRadius(respawn->GetActorLocation(), 1000.0f, loc);
-		SetActorLocation(loc);
+		SetActorLocation(loc, true);
 
 		// Fully Heal the drone
 		FullHeal();
@@ -295,8 +298,7 @@ void ADroneRPGCharacter::KillDrone() {
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 }
 
-void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
-	float damage = projectile->GetDamage();
+void ADroneRPGCharacter::DamageDrone(float damage) {
 
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
@@ -329,15 +331,26 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	if (currentStats.shields <= 0) {
 		currentStats.health -= damage;
 
-		// If we have no health, kill the character 
 		if (currentStats.health <= 0) {
 			deaths++;
-			ADroneRPGCharacter* attacker = Cast<ADroneRPGCharacter>(projectile->GetShooter());
-			attacker->SetKills(attacker->GetKills() + 1);
 			KillDrone();
 		}
 
 		CalculateHealthColours();
+	}
+
+	ClampValue(currentStats.health, maxStats.health, 0);
+	ClampValue(currentStats.shields, maxStats.shields, 0);
+
+}
+
+void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {	
+	DamageDrone(projectile->GetDamage());
+
+	// If we have no health, kill the character 
+	if (currentStats.health <= 0) {
+		ADroneRPGCharacter* attacker = Cast<ADroneRPGCharacter>(projectile->GetShooter());
+		attacker->SetKills(attacker->GetKills() + 1);
 	}
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
@@ -345,9 +358,6 @@ void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 		ADroneBaseAI* con = Cast<ADroneBaseAI>(GetController());
 		con->DroneAttacked(projectile->GetShooter());
 	}
-
-	ClampValue(currentStats.health, maxStats.health, 0);
-	ClampValue(currentStats.shields, maxStats.shields, 0);
 }
 
 bool ADroneRPGCharacter::IsAlive()

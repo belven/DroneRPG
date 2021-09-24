@@ -22,7 +22,6 @@ protected:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float MoveSpeed;
 	bool moveCamera;
-	TArray<ADroneRPGCharacter*> drones;
 	int32 droneIndex;
 
 	bool isFiring;
@@ -49,6 +48,7 @@ protected:
 	void CalculateMovement(float DeltaSeconds);
 	virtual void SetupInputComponent() override;
 	void CanMoveCamera();
+	void IncrementDrone();
 private:
 	void ChangeView();
 };

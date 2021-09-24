@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "KeyActor.h"
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
 
@@ -15,7 +15,7 @@ class ADroneRPGCharacter;
 class UNiagaraSystem;
 
 UCLASS()
-class DRONERPG_API AObjective : public AActor
+class DRONERPG_API AObjective : public AKeyActor
 {
 	GENERATED_BODY()
 
@@ -75,9 +75,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		float currentControl;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
-		float objectiveSize;
 private:
 	UPROPERTY()
 		UBoxComponent* objectiveArea;

@@ -7,11 +7,6 @@
 
 #define mGetController Cast<ADroneRPGPlayerController>(GetPlayerDrone()->GetController())
 
-TArray<ADroneRPGCharacter*> ADroneHUD::GetDrones()
-{
-	return mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
-}
-
 void ADroneHUD::DrawHUD() {
 	Super::DrawHUD();
 	DrawScore();
@@ -40,7 +35,7 @@ void ADroneHUD::DrawScore() {
 	// Get the viewport (current window) size
 	con->GetViewportSize(vpX, vpY);
 
-	for (ADroneRPGCharacter* drone : mGetActorsInWorld<ADroneRPGCharacter>(GetWorld())) {
+	for (ADroneRPGCharacter* drone : mGetDrones) {
 		totalScore.FindOrAdd(drone->GetTeam()) += drone->GetKills();
 	}
 
@@ -148,16 +143,5 @@ void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone) {
 }
 
 TArray<ADroneRPGCharacter*> ADroneHUD::GetEnemyDrones() {
-	TArray<ADroneRPGCharacter*> drones;
-
-	if (GetPlayerDrone() != NULL) {
-		for (ADroneRPGCharacter* drone : GetDrones()) {
-
-			if (GetPlayerDrone()->GetTeam() != drone->GetTeam()) {
-				drones.Add(drone);
-			}
-		}
-	}
-
-	return drones;
+	return mGetEnemysInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam());
 }

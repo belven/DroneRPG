@@ -7,13 +7,15 @@
 #include "FunctionLibrary.h"
 
 // Sets default values
-ARespawnPoint::ARespawnPoint()
+ARespawnPoint::ARespawnPoint() : Super()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
 
+	keyActorSize = 1000;
+
 	respawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("RespawnArea"));
-	respawnArea->SetBoxExtent(FVector(1000, 1000, 400));
+	respawnArea->SetBoxExtent(FVector(GetSize(), GetSize(), 400));
 	respawnArea->SetupAttachment(GetRootComponent());
 }
 

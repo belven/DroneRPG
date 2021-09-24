@@ -17,9 +17,6 @@ class DRONERPG_API ADroneHUD : public AHUD
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
-		TArray<ADroneRPGCharacter*> GetDrones();
-
-	UFUNCTION(BlueprintCallable, Category = "HUD")
 		TArray<ADroneRPGCharacter*> GetEnemyDrones();
 
 	UFUNCTION(BlueprintCallable, Category = "HUD")
