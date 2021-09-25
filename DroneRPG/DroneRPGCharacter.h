@@ -46,7 +46,8 @@ public:
 	virtual void BeginDestroy() override;
 	void Respawn();
 	void KillDrone();
-	void DamageDrone(float damage);
+	FString GetDroneName();
+	void DamageDrone(float damage, AActor* damager);
 	virtual void BeginPlay() override;
 	void PulseShield();
 	virtual void Tick(float DeltaSeconds) override;

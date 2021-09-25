@@ -6,6 +6,11 @@ ATriggeredEvent::ATriggeredEvent()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+FString ATriggeredEvent::GetEventName()
+{
+	return "Unset";
+}
+
 void ATriggeredEvent::TriggerEvent()
 {
 	// Do Nothing by default

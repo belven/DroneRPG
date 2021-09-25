@@ -36,6 +36,7 @@ class ADroneRPGCharacter;
 #define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius
 
 #define mRandomReachablePointInRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(start, radius, loc);
+#define mRandomPointInNavigableRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomPointInNavigableRadius(start, radius, loc);
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWolrd(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 

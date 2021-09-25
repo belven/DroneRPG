@@ -14,6 +14,7 @@ class DRONERPG_API ATriggeredEvent : public AActor
 public:	
 
 	ATriggeredEvent();
+	virtual FString GetEventName();
 
 	virtual void TriggerEvent();
 

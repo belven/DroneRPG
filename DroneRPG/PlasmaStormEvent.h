@@ -17,6 +17,7 @@ class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent
 public:
 	APlasmaStormEvent();
 
+	virtual FString GetEventName() override;
 	virtual void TriggerEvent() override;
 
 	virtual void Tick(float DeltaTime) override;

@@ -6,7 +6,7 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 
-#define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
+#define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 
 APlasmaStormEvent::APlasmaStormEvent()
 {
@@ -18,7 +18,7 @@ APlasmaStormEvent::APlasmaStormEvent()
 	moveRate = 10.0f;
 	targetLocation.Location = FVector::ZeroVector;
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/Plasma_Storm"));
 
 	if (auraParticleSystem.Succeeded()) {
 		stormSystem = auraParticleSystem.Object;
@@ -32,13 +32,19 @@ APlasmaStormEvent::APlasmaStormEvent()
 		meshComponent->SetStaticMesh(sphereMesh.Object);
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		meshComponent->SetupAttachment(RootComponent);
+		meshComponent->SetHiddenInGame(true);
 	}
+}
+
+FString APlasmaStormEvent::GetEventName()
+{
+	return "Plasma Storm";
 }
 
 void APlasmaStormEvent::TriggerEvent()
 {
 	for (ADroneRPGCharacter* drone : mGetDronesInRadius(radius, GetActorLocation())) {
-		drone->DamageDrone(damage);
+		drone->DamageDrone(damage, this);
 		damageDealt += damage;
 	}
 
@@ -57,8 +63,8 @@ void APlasmaStormEvent::BeginPlay()
 	damageDealt = 0.0f;
 	stormParticle = mSpawnSystemAttached(stormSystem, TEXT("Storm Particles"));
 	stormParticle->SetFloatParameter(TEXT("Radius"), radius);
-	stormParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-	stormParticle->SetFloatParameter(TEXT("Size"), 40);
+	stormParticle->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Purple));
+	stormParticle->SetFloatParameter(TEXT("Size"), 100);
 
 	TriggerEvent();
 	Move();
@@ -67,12 +73,12 @@ void APlasmaStormEvent::BeginPlay()
 void APlasmaStormEvent::Move()
 {
 	int32 count = 0;
-	mRandomReachablePointInRadius(GetActorLocation(), travelDistance, targetLocation);
+	mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 
 	while (mDist(GetActorLocation(), targetLocation.Location) <= travelDistance * 0.7 && count <= 30)
 	{
 		count++;
-		mRandomReachablePointInRadius(GetActorLocation(), travelDistance, targetLocation);
+		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 	}
 
 	mSetTimer(TimerHandle_Move, &APlasmaStormEvent::Move, moveRate);

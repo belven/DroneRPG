@@ -23,6 +23,8 @@
 #include "Shotgun.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include <Materials/MaterialLayersFunctions.h>
+#include "TriggeredEvent.h"
+#include <Kismet/KismetSystemLibrary.h>
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -254,7 +256,7 @@ void ADroneRPGCharacter::Respawn() {
 	if (respawn != NULL) {
 		// Move us to the respawn point 
 		FNavLocation loc;
-		mRandomReachablePointInRadius(respawn->GetActorLocation(), 1000.0f, loc);
+		mRandomPointInNavigableRadius(respawn->GetActorLocation(), respawn->GetSize(), loc);
 		SetActorLocation(loc, true);
 
 		// Fully Heal the drone
@@ -284,7 +286,6 @@ void ADroneRPGCharacter::KillDrone() {
 	if (DroneDied.IsBound())
 		DroneDied.Broadcast(this);
 
-	// TODO: set up the concept of respawning the player and making a spectator mode whilst that's happening
 	currentStats.health = 0;
 	currentStats.shields = 0;
 	canRegenShields = false;
@@ -292,13 +293,19 @@ void ADroneRPGCharacter::KillDrone() {
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	meshComponent->SetHiddenInGame(true);
 
-	//shieldParticle->SetHiddenInGame(true);
 	healthParticle->SetHiddenInGame(true);
 
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 }
 
-void ADroneRPGCharacter::DamageDrone(float damage) {
+FString ADroneRPGCharacter::GetDroneName()
+{
+	if (mGetDrones.Contains(this))
+		return FString::FromInt(mGetDrones.IndexOfByKey(this));
+	return UKismetSystemLibrary::GetObjectName(this);
+}
+
+void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
@@ -320,7 +327,7 @@ void ADroneRPGCharacter::DamageDrone(float damage) {
 		// Weaken max shields, to prevent ships being as strong for the whole match
 		if (maxStats.shields > 50) {
 
-			// Take half damage taken away from max shields TODO work out a decent value for this, change it based on projectile?
+			// Take half damage taken away from max shields
 			maxStats.shields -= (damage * 0.5);
 			ClampValue(maxStats.shields, maxStats.shields, 50);
 		}
@@ -328,12 +335,26 @@ void ADroneRPGCharacter::DamageDrone(float damage) {
 	}
 
 	// If we have 0 shields, then take health damage
-	if (currentStats.shields <= 0) {
+	if (currentStats.shields <= 0 && currentStats.health > 0) {
 		currentStats.health -= damage;
 
 		if (currentStats.health <= 0) {
 			deaths++;
 			KillDrone();
+
+			TArray< FStringFormatArg > args;
+			args.Add(FStringFormatArg(GetDroneName()));
+
+			if (mIsA(damager, ADroneProjectile)) {
+				ADroneProjectile* proj = Cast<ADroneProjectile>(damager);
+				args.Add(FStringFormatArg(proj->GetShooter()->GetDroneName()));
+				GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by Drone {1}"), args));
+			}
+			else if (mIsA(damager, ATriggeredEvent)) {
+				ATriggeredEvent* triggerEvent = Cast<ATriggeredEvent>(damager);
+				args.Add(FStringFormatArg(triggerEvent->GetEventName()));
+				GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
+			}
 		}
 
 		CalculateHealthColours();
@@ -344,8 +365,8 @@ void ADroneRPGCharacter::DamageDrone(float damage) {
 
 }
 
-void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {	
-	DamageDrone(projectile->GetDamage());
+void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
+	DamageDrone(projectile->GetDamage(), projectile);
 
 	// If we have no health, kill the character 
 	if (currentStats.health <= 0) {
