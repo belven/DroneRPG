@@ -1,8 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "FunctionLibrary.h"
-#include "DroneDamagerInterface.h"
+#include "Enums.h"
 #include "DroneRPGGameMode.generated.h"
 
 UCLASS(minimalapi)
@@ -16,7 +15,9 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EntityKilled(AActor* killedEntity, AActor* damager);
 
-	virtual void AddTeamScore(int32 team, float score);
+	virtual TArray<FScoreBoardStat> GetScoreBoardStats();
+
+	virtual void AddTeamScore(int32 team, float bonusScore);
 
 	virtual FString GetTeamScoreText(int32 team);
 
@@ -25,4 +26,5 @@ public:
 
 protected:
 	EGameModeType gameMode;
+	TMap<int32, float> teamScores;
 };

@@ -13,10 +13,10 @@ ADominationGameMode::ADominationGameMode() : Super()
 
 void ADominationGameMode::AddTeamScore(int32 team, float bonusScore)
 {
-	float& score = teamScores.FindOrAdd(team);
-	score += bonusScore;
+	Super::AddTeamScore(team, bonusScore);
 
-	if (score >= 300) {		
+	float& score = teamScores.FindOrAdd(team);
+	if (score >= 1000) {		
 		for (APlayerState* ps : UGameplayStatics::GetGameState(GetWorld())->PlayerArray) {
 		APlayerController* con = UGameplayStatics::GetPlayerController(GetWorld(), ps->GetPlayerId());		
 		UKismetSystemLibrary::QuitGame(GetWorld(), con, EQuitPreference::Quit, false);			
@@ -24,13 +24,16 @@ void ADominationGameMode::AddTeamScore(int32 team, float bonusScore)
 	}
 }
 
-FString ADominationGameMode::GetTeamScoreText(int32 team)
+TArray<FScoreBoardStat> ADominationGameMode::GetScoreBoardStats()
 {
-	FColor tc = *UFunctionLibrary::GetTeamColours().Find(team);
-	float& score = teamScores.FindOrAdd(team);
+	TArray<FScoreBoardStat> stats; 
 
-	TArray< FStringFormatArg > args;
-	args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
-	args.Add(FStringFormatArg((int)FMath::RoundHalfToEven(score)));
-	return FString::Format(TEXT("Team {0} has {1} points"), args);
+	for (auto& team : UFunctionLibrary::GetTeamColours()) {
+		FScoreBoardStat stat;
+		stat.text = GetTeamScoreText(team.Key);
+		stat.textColour = team.Value;
+		stats.Add(stat);
+	}
+
+	return stats;
 }

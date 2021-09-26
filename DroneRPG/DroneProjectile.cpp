@@ -83,6 +83,11 @@ void ADroneProjectile::IgnoreActor(AActor* actor) {
 	ProjectileMesh->IgnoreActorWhenMoving(actor, true);
 }
 
+int32 ADroneProjectile::GetDamagerTeam()
+{
+	return GetShooter()->GetTeam();
+}
+
 // Called every frame
 void ADroneProjectile::Tick(float DeltaTime)
 {

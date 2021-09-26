@@ -40,16 +40,10 @@ void ADroneHUD::DrawScore() {
 		totalScore.FindOrAdd(drone->GetTeam()) += drone->GetKills();
 	}
 
-	for (auto& pair : totalScore) {
+	ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 
-		ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		FColor tc = *UFunctionLibrary::GetTeamColours().Find(pair.Key);
-		/*TArray< FStringFormatArg > args;
-		args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
-		args.Add(FStringFormatArg(pair.Value));*/
-
-		// Write some text below the drone that states it's current kills and deaths
-		DrawText(gm->GetTeamScoreText(pair.Key), FLinearColor(tc), vpX / 2, y);
+	for (FScoreBoardStat stat : gm->GetScoreBoardStats()) {
+		DrawText(stat.text, FLinearColor(stat.textColour), vpX / 2.1, y);
 		y += 20;
 	}
 }

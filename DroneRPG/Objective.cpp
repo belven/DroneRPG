@@ -228,7 +228,7 @@ void AObjective::Tick(float DeltaTime)
 
 	if (fullClaim) {
 		ADroneRPGGameMode* gm =  Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		gm->AddTeamScore(areaOwner, 1);
+		gm->AddTeamScore(areaOwner, 5);
 	}
 }
 

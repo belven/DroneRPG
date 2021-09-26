@@ -3,42 +3,8 @@
 #include "UObject/NoExportTypes.h"
 #include <EngineUtils.h>
 #include <Engine/World.h>
+#include "Enums.h"
 #include "FunctionLibrary.generated.h"
-
-UENUM(BlueprintType)
-enum class  EWeaponType : uint8 {
-	Laser,
-	Rocket,
-	Mine,
-	Rail_Gun,
-	Shotgun,
-	End
-};
-
-UENUM(BlueprintType)
-enum class  EActionState : uint8 {
-	SearchingForObjective,
-	AttackingTarget,
-	CapturingObjective,
-	DefendingObjective,
-	EvadingDamage,
-	ReturingToBase
-};
-
-UENUM(BlueprintType)
-enum class  EGameModeType : uint8 {
-	Domination,
-	TeamDeathMatch,
-	Hardpoint,
-	AttackDefend,
-	Payload
-};
-
-UENUM(BlueprintType)
-enum class  EDamagerType : uint8 {
-	Drone,
-	PlasmaStorm
-};
 
 class ADroneRPGCharacter;
 class UWeapon;
@@ -96,7 +62,7 @@ public:
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
-	
+
 	static TMap<int32, FColor> GetTeamColours();
 	static TMap<int32, FColor> teamColours;
 

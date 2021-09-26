@@ -20,4 +20,5 @@ public:
 	virtual void DroneKilled(ADroneRPGCharacter* drone);
 	virtual FString GetDamagerName();
 	virtual EDamagerType GetDamagerType();
+	virtual int32 GetDamagerTeam();
 };

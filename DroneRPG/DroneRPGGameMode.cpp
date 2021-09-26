@@ -6,6 +6,7 @@
 #include "DroneDamagerInterface.h"
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
+#include "FunctionLibrary.h"
 
 ADroneRPGGameMode::ADroneRPGGameMode()
 {
@@ -30,15 +31,32 @@ void ADroneRPGGameMode::BeginPlay()
 
 void ADroneRPGGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 {
-	// Do Nothing
+	if (mImplements(damager, UDroneDamagerInterface)) {
+		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
+		float& score = teamScores.FindOrAdd(damageDealer->GetDamagerTeam());
+		score++;
+	}
 }
 
-void ADroneRPGGameMode::AddTeamScore(int32 team, float score)
+TArray<FScoreBoardStat> ADroneRPGGameMode::GetScoreBoardStats()
 {
-	// Do nothing by default
+	TArray<FScoreBoardStat> stats;
+	return stats;
+}
+
+void ADroneRPGGameMode::AddTeamScore(int32 team, float bonusScore)
+{
+	float& score = teamScores.FindOrAdd(team);
+	score += bonusScore;
 }
 
 FString ADroneRPGGameMode::GetTeamScoreText(int32 team)
 {
-	return "Not set";
+	FColor tc = *UFunctionLibrary::GetTeamColours().Find(team);
+	float& score = teamScores.FindOrAdd(team);
+
+	TArray< FStringFormatArg > args;
+	args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
+	args.Add(FStringFormatArg((int)FMath::RoundHalfToEven(score)));
+	return FString::Format(TEXT("Team {0} has {1} points"), args);
 }

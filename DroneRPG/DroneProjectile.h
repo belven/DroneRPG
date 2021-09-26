@@ -44,6 +44,7 @@ protected:
 
 	void SetUpCollision();
 	void IgnoreActor(AActor* actor);
+	virtual int32 GetDamagerTeam() override;
 
 	ADroneRPGCharacter* target;
 
