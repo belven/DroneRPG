@@ -53,6 +53,16 @@ ADroneProjectile::ADroneProjectile()
 	RootComponent->SetHiddenInGame(true);
 }
 
+void ADroneProjectile::DroneKilled(ADroneRPGCharacter* drone)
+{
+	GetShooter()->SetKills(GetShooter()->GetKills() + 1);
+}
+
+FString ADroneProjectile::GetDamagerName()
+{
+	return GetShooter()->GetDroneName();
+}
+
 // Called when the game starts or when spawned
 void ADroneProjectile::BeginPlay()
 {

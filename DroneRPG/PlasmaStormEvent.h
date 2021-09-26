@@ -4,18 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "TriggeredEvent.h"
+#include "DroneDamagerInterface.h"
 #include "PlasmaStormEvent.generated.h"
 
 class UNiagaraSystem;
 class UNiagaraComponent;
+class ADroneRPGCharacter;
 
 UCLASS()
-class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent
+class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent, public IDroneDamagerInterface
 {
 	GENERATED_BODY()
 
 public:
 	APlasmaStormEvent();
+
+	virtual void DroneKilled(ADroneRPGCharacter* drone) override;
+	virtual FString GetDamagerName() override;
 
 	virtual FString GetEventName() override;
 	virtual void TriggerEvent() override;
@@ -23,7 +28,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void BeginPlay() override;
 
-	float GetRadius() const { return radius; }
+	float GetRadius();
 	void SetRadius(float val) { radius = val; }
 
 	float GetDamage() const { return damage; }
@@ -34,6 +39,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
 		float damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
+		float kills;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
 		float damageDealt;
@@ -49,6 +57,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
 		float acceleration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
+		bool isPlayerHunter;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
+		bool isPowerDrainer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
+		float powerDrainLimit;
 
 private:
 	void Move();

@@ -25,6 +25,7 @@
 #include <Materials/MaterialLayersFunctions.h>
 #include "TriggeredEvent.h"
 #include <Kismet/KismetSystemLibrary.h>
+#include "DroneDamagerInterface.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -342,17 +343,14 @@ void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 			deaths++;
 			KillDrone();
 
-			TArray< FStringFormatArg > args;
-			args.Add(FStringFormatArg(GetDroneName()));
+			if (mImplements(damager, UDroneDamagerInterface)) {
+				IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
+				damageDealer->DroneKilled(this);
 
-			if (mIsA(damager, ADroneProjectile)) {
-				ADroneProjectile* proj = Cast<ADroneProjectile>(damager);
-				args.Add(FStringFormatArg(proj->GetShooter()->GetDroneName()));
-				GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by Drone {1}"), args));
-			}
-			else if (mIsA(damager, ATriggeredEvent)) {
-				ATriggeredEvent* triggerEvent = Cast<ATriggeredEvent>(damager);
-				args.Add(FStringFormatArg(triggerEvent->GetEventName()));
+				TArray< FStringFormatArg > args;
+				args.Add(FStringFormatArg(GetDroneName()));
+				args.Add(FStringFormatArg(damageDealer->GetDamagerName()));
+
 				GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
 			}
 		}
@@ -362,17 +360,10 @@ void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 
 	ClampValue(currentStats.health, maxStats.health, 0);
 	ClampValue(currentStats.shields, maxStats.shields, 0);
-
 }
 
 void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
 	DamageDrone(projectile->GetDamage(), projectile);
-
-	// If we have no health, kill the character 
-	if (currentStats.health <= 0) {
-		ADroneRPGCharacter* attacker = Cast<ADroneRPGCharacter>(projectile->GetShooter());
-		attacker->SetKills(attacker->GetKills() + 1);
-	}
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat
 	if (GetController() != NULL && mIsA(GetController(), ADroneBaseAI)) {

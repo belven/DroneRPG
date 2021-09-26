@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DroneDamagerInterface.h"
 #include "DroneProjectile.generated.h"
 
 class UProjectileMovementComponent;
@@ -13,11 +14,14 @@ class UNiagaraComponent;
 class UNiagaraSystem;
 
 UCLASS()
-class DRONERPG_API ADroneProjectile : public AActor
+class DRONERPG_API ADroneProjectile : public AActor, public IDroneDamagerInterface
 {
 	GENERATED_BODY()
 
 protected:
+	virtual void DroneKilled(ADroneRPGCharacter* drone) override;
+	virtual FString GetDamagerName() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

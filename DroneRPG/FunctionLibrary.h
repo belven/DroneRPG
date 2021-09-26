@@ -16,6 +16,7 @@ class ADroneRPGCharacter;
 
 #define mDist(a, b) FVector::Dist(a, b)
 #define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
+#define  mImplements(aObject, aClass)  aObject->Implements<aClass>()
 #define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
 #define mDroneLocation GetCharacter()->GetActorLocation()
 #define mDroneRotation GetCharacter()->GetActorRotation()
@@ -24,6 +25,7 @@ class ADroneRPGCharacter;
 #define mShuffleArray UFunctionLibrary::ShuffleArray
 #define mGetWeapon UFunctionLibrary::GetWeapon
 #define mGetDefaultWeapon UFunctionLibrary::GetDefaultWeapon
+#define mGetRandomObject UFunctionLibrary::GetRandomObject
 
 #define mGetActorsInWorld UFunctionLibrary::GetActorsInWorld
 #define mGetClosestActorInWorld UFunctionLibrary::GetClosestActorInWorld

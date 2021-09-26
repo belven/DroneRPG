@@ -11,6 +11,7 @@
 APlasmaStormEvent::APlasmaStormEvent()
 {
 	radius = 2000.0f;
+	powerDrainLimit = radius * 3;
 	damage = 20.0f;
 	travelDistance = 20000;
 	damageRate = 3.0f;
@@ -36,6 +37,16 @@ APlasmaStormEvent::APlasmaStormEvent()
 	}
 }
 
+void APlasmaStormEvent::DroneKilled(ADroneRPGCharacter* drone)
+{
+	kills++;
+}
+
+FString APlasmaStormEvent::GetDamagerName()
+{
+	return GetEventName();
+}
+
 FString APlasmaStormEvent::GetEventName()
 {
 	return "Plasma Storm";
@@ -43,7 +54,7 @@ FString APlasmaStormEvent::GetEventName()
 
 void APlasmaStormEvent::TriggerEvent()
 {
-	for (ADroneRPGCharacter* drone : mGetDronesInRadius(radius, GetActorLocation())) {
+	for (ADroneRPGCharacter* drone : mGetDronesInRadius(GetRadius(), GetActorLocation())) {
 		drone->DamageDrone(damage, this);
 		damageDealt += damage;
 	}
@@ -55,6 +66,7 @@ void APlasmaStormEvent::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	SetActorLocation(FMath::Lerp(GetActorLocation(), targetLocation.Location, acceleration));
+	stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
 }
 
 void APlasmaStormEvent::BeginPlay()
@@ -62,7 +74,7 @@ void APlasmaStormEvent::BeginPlay()
 	Super::BeginPlay();
 	damageDealt = 0.0f;
 	stormParticle = mSpawnSystemAttached(stormSystem, TEXT("Storm Particles"));
-	stormParticle->SetFloatParameter(TEXT("Radius"), radius);
+	//stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
 	stormParticle->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Purple));
 	stormParticle->SetFloatParameter(TEXT("Size"), 100);
 
@@ -70,15 +82,25 @@ void APlasmaStormEvent::BeginPlay()
 	Move();
 }
 
+float APlasmaStormEvent::GetRadius()
+{
+	return isPowerDrainer ? MIN(radius + damageDealt, powerDrainLimit) : radius;
+}
+
 void APlasmaStormEvent::Move()
 {
-	int32 count = 0;
-	mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
-
-	while (mDist(GetActorLocation(), targetLocation.Location) <= travelDistance * 0.7 && count <= 30)
-	{
-		count++;
+	if (!isPlayerHunter) {
+		int32 count = 0;
 		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
+
+		while (mDist(GetActorLocation(), targetLocation.Location) <= travelDistance * 0.7 && count <= 30)
+		{
+			count++;
+			mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
+		}
+	}
+	else if(mGetDrones.Num() > 0) {
+		targetLocation.Location = mGetRandomObject(mGetDrones)->GetActorLocation();
 	}
 
 	mSetTimer(TimerHandle_Move, &APlasmaStormEvent::Move, moveRate);
