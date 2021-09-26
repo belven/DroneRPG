@@ -1,9 +1,10 @@
+#pragma once
 #include "Weapon.h"
 #include "DroneProjectile.h"
 #include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
 #include "FunctionLibrary.h"
-
+#include "Enums.h"
 
 UWeapon::UWeapon()
 {
@@ -34,7 +35,7 @@ T* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* i
 
 float UWeapon::GetRange()
 {
-	return ADroneProjectile::Default_Initial_Speed * ADroneProjectile::Default_Initial_Lifespan; 
+	return ADroneProjectile::Default_Initial_Speed * ADroneProjectile::Default_Initial_Lifespan;
 }
 
 void UWeapon::ShotTimerExpired()
@@ -58,7 +59,7 @@ void UWeapon::FireShot(FVector FireDirection, AActor* target)
 			const FRotator FireRotation = FireDirection.Rotation();
 			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 			SpawnProjectile(gunLocation, FireRotation, target);
-			
+
 			mSetTimerWolrd(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
 
 			if (FireSound != nullptr)

@@ -4,22 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "FunctionLibrary.h"
 #include "Weapon.generated.h"
 
 #define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation)
 
 class ADroneRPGCharacter;
 class ADroneProjectile;
-
-UENUM(BlueprintType)
-enum class  EWeaponType : uint8 {
-	Laser,
-	Rocket,
-	Mine,
-	Rail_Gun,
-	Shotgun,
-	End
-};
 
 UCLASS()
 class DRONERPG_API UWeapon : public UObject

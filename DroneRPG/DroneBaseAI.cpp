@@ -1,3 +1,4 @@
+#pragma once
 #include "DroneBaseAI.h"
 #include <EngineUtils.h>
 #include "DroneRPGCharacter.h"
@@ -7,7 +8,6 @@
 #include <Kismet/KismetMathLibrary.h>
 #include <Kismet/KismetArrayLibrary.h>
 #include "Objective.h"
-#include "FunctionLibrary.h"
 #include "NavigationSystem.h"
 #include "Weapon.h"
 #include "RespawnPoint.h"

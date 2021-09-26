@@ -5,6 +5,7 @@
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
+#include "Enums.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 
@@ -45,6 +46,11 @@ void APlasmaStormEvent::DroneKilled(ADroneRPGCharacter* drone)
 FString APlasmaStormEvent::GetDamagerName()
 {
 	return GetEventName();
+}
+
+EDamagerType APlasmaStormEvent::GetDamagerType()
+{
+	return EDamagerType::PlasmaStorm;
 }
 
 FString APlasmaStormEvent::GetEventName()

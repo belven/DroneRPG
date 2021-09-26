@@ -1,15 +1,47 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include <EngineUtils.h>
 #include <Engine/World.h>
-#include "Weapon.h"
 #include "FunctionLibrary.generated.h"
 
+UENUM(BlueprintType)
+enum class  EWeaponType : uint8 {
+	Laser,
+	Rocket,
+	Mine,
+	Rail_Gun,
+	Shotgun,
+	End
+};
+
+UENUM(BlueprintType)
+enum class  EActionState : uint8 {
+	SearchingForObjective,
+	AttackingTarget,
+	CapturingObjective,
+	DefendingObjective,
+	EvadingDamage,
+	ReturingToBase
+};
+
+UENUM(BlueprintType)
+enum class  EGameModeType : uint8 {
+	Domination,
+	TeamDeathMatch,
+	Hardpoint,
+	AttackDefend,
+	Payload
+};
+
+UENUM(BlueprintType)
+enum class  EDamagerType : uint8 {
+	Drone,
+	PlasmaStorm
+};
+
 class ADroneRPGCharacter;
+class UWeapon;
 
 #define MIN(a,b) (a < b) ? (a) : (b)
 #define MAX(a,b) (a > b) ? (a) : (b)
@@ -169,4 +201,3 @@ T UFunctionLibrary::GetRandomEnum(T end)
 {
 	return static_cast<T>(rand() % ((int)end - 1));
 }
-

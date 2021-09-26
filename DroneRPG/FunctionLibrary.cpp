@@ -4,6 +4,7 @@
 #include "DroneRPGCharacter.h"
 #include "Objective.h"
 #include "RocketLauncher.h"
+#include "Weapon.h"
 
 TMap<int32, FColor> UFunctionLibrary::teamColours = UFunctionLibrary::GetTeamColours();
 TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = UFunctionLibrary::GetDrones();

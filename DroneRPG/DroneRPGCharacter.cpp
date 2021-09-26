@@ -1,3 +1,4 @@
+#pragma once
 #include "DroneRPGCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
@@ -20,12 +21,12 @@
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
 #include "Weapon.h"
-#include "Shotgun.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include <Materials/MaterialLayersFunctions.h>
 #include "TriggeredEvent.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include "DroneDamagerInterface.h"
+#include "DroneRPGGameMode.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -144,7 +145,6 @@ void ADroneRPGCharacter::BeginPlay()
 	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
-
 
 	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
 	//shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shape_Sphere'"));
@@ -345,7 +345,9 @@ void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 
 			if (mImplements(damager, UDroneDamagerInterface)) {
 				IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
+				ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 				damageDealer->DroneKilled(this);
+				gm->EntityKilled(this, damager);
 
 				TArray< FStringFormatArg > args;
 				args.Add(FStringFormatArg(GetDroneName()));

@@ -4,6 +4,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPGPlayerController.h"
 #include "Objective.h"
+#include "DroneRPGGameMode.h"
 
 #define mGetController Cast<ADroneRPGPlayerController>(GetPlayerDrone()->GetController())
 
@@ -40,13 +41,15 @@ void ADroneHUD::DrawScore() {
 	}
 
 	for (auto& pair : totalScore) {
+
+		ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		FColor tc = *UFunctionLibrary::GetTeamColours().Find(pair.Key);
-		TArray< FStringFormatArg > args;
+		/*TArray< FStringFormatArg > args;
 		args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
-		args.Add(FStringFormatArg(pair.Value));
+		args.Add(FStringFormatArg(pair.Value));*/
 
 		// Write some text below the drone that states it's current kills and deaths
-		DrawText(FString::Format(TEXT("{0} = {1}"), args), FLinearColor(tc), vpX / 2, y);
+		DrawText(gm->GetTeamScoreText(pair.Key), FLinearColor(tc), vpX / 2, y);
 		y += 20;
 	}
 }

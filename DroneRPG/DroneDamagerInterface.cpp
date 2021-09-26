@@ -1,13 +1,17 @@
 #include "DroneDamagerInterface.h"
-
-// Add default functionality here for any IDroneDamagerInterface functions that are not pure virtual.
+#include "Enums.h"
 
 void IDroneDamagerInterface::DroneKilled(ADroneRPGCharacter* drone)
 {
-
+	// Do nothing
 }
 
 FString IDroneDamagerInterface::GetDamagerName()
 {
 	return "";
+}
+
+EDamagerType IDroneDamagerInterface::GetDamagerType()
+{
+	return EDamagerType::Drone;
 }

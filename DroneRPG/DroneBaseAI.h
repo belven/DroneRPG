@@ -1,32 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "DroneRPGGameMode.h"
+#include "FunctionLibrary.h"
 #include "DroneBaseAI.generated.h"
 
 class ADroneRPGCharacter;
 class AObjective;
-
-UENUM(BlueprintType)
-enum class  EActionState : uint8 {
-	SearchingForObjective,
-	AttackingTarget,
-	CapturingObjective,
-	DefendingObjective,
-	EvadingDamage,
-	ReturingToBase
-};
-
-UENUM(BlueprintType)
-enum class  EGameModeType : uint8 {
-	Domination,
-	TeamDeathMatch,
-	Hardpoint,
-	AttackDefend,
-	Payload
-};
 
 UCLASS()
 class DRONERPG_API ADroneBaseAI : public AAIController

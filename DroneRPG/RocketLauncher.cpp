@@ -1,8 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+#pragma once
 #include "RocketLauncher.h"
 #include "DroneProjectile.h"
 #include "Rocket.h"
 #include "DroneRPGCharacter.h"
+#include "Enums.h"
 
 URocketLauncher::URocketLauncher() : Super()
 {

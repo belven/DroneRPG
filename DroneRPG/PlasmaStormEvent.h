@@ -21,6 +21,7 @@ public:
 
 	virtual void DroneKilled(ADroneRPGCharacter* drone) override;
 	virtual FString GetDamagerName() override;
+	virtual EDamagerType GetDamagerType() override;
 
 	virtual FString GetEventName() override;
 	virtual void TriggerEvent() override;

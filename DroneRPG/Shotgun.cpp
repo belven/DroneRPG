@@ -1,8 +1,10 @@
+#pragma once
 #include "Shotgun.h"
 #include "DroneProjectile.h"
 #include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
 #include "FunctionLibrary.h"
+#include "Enums.h"
 
 const float UShotgun::Default_Initial_Lifespan = 0.7f;
 

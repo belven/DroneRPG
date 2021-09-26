@@ -7,6 +7,8 @@
 #include "FunctionLibrary.h"
 #include <Components/StaticMeshComponent.h>
 #include "NavigationSystem.h"
+#include "DroneRPGGameMode.h"
+#include <Kismet/GameplayStatics.h>
 
 AObjective::AObjective() : Super()
 {
@@ -25,7 +27,7 @@ AObjective::AObjective() : Super()
 	bigParticle = 75;
 
 	objectiveName = "";
-	
+
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
 	if (auraParticleSystem.Succeeded()) {
@@ -223,6 +225,11 @@ void AObjective::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	CalculateClaim();
+
+	if (fullClaim) {
+		ADroneRPGGameMode* gm =  Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		gm->AddTeamScore(areaOwner, 1);
+	}
 }
 
 bool AObjective::HasCompleteControl(int32 team)
