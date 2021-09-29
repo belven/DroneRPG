@@ -28,6 +28,7 @@ TArray<FScoreBoardStat> ADominationGameMode::GetScoreBoardStats()
 {
 	TArray<FScoreBoardStat> stats; 
 
+	// Domination just uses the base score of the teams
 	for (auto& team : UFunctionLibrary::GetTeamColours()) {
 		FScoreBoardStat stat;
 		stat.text = GetTeamScoreText(team.Key);

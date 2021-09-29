@@ -27,10 +27,7 @@ public:
 
 	UFUNCTION()
 		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UFUNCTION(BlueprintCallable, Category = "Objective")
-		void ClearOutOverlap(AActor* other);
-
+	
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
@@ -59,7 +56,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void RemoveOverlapingComponents(AActor* other);
 	void CalculateOwnership();
 	void UpdateColour();
 	void CalculateClaim();

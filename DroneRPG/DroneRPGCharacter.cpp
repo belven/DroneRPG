@@ -45,7 +45,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
-	//GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
@@ -101,7 +100,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
 
-	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
@@ -151,6 +149,8 @@ void ADroneRPGCharacter::BeginPlay()
 
 	if (shieldMesh != NULL) {
 		FColor col = GetTeamColour();
+		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
+		// Otherwise we access the base mesh, that all drones use, and change it globally
 		shieldMeshComp = NewObject<UInstancedStaticMeshComponent>(this);
 		shieldMeshComp->SetWorldScale3D(FVector(1));
 		shieldMeshComp->SetStaticMesh(shieldMesh);
@@ -162,12 +162,14 @@ void ADroneRPGCharacter::BeginPlay()
 		trans.AddToTranslation(FVector(0, 0, 30));
 		meshIndex = shieldMeshComp->AddInstanceWorldSpace(trans);
 
+		// The colour isn't strong enough to come through if we don't do this. TODO see if this can be reduced?? 
 		FLinearColor col2 = FLinearColor(col);
 		col2.R *= 300;
 		col2.G *= 300;
 		col2.B *= 300;
 		col2.A = 0;
 
+		// Set default shield values
 		SetMaterialFloat(TEXT("Wipe"), minWipe);
 		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 		SetMaterialColour(TEXT("Emissive Color"), col2);
@@ -175,6 +177,8 @@ void ADroneRPGCharacter::BeginPlay()
 
 	kills = 0;
 	deaths = 0;
+
+	// Give each drone a random weapon
 	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
 	SetWeapon(mGetDefaultWeapon(type, this));
 
@@ -184,8 +188,10 @@ void ADroneRPGCharacter::BeginPlay()
 void ADroneRPGCharacter::PulseShield() {
 	const float increment = 0.005;
 
+	// wipeValue is used to make the shield colour move vertically across the mesh
 	wipeValue += increment;
 
+	// If we've reached the top, reset to the bottom
 	if (wipeValue >= maxWipe)
 		wipeValue = minWipe;
 
@@ -229,26 +235,6 @@ float ADroneRPGCharacter::ClampValue(float value, float max, float min) {
 	return value;
 }
 
-void ADroneRPGCharacter::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// Check if we have a drone and we don't already have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter) && !dronesInArea.Contains(OtherActor)) {
-
-		// Add it to the list and re-calculate ownership
-		dronesInArea.Add(Cast<ADroneRPGCharacter>(OtherActor));
-	}
-}
-
-void ADroneRPGCharacter::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	// Check if we have a drone and we have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter) && dronesInArea.Contains(OtherActor)) {
-
-		// Remove it from the list and re-calculate ownership
-		dronesInArea.Remove(Cast<ADroneRPGCharacter>(OtherActor));
-	}
-}
-
 void ADroneRPGCharacter::Respawn() {
 	// Get our teams respawn point
 	ARespawnPoint* respawn = GetRespawnPoint();
@@ -283,9 +269,30 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 	return NULL;
 }
 
-void ADroneRPGCharacter::KillDrone() {
+void ADroneRPGCharacter::KillDrone(AActor* killer)
+{
+	// Inform our listeners that we've died
 	if (DroneDied.IsBound())
 		DroneDied.Broadcast(this);
+
+	// Check if the killer uses UDroneDamagerInterface
+	if (mImplements(killer, UDroneDamagerInterface)) {
+		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(killer);
+		ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+
+		// Tell the killer they've killed us
+		damageDealer->DroneKilled(this);
+
+		// Tell the gamemode we've died, to update score etc.
+		gm->EntityKilled(this, killer);
+
+		// Add text to the kill feed TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
+		TArray< FStringFormatArg > args;
+		args.Add(FStringFormatArg(GetDroneName()));
+		args.Add(FStringFormatArg(damageDealer->GetDamagerName()));
+
+		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
+	}
 
 	currentStats.health = 0;
 	currentStats.shields = 0;
@@ -339,22 +346,9 @@ void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 	if (currentStats.shields <= 0 && currentStats.health > 0) {
 		currentStats.health -= damage;
 
-		if (currentStats.health <= 0) {
+		if (!IsAlive()) {
 			deaths++;
-			KillDrone();
-
-			if (mImplements(damager, UDroneDamagerInterface)) {
-				IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
-				ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-				damageDealer->DroneKilled(this);
-				gm->EntityKilled(this, damager);
-
-				TArray< FStringFormatArg > args;
-				args.Add(FStringFormatArg(GetDroneName()));
-				args.Add(FStringFormatArg(damageDealer->GetDamagerName()));
-
-				GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
-			}
+			KillDrone(damager);
 		}
 
 		CalculateHealthColours();
@@ -380,11 +374,16 @@ bool ADroneRPGCharacter::IsAlive()
 }
 
 void ADroneRPGCharacter::FullHeal() {
+	// Set everything back to full
 	SetDefaults();
+
+	// Reset the health colour
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 
+	//Reset the Exponent of the shield
 	SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 
+	// Unhide the health and shield particles
 	shieldMeshComp->SetHiddenInGame(false);
 	healthParticle->SetHiddenInGame(false);
 }
@@ -446,7 +445,7 @@ void ADroneRPGCharacter::CalculateShields(float DeltaSeconds) {
 	if (currentStats.shields < maxStats.shields && canRegenShields) {
 		float value = shieldRegen * DeltaSeconds;
 
-		// Do we have the energy to regen our shields? TODO: show how represent energy as a particle etc. Do we want to make energy regen stop when used?
+		// Do we have the energy to regen our shields?
 		if (currentStats.energy > value) {
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -471,6 +470,8 @@ void ADroneRPGCharacter::CalculateEnergy(float DeltaSeconds) {
 void ADroneRPGCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	// Update shield material
 	PulseShield();
 
 	CalculateEnergy(DeltaSeconds);

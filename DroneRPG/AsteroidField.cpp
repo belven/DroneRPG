@@ -53,12 +53,14 @@ void AAsteroidField::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Create all the asteroids
 	for (auto& pair : meshes) {
 		for (int32 i = 0; i < pair.Value; i++) {
 			SpawnAsteroid(pair.Key);
 		}
 	}
 
+	// Make sure we don't overlap with a KeyActor, like a respawn point or objective
 	TArray<AKeyActor*> keyActors = mGetActorsInWorld<AKeyActor>(GetWorld());
 
 	for (AKeyActor* keyActor : keyActors)
@@ -70,6 +72,7 @@ void AAsteroidField::BeginPlay()
 void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 	UInstancedStaticMeshComponent* comp;
 
+	// Create a UInstancedStaticMeshComponent for each type of mesh, this is more efficient later on
 	if (!meshInstances.Contains(mesh)) {
 		comp = NewObject<UInstancedStaticMeshComponent>(this);
 		comp->SetStaticMesh(mesh);
@@ -84,10 +87,17 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 
 	FVector loc = GetAsteroidLocation();
 
+	// If we found a location, spawn an mesh
 	if (!loc.IsNearlyZero()) {
+
+		// Get a random fixed scale
 		float rand = FMath::RandRange(minScale, maxScale);
+
+		// Limit the scale differences by no more than 10% smaller or larger
 		float min = rand * 0.9f;
 		float max = rand * 1.1f;
+
+		// set up scale values within a random range of min max
 		float x = FMath::RandRange(min, max);
 		float y = FMath::RandRange(min, max);
 		float z = FMath::RandRange(min, max);
@@ -112,11 +122,15 @@ FVector AAsteroidField::GetAsteroidLocation() {
 	int32 count = 0;
 	FNavLocation loc;
 
+	// Get all other UInstancedStaticMeshComponent, to check we don't spawn too close to them
 	TArray<UInstancedStaticMeshComponent*> comps;
 	GetComponents<UInstancedStaticMeshComponent>(comps);
 
+	// Get a random point
 	mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
 
+	// Iterate over all other current UInstancedStaticMeshComponents, and check if we're too close
+	// Keep checking a new location each time
 	while (locTooClose && count < 20) {
 		locTooClose = false;
 		count++;
@@ -140,6 +154,7 @@ FVector AAsteroidField::GetAsteroidLocation() {
 		return FVector::ZeroVector;
 	}
 
+	// Increase the Z so they spawn blocking line of sight for the drones
 	loc.Location.Z += 350;
 
 	return loc;

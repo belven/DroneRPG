@@ -43,19 +43,13 @@ public:
 	ADroneRPGCharacter();
 	virtual void BeginDestroy() override;
 	void Respawn();
-	void KillDrone();
+	void KillDrone(AActor* killer);
 	FString GetDroneName();
 	void DamageDrone(float damage, AActor* damager);
 	virtual void BeginPlay() override;
 	void PulseShield();
 	virtual void Tick(float DeltaSeconds) override;
 	void RecieveHit(ADroneProjectile* projectile);
-
-	UFUNCTION()
-		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		void SetDefaults();
@@ -157,10 +151,7 @@ private:
 
 	UPROPERTY()
 		UMaterialInstanceConstant* matInstanceConst;
-
-	UPROPERTY()
-		TArray<ADroneRPGCharacter*> dronesInArea;
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class UCameraComponent* TopDownCameraComponent;
 
@@ -172,12 +163,6 @@ private:
 
 	UPROPERTY()
 		UNiagaraSystem* auraSystem;
-
-	UPROPERTY()
-		UNiagaraSystem* shieldSystem;
-
-	UPROPERTY()
-		UNiagaraComponent* shieldParticle;
 
 	UPROPERTY()
 		UNiagaraComponent* healthParticle;

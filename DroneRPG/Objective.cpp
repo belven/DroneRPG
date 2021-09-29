@@ -83,32 +83,6 @@ void AObjective::BeginPlay()
 	UpdateColour();
 }
 
-void AObjective::RemoveOverlapingComponents(AActor* other) {
-	TArray<UStaticMeshComponent*> comps;
-	other->GetComponents<UStaticMeshComponent>(comps);
-
-	for (UStaticMeshComponent* comp : comps) {
-		if (mDist(comp->GetComponentLocation(), GetActorLocation()) < GetSize()) {
-			comp->SetHiddenInGame(true);
-			comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-	}
-}
-
-void AObjective::ClearOutOverlap(AActor* other) {
-	if (other != NULL) {
-		RemoveOverlapingComponents(other);
-	}
-	else {
-		TArray<AActor*> actors;
-		GetOverlappingActors(actors);
-
-		for (AActor* a : actors) {
-			RemoveOverlapingComponents(other);
-		}
-	}
-}
-
 void AObjective::CalculateOwnership() {
 	// Clear the teams list, as we're calculating it again 
 	teamsInArea.Empty();
@@ -226,6 +200,7 @@ void AObjective::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	CalculateClaim();
 
+	// Every second add 5 points to the team that full owns this point
 	if (fullClaim) {
 		ADroneRPGGameMode* gm =  Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 		gm->AddTeamScore(areaOwner, 5);

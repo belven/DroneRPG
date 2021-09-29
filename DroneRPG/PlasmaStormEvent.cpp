@@ -60,19 +60,27 @@ FString APlasmaStormEvent::GetEventName()
 
 void APlasmaStormEvent::TriggerEvent()
 {
+	// Get drones within our radius, deal damage to them
 	for (ADroneRPGCharacter* drone : mGetDronesInRadius(GetRadius(), GetActorLocation())) {
 		drone->DamageDrone(damage, this);
 		damageDealt += damage;
 	}
 
+	// Set the timer that runs this method on loop
 	mSetTimer(TimerHandle_EventTrigger, &APlasmaStormEvent::TriggerEvent, damageRate);
 }
 
 void APlasmaStormEvent::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Update our location every tick, moving a rate towards our target location
 	SetActorLocation(FMath::Lerp(GetActorLocation(), targetLocation.Location, acceleration));
-	stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
+
+	// If we our a Power Drainer then, update our radius, as it may have changed
+	if (isPowerDrainer) {
+		stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
+	}
 }
 
 void APlasmaStormEvent::BeginPlay()
@@ -80,7 +88,7 @@ void APlasmaStormEvent::BeginPlay()
 	Super::BeginPlay();
 	damageDealt = 0.0f;
 	stormParticle = mSpawnSystemAttached(stormSystem, TEXT("Storm Particles"));
-	//stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
+	stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
 	stormParticle->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Purple));
 	stormParticle->SetFloatParameter(TEXT("Size"), 100);
 
@@ -90,11 +98,13 @@ void APlasmaStormEvent::BeginPlay()
 
 float APlasmaStormEvent::GetRadius()
 {
+	// Radius can be influenced by damage done if we are a Power Drainer
 	return isPowerDrainer ? MIN(radius + damageDealt, powerDrainLimit) : radius;
 }
 
 void APlasmaStormEvent::Move()
 {
+	// We're not a Player hunter, find a random location to move to, within a radius
 	if (!isPlayerHunter) {
 		int32 count = 0;
 		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
@@ -105,6 +115,7 @@ void APlasmaStormEvent::Move()
 			mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 		}
 	}
+	// Otherwise, find a random player and move to thier location
 	else if(mGetDrones.Num() > 0) {
 		targetLocation.Location = mGetRandomObject(mGetDrones)->GetActorLocation();
 	}

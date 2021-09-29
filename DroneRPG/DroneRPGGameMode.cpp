@@ -31,9 +31,14 @@ void ADroneRPGGameMode::BeginPlay()
 
 void ADroneRPGGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 {
+	// Check if the damager uses the UDroneDamagerInterface, which it should
 	if (mImplements(damager, UDroneDamagerInterface)) {
 		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
+
+		// Get their team and their teams current score.
 		float& score = teamScores.FindOrAdd(damageDealer->GetDamagerTeam());
+
+		// Add extra points. TODO The game mode may want to override something called GetKilledScore etc. so the amount of points can change per game mode
 		score++;
 	}
 }
@@ -46,12 +51,14 @@ TArray<FScoreBoardStat> ADroneRPGGameMode::GetScoreBoardStats()
 
 void ADroneRPGGameMode::AddTeamScore(int32 team, float bonusScore)
 {
+	// Find and add the points to the team, from AObjective
 	float& score = teamScores.FindOrAdd(team);
 	score += bonusScore;
 }
 
 FString ADroneRPGGameMode::GetTeamScoreText(int32 team)
 {
+	// Create a basic team score text string using colour and points
 	FColor tc = *UFunctionLibrary::GetTeamColours().Find(team);
 	float& score = teamScores.FindOrAdd(team);
 
