@@ -50,7 +50,7 @@ ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), isFiring
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
-	moveCamera = false;
+	moveCamera = true;
 }
 
 ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {

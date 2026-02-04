@@ -97,9 +97,9 @@ FString UFunctionLibrary::GetColourString(FColor color)
 	return colourString;
 }
 
-TMap<int32, FColor> UFunctionLibrary::GetTeamColours()
+TMap<int32, FColor>& UFunctionLibrary::GetTeamColours()
 {
-	if (UFunctionLibrary::teamColours.IsEmpty()) {
+	if (teamColours.IsEmpty()) {
 		teamColours.Add(1, FColor::Blue);
 		teamColours.Add(2, FColor::Yellow);
 		teamColours.Add(3, FColor::White);

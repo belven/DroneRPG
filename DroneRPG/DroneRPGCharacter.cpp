@@ -27,6 +27,7 @@
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
+	team = 1;
 	// Set size for player capsule
 	const float capWidth = 120.0f;
 	const float capHeight = 400.0f;
@@ -43,7 +44,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-
+	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
 
 	if (auraParticleSystem.Succeeded()) {
@@ -114,7 +115,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	healthParticleSize = 20;
 
-	SetTeam(1);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
 }
 
@@ -130,54 +130,6 @@ void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!UFunctionLibrary::GetDrones().Contains(this))
-		UFunctionLibrary::GetDrones().Add(this);
-
-	// Set up particle effect defaults
-	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
-	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
-	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
-	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
-
-	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
-	//shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shape_Sphere'"));
-
-	if (shieldMesh != NULL) {
-		FColor col = GetTeamColour();
-		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
-		// Otherwise we access the base mesh, that all drones use, and change it globally
-		shieldMeshComp = NewObject<UInstancedStaticMeshComponent>(this);
-		shieldMeshComp->SetWorldScale3D(FVector(1));
-		shieldMeshComp->SetStaticMesh(shieldMesh);
-		shieldMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		shieldMeshComp->SetupAttachment(RootComponent);
-		shieldMeshComp->RegisterComponent();
-
-		FTransform trans = GetActorTransform();
-		trans.AddToTranslation(FVector(0, 0, 30));
-		meshIndex = shieldMeshComp->AddInstance(trans, true);
-
-		// The colour isn't strong enough to come through if we don't do this. TODO see if this can be reduced?? 
-		FLinearColor col2 = FLinearColor(col);
-		col2.R *= 300;
-		col2.G *= 300;
-		col2.B *= 300;
-		col2.A = 0;
-
-		// Set default shield values
-		SetMaterialFloat(TEXT("Wipe"), minWipe);
-		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
-		SetMaterialColour(TEXT("Emissive Color"), col2);
-	}
-
-	kills = 0;
-	deaths = 0;
-
-	// Give each drone a random weapon
-	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(mGetDefaultWeapon(type, this));
-
-	Respawn();
 }
 
 void ADroneRPGCharacter::PulseShield() {
@@ -196,7 +148,7 @@ void ADroneRPGCharacter::PulseShield() {
 void ADroneRPGCharacter::SetDefaults() {
 	float energy = 150;
 	float health = 150;
-	float shields = 150;
+	float shields = 250;
 
 	maxStats.energy = energy;
 	maxStats.health = health;
@@ -214,6 +166,68 @@ void ADroneRPGCharacter::SetDefaults() {
 
 FColor ADroneRPGCharacter::GetTeamColour() {
 	return *UFunctionLibrary::GetTeamColours().Find(GetTeam());
+}
+
+void ADroneRPGCharacter::SetUpDrone()
+{
+	if (!UFunctionLibrary::GetDrones().Contains(this))
+		UFunctionLibrary::GetDrones().Add(this);
+
+	// Set up particle effect defaults
+	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
+	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
+	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
+	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
+
+	kills = 0;
+	deaths = 0;
+
+	// Give each drone a random weapon
+	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
+	SetWeapon(mGetDefaultWeapon(type, this));
+
+	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
+	//shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shape_Sphere'"));
+
+	if (shieldMesh != NULL) {
+		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
+		// Otherwise we access the base mesh, that all drones use, and change it globally
+		shieldMeshComp = NewObject<UInstancedStaticMeshComponent>(this);
+		shieldMeshComp->SetWorldScale3D(FVector(1));
+		shieldMeshComp->SetStaticMesh(shieldMesh);
+		shieldMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		shieldMeshComp->SetupAttachment(RootComponent);
+		shieldMeshComp->RegisterComponent();
+
+		FTransform trans = GetActorTransform();
+		trans.AddToTranslation(FVector(0, 0, 30));
+		meshIndex = shieldMeshComp->AddInstance(trans, true);
+
+		// Set default shield values
+		SetMaterialFloat(TEXT("Wipe"), minWipe);
+		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
+	}
+
+	// The colour isn't strong enough to come through if we don't do this. TODO see if this can be reduced?? 
+	FColor col = GetTeamColour();
+	FLinearColor col2 = FLinearColor(col);
+	col2.R *= 300;
+	col2.G *= 300;
+	col2.B *= 300;
+	col2.A = 0;
+	SetMaterialColour(TEXT("Emissive Color"), col2);
+}
+
+void ADroneRPGCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	SetUpDrone();
+}
+
+void ADroneRPGCharacter::SetTeam(int32 val)
+{
+	team = val;
 }
 
 bool ADroneRPGCharacter::IsHealthy() {

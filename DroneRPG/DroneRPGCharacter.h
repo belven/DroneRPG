@@ -69,6 +69,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		FColor GetTeamColour();
+	void SetUpDrone();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		FColor GetHealthStatus() const { return healthStatus; }
@@ -84,9 +85,11 @@ public:
 		int32 GetDeaths() const { return deaths; }
 	void SetDeaths(int32 val) { deaths = val; }
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		int32 GetTeam() const { return team; }
-	void SetTeam(int32 val) { team = val; }
+	void SetTeam(int32 val);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		FDroneStats GetCurrentStats() const { return currentStats; }

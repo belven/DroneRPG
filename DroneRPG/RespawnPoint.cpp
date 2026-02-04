@@ -1,9 +1,14 @@
 #include "RespawnPoint.h"
+
+#include "DroneBaseAI.h"
 #include "DroneRPGCharacter.h"
 #include "Components/BoxComponent.h"
 #include "FunctionLibrary.h"
+#include "NavigationSystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
-ARespawnPoint::ARespawnPoint()
+ARespawnPoint::ARespawnPoint() : teamSize(6)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
@@ -13,6 +18,36 @@ ARespawnPoint::ARespawnPoint()
 	respawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("RespawnArea"));
 	respawnArea->SetBoxExtent(FVector(GetSize(), GetSize(), 400));
 	respawnArea->SetupAttachment(GetRootComponent());
+
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
+
+	if (auraParticleSystem.Succeeded()) {
+		auraSystem = auraParticleSystem.Object;
+	}
+}
+
+void ARespawnPoint::SpawnTeam()
+{
+	for (int i = 0; i < teamSize - 1; ++i)
+	{
+		FNavLocation loc;
+		mRandomPointInNavigableRadius(GetActorLocation(), GetSize(), loc);
+
+		FActorSpawnParameters params;
+		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		ADroneRPGCharacter* npc = GetWorld()->SpawnActor<ADroneRPGCharacter>(ADroneRPGCharacter::StaticClass(), loc.Location, GetActorRotation(), params);
+
+		if (IsValid(npc))
+		{
+			npc->SetTeam(GetTeam());
+			ADroneBaseAI* aiCon = GetWorld()->SpawnActor<ADroneBaseAI>(ADroneBaseAI::StaticClass());
+			if (IsValid(aiCon))
+			{
+				aiCon->Possess(npc);
+			}
+		}
+	}
 }
 
 void ARespawnPoint::BeginPlay()
@@ -20,6 +55,19 @@ void ARespawnPoint::BeginPlay()
 	Super::BeginPlay();
 	respawnArea->OnComponentBeginOverlap.AddDynamic(this, &ARespawnPoint::BeginOverlap);
 	respawnArea->OnComponentEndOverlap.AddDynamic(this, &ARespawnPoint::EndOverlap);
+
+	// Create our particle system
+	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+
+	// Set up the systems defaults
+	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
+	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
+	captureParticle->SetFloatParameter(TEXT("Size"), 200);
+	FColor teamColour = *UFunctionLibrary::GetTeamColours().Find(GetTeam());
+
+	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
+
+	SpawnTeam();
 }
 
 void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -31,7 +79,7 @@ void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 {
 	if (mIsA(OtherActor, ADroneRPGCharacter)) {
 		ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(OtherActor);
-		if (!drone->IsHealthy()) {
+		if (drone->GetTeam() == GetTeam() && !drone->IsHealthy()) {
 			drone->FullHeal();
 		}
 	}

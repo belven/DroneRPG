@@ -3,6 +3,8 @@
 #include "KeyActor.h"
 #include "RespawnPoint.generated.h"
 
+class UNiagaraComponent;
+class UNiagaraSystem;
 class ADroneRPGCharacter;
 class UBoxComponent;
 
@@ -15,6 +17,7 @@ public:
 	ARespawnPoint();
 
 protected:
+	void SpawnTeam();
 	virtual void BeginPlay() override;
 
 	void RespawnCharacter(ADroneRPGCharacter* character);
@@ -22,6 +25,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		int32 team;
 
+		int32 teamSize;
 	UPROPERTY()
 		UBoxComponent* respawnArea;
 public:
@@ -36,4 +40,10 @@ public:
 
 	int32 GetTeam() const { return team; }
 	void SetTeam(int32 val) { team = val; }
+
+	UPROPERTY()
+	UNiagaraSystem* auraSystem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+	UNiagaraComponent* captureParticle;
 };

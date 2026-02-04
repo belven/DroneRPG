@@ -62,7 +62,7 @@ public:
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 
-	static TMap<int32, FColor> GetTeamColours();
+	static TMap<int32, FColor>& GetTeamColours();
 	static TMap<int32, FColor> teamColours;
 
 	static FString GetColourString(FColor color);
