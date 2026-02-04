@@ -10,5 +10,9 @@ public class DroneRPGTarget : TargetRules
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("DroneRPG");
-	}
+        bLegacyParentIncludePaths = true;
+        CppStandard = CppStandardVersion.Default;
+        WindowsPlatform.bStrictConformanceMode = true;
+        bValidateFormatStrings = true;
+    }
 }

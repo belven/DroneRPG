@@ -1,8 +1,6 @@
 #pragma once
-#include "Enums.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Components/BoxComponent.h"
 #include "DroneRPGCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDroneDied, ADroneRPGCharacter*, drone);
@@ -18,7 +16,7 @@ USTRUCT(BlueprintType)
 struct FDroneStats
 {
 	GENERATED_USTRUCT_BODY()
-public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 		float  health;
 
@@ -49,7 +47,7 @@ public:
 	virtual void BeginPlay() override;
 	void PulseShield();
 	virtual void Tick(float DeltaSeconds) override;
-	void RecieveHit(ADroneProjectile* projectile);
+	void ReceiveHit(ADroneProjectile* projectile);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 		void SetDefaults();
@@ -104,7 +102,7 @@ public:
 
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+	FORCEINLINE UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 private:
 	bool canRegenShields;
 	bool shieldsCritical;
@@ -153,13 +151,13 @@ private:
 		UMaterialInstanceConstant* matInstanceConst;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* TopDownCameraComponent;
+	UCameraComponent* TopDownCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
+	USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class UDecalComponent* CursorToWorld;
+	UDecalComponent* CursorToWorld;
 
 	UPROPERTY()
 		UNiagaraSystem* auraSystem;

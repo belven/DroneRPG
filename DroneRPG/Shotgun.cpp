@@ -8,7 +8,7 @@
 
 const float UShotgun::Default_Initial_Lifespan = 0.7f;
 
-UShotgun::UShotgun()
+UShotgun::UShotgun(): pellets(0)
 {
 	weaponType = EWeaponType::Shotgun;
 	spread = 0.15f;
@@ -16,12 +16,12 @@ UShotgun::UShotgun()
 
 float UShotgun::GetRange()
 {
-	return ADroneProjectile::Default_Initial_Speed * UShotgun::Default_Initial_Lifespan;
+	return ADroneProjectile::Default_Initial_Speed * Default_Initial_Lifespan;
 }
 
 UShotgun* UShotgun::CreateShotgun(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner, int32 inPellets)
 {
-	UShotgun* weapon = NewObject<UShotgun>(UShotgun::StaticClass());
+	UShotgun* weapon = NewObject<UShotgun>(StaticClass());
 	weapon->fireRate = inFireRate;
 	weapon->damage = inDamage;
 	weapon->owner = inOwner;
@@ -47,7 +47,7 @@ void UShotgun::FireShot(FVector FireDirection, AActor* target)
 				const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 
 				SpawnProjectile(gunLocation, FireRotation, target);
-				mSetTimerWolrd(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UShotgun::ShotTimerExpired, fireRate);
+				mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UShotgun::ShotTimerExpired, fireRate);
 			}
 
 			if (FireSound != nullptr)

@@ -1,7 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "DroneProjectile.h"
 #include "Rocket.generated.h"
@@ -27,5 +24,4 @@ private:
 	bool canCheckForEnemies;
 	FTimerHandle TimerHandle_CanCheckForEnemies;
 	void CanCheckForEnemies();
-
 };

@@ -1,12 +1,9 @@
 #pragma once
 #include "DroneBaseAI.h"
-#include <EngineUtils.h>
 #include "DroneRPGCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "DroneProjectile.h"
-#include "Kismet/GameplayStatics.h"
 #include <Kismet/KismetMathLibrary.h>
-#include <Kismet/KismetArrayLibrary.h>
 #include "Objective.h"
 #include "NavigationSystem.h"
 #include "Weapon.h"
@@ -15,7 +12,7 @@
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
-ADroneBaseAI::ADroneBaseAI() : Super()
+ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), targetObjective(nullptr), target(nullptr), currentState(), previousState()
 {
 	PrimaryActorTick.TickInterval = 0.1;
 	minCaptureDistance = 650;
@@ -48,7 +45,7 @@ void ADroneBaseAI::CalculateObjective()
 	case EGameModeType::AttackDefend:
 	case EGameModeType::Payload:
 	case EGameModeType::Hardpoint:
-		// In all other cases we will need to find an objective TODO:, this may need to change in game modes such as AttackDefend
+		// In all other cases we will need to find an objective TODO: this may need to change in game modes such as AttackDefend
 		FindObjective();
 		break;
 	default:
@@ -128,7 +125,7 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = mGetEnemysInRadius(distance, mDroneLocation, GetDrone()->GetTeam());
+	TArray<ADroneRPGCharacter*> drones = mGetEnemiesInRadius(distance, mDroneLocation, GetDrone()->GetTeam());
 
 	if (drones.Num() > 0) {
 		mShuffleArray<ADroneRPGCharacter*>(drones);
@@ -194,10 +191,10 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 		RotateToFace();
 
-		if (currentState != EActionState::ReturingToBase && !GetDrone()->IsHealthy()) {
-			currentState = EActionState::ReturingToBase;
+		if (currentState != EActionState::ReturningToBase && !GetDrone()->IsHealthy()) {
+			currentState = EActionState::ReturningToBase;
 		}
-		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturingToBase && IsTargetValid()) {
+		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturningToBase && IsTargetValid()) {
 			currentState = EActionState::EvadingDamage;
 			GetDrone()->GetMovementComponent()->StopActiveMovement();
 		}
@@ -241,7 +238,7 @@ void ADroneBaseAI::PerformActions() {
 	case EActionState::EvadingDamage:
 		EvadingDamage();
 		break;
-	case EActionState::ReturingToBase:
+	case EActionState::ReturningToBase:
 		ReturningToBase();
 		break;
 	default:
@@ -269,7 +266,7 @@ void ADroneBaseAI::MoveToObjective() {
 }
 
 void ADroneBaseAI::DefendingObjective() {
-	AObjective* currentObjective = Cast<AObjective>(targetObjective);
+	//AObjective* currentObjective = Cast<AObjective>(targetObjective);
 
 	// Have we gone too far from our objective? If so move closer
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
@@ -347,7 +344,7 @@ void ADroneBaseAI::AttackingTarget() {
 	}
 }
 
-FHitResult ADroneBaseAI::LinetraceToLocation(FVector startLoc, FVector endLocation) {
+FHitResult ADroneBaseAI::LineTraceToLocation(const FVector& startLoc, const FVector& endLocation) {
 	FHitResult hit;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(GetCharacter());
@@ -357,8 +354,8 @@ FHitResult ADroneBaseAI::LinetraceToLocation(FVector startLoc, FVector endLocati
 	return hit;
 }
 
-bool ADroneBaseAI::CanSee(AActor* other, FVector startLoc) {
-	FHitResult hit = LinetraceToLocation(startLoc, other->GetActorLocation());
+bool ADroneBaseAI::CanSee(AActor* other, const FVector& startLoc) {
+	FHitResult hit = LineTraceToLocation(startLoc, other->GetActorLocation());
 
 	// Do we have line of sight to our target?
 	if (hit.GetActor() == other)
@@ -369,11 +366,9 @@ bool ADroneBaseAI::CanSee(AActor* other, FVector startLoc) {
 }
 
 FVector ADroneBaseAI::GetPredictedLocation(AActor* actor) {
-	FVector loc;
 	float time = mDist(mDroneLocation, actor->GetActorLocation()) / ADroneProjectile::Default_Initial_Speed;
-	time = FMath::RandRange(time * 0.9f, time * 1.1f);
-	loc = actor->GetActorLocation() + (actor->GetVelocity() * time);
-	return loc;
+	//time = FMath::RandRange(time * 0.9f, time * 1.1f);
+	return actor->GetActorLocation() + (actor->GetVelocity() * time);
 }
 
 bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
@@ -385,11 +380,10 @@ bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
 		return true;
 	}
 	// We don't have line of sight
-	else {
+
 		// Only move to the target if told to do so
-		if (moveIfCantSee)
-			MoveToActor(targetToAttack);
-		return false;
+	if (moveIfCantSee) {
+		MoveToActor(targetToAttack);
 	}
 	return false;
 }
@@ -454,7 +448,7 @@ ADroneRPGCharacter* ADroneBaseAI::GetDrone()
 	return Cast<ADroneRPGCharacter>(GetCharacter());
 }
 
-void ADroneBaseAI::FireShot(FVector FireDirection)
+void ADroneBaseAI::FireShot(const FVector& FireDirection)
 {
 	GetDrone()->GetWeapon()->FireShot(FireDirection, target);
 }

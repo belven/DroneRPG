@@ -1,13 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "RespawnPoint.h"
 #include "DroneRPGCharacter.h"
 #include "Components/BoxComponent.h"
 #include "FunctionLibrary.h"
 
-// Sets default values
-ARespawnPoint::ARespawnPoint() : Super()
+ARespawnPoint::ARespawnPoint()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
@@ -19,7 +15,6 @@ ARespawnPoint::ARespawnPoint() : Super()
 	respawnArea->SetupAttachment(GetRootComponent());
 }
 
-// Called when the game starts or when spawned
 void ARespawnPoint::BeginPlay()
 {
 	Super::BeginPlay();

@@ -1,5 +1,4 @@
 #include "TriggeredEvent.h"
-#include "FunctionLibrary.h"
 
 ATriggeredEvent::ATriggeredEvent()
 {

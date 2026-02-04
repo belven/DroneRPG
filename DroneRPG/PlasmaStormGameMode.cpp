@@ -40,7 +40,7 @@ TArray<FScoreBoardStat> APlasmaStormGameMode::GetScoreBoardStats()
 
 	// Add plasma storm kills to the score board
 	TArray< FStringFormatArg > args;
-	args.Add(FStringFormatArg((int)FMath::RoundHalfToEven(kills)));
+	args.Add(FStringFormatArg(static_cast<int>(FMath::RoundHalfToEven(kills))));
 
 	stats.Add(FScoreBoardStat(FString::Format(TEXT("Plasma Storm has {0} kills"), args), FColor::Purple));
 	return stats;

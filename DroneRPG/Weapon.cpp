@@ -2,11 +2,10 @@
 #include "Weapon.h"
 #include "DroneProjectile.h"
 #include "DroneRPGCharacter.h"
-#include <Kismet/GameplayStatics.h>
 #include "FunctionLibrary.h"
 #include "Enums.h"
 
-UWeapon::UWeapon()
+UWeapon::UWeapon(): weaponMeshComp(nullptr), owner(nullptr), FireSound(nullptr)
 {
 	fireRate = 0.3f;
 	damage = 15.0f;
@@ -16,7 +15,8 @@ UWeapon::UWeapon()
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> ProjectileClassFound(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Base"));
 
-	if (ProjectileClassFound.Succeeded()) {
+	if (ProjectileClassFound.Succeeded())
+	{
 		projectileClass = ProjectileClassFound.Class;
 	}
 }
@@ -60,11 +60,11 @@ void UWeapon::FireShot(FVector FireDirection, AActor* target)
 			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 			SpawnProjectile(gunLocation, FireRotation, target);
 
-			mSetTimerWolrd(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
+			mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
 
 			if (FireSound != nullptr)
 			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, owner->GetActorLocation());
+				//UGameplayStatics::PlaySoundAtLocation(this, FireSound, owner->GetActorLocation());
 			}
 
 			canFire = false;

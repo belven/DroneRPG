@@ -5,13 +5,10 @@
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include <Kismet/GameplayStatics.h>
-#include <Kismet/KismetMathLibrary.h>
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
@@ -20,13 +17,11 @@
 #include "FunctionLibrary.h"
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
-#include "Weapon.h"
 #include "Materials/MaterialInstanceConstant.h"
-#include <Materials/MaterialLayersFunctions.h>
-#include "TriggeredEvent.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include "DroneDamagerInterface.h"
 #include "DroneRPGGameMode.h"
+#include "Components/InstancedStaticMeshComponent.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
@@ -85,10 +80,10 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 		meshComponent->SetupAttachment(RootComponent);
 	}
 
-	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldIsntance(TEXT("MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldInstance(TEXT("MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
 
-	if (shieldIsntance.Succeeded()) {
-		matInstanceConst = shieldIsntance.Object;
+	if (shieldInstance.Succeeded()) {
+		matInstanceConst = shieldInstance.Object;
 	}
 
 	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/TopDownCPP/Blueprints/M_Cursor_Decal.M_Cursor_Decal'"));
@@ -160,7 +155,7 @@ void ADroneRPGCharacter::BeginPlay()
 
 		FTransform trans = GetActorTransform();
 		trans.AddToTranslation(FVector(0, 0, 30));
-		meshIndex = shieldMeshComp->AddInstanceWorldSpace(trans);
+		meshIndex = shieldMeshComp->AddInstance(trans, true);
 
 		// The colour isn't strong enough to come through if we don't do this. TODO see if this can be reduced?? 
 		FLinearColor col2 = FLinearColor(col);
@@ -186,7 +181,7 @@ void ADroneRPGCharacter::BeginPlay()
 }
 
 void ADroneRPGCharacter::PulseShield() {
-	const float increment = 0.005;
+	constexpr float increment = 0.005;
 
 	// wipeValue is used to make the shield colour move vertically across the mesh
 	wipeValue += increment;
@@ -244,7 +239,7 @@ void ADroneRPGCharacter::Respawn() {
 		// Move us to the respawn point 
 		FNavLocation loc;
 		mRandomPointInNavigableRadius(respawn->GetActorLocation(), respawn->GetSize(), loc);
-		SetActorLocation(loc, true);
+		SetActorLocation(loc, false, NULL, ETeleportType::ResetPhysics);
 
 		// Fully Heal the drone
 		FullHeal();
@@ -358,7 +353,7 @@ void ADroneRPGCharacter::DamageDrone(float damage, AActor* damager) {
 	ClampValue(currentStats.shields, maxStats.shields, 0);
 }
 
-void ADroneRPGCharacter::RecieveHit(ADroneProjectile* projectile) {
+void ADroneRPGCharacter::ReceiveHit(ADroneProjectile* projectile) {
 	DamageDrone(projectile->GetDamage(), projectile);
 
 	// Inform our controller that we've been hit, only the AI version needs to know for now, so it can respond to combat

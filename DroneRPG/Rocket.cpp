@@ -2,20 +2,25 @@
 #include "FunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "DroneRPGCharacter.h"
-#include <Kismet/KismetMathLibrary.h>
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 
 const float ARocket::Default_Initial_Speed = 1000.0f;
 const float ARocket::Default_Initial_Lifespan = 3.5f;
 
-ARocket::ARocket() : Super()
+ARocket::ARocket() 
 {
-	const float speed = 3000.0f;
+	constexpr float speed = 3000.0f;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = speed;
 	ProjectileMovement->HomingAccelerationMagnitude = 15000;
 	InitialLifeSpan = Default_Initial_Lifespan;
 	canCheckForEnemies = true;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundAudio(TEXT("SoundCue'/Game/TopDownCPP/Sounds/Rocket_Booster_Cue.Rocket_Booster_Cue'"));
+	FireSound = FireSoundAudio.Object;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase>HitSoundAudio(TEXT("SoundCue'/Game/TopDownCPP/Sounds/Rocket_Explosion_Cue.Rocket_Explosion_Cue'"));
+	HitSound = HitSoundAudio.Object;
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> rocketTrailSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/Rocket_Trail.Rocket_Trail'"));
 
@@ -82,7 +87,7 @@ void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 					// Check if the drone found is an enemy
 					if (GetShooter()->GetTeam() != drone->GetTeam()) {
 						// Deal damage to enemy Drone
-						drone->RecieveHit(this);
+						drone->ReceiveHit(this);
 						Destroy();
 					}
 				}

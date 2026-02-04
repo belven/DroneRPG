@@ -1,12 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DroneRPGPlayerController.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Runtime/Engine/Classes/Components/DecalComponent.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "DroneRPGCharacter.h"
 #include "Engine/World.h"
-#include <Kismet/GameplayStatics.h>
 #include <Kismet/KismetMathLibrary.h>
 #include "DroneProjectile.h"
 #include "FunctionLibrary.h"
@@ -17,27 +13,27 @@
 
 void ADroneRPGPlayerController::One()
 {
-	SetWeapon((EWeaponType)1);
+	SetWeapon(static_cast<EWeaponType>(1));
 }
 
 void ADroneRPGPlayerController::Two()
 {
-	SetWeapon((EWeaponType)2);
+	SetWeapon(static_cast<EWeaponType>(2));
 }
 
 void ADroneRPGPlayerController::Three()
 {
-	SetWeapon((EWeaponType)3);
+	SetWeapon(static_cast<EWeaponType>(3));
 }
 
 void ADroneRPGPlayerController::Four()
 {
-	SetWeapon((EWeaponType)4);
+	SetWeapon(static_cast<EWeaponType>(4));
 }
 
 void ADroneRPGPlayerController::Five()
 {
-	SetWeapon((EWeaponType)5);
+	SetWeapon(static_cast<EWeaponType>(5));
 }
 
 void ADroneRPGPlayerController::SetWeapon(EWeaponType type) {
@@ -49,12 +45,12 @@ const FName ADroneRPGPlayerController::MoveRightBinding("MoveRight");
 const FName ADroneRPGPlayerController::FireForwardBinding("FireForward");
 const FName ADroneRPGPlayerController::FireRightBinding("FireRight");
 
-ADroneRPGPlayerController::ADroneRPGPlayerController()
+ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), isFiring(false)
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
-	moveCamera = true;
+	moveCamera = false;
 }
 
 ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
@@ -75,7 +71,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 		// Create fire direction vector
 		const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
 		const float FireRightValue = GetInputAxisValue(FireRightBinding);
-		const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
+		//	const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
 
 		FHitResult Hit;
 		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
@@ -91,7 +87,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 	}
 }
 
-void ADroneRPGPlayerController::FireShot(FVector FireDirection)
+void ADroneRPGPlayerController::FireShot(const FVector& FireDirection)
 {
 	// If it's ok to fire again
 	if (isFiring)
@@ -111,11 +107,11 @@ void ADroneRPGPlayerController::StopUsingTool() {
 	isFiring = false;
 }
 
-void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds)
+void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds) const
 {
 	// Find movement direction
-	const float ForwardValue = GetInputAxisValue(MoveForwardBinding);
-	const float RightValue = GetInputAxisValue(MoveRightBinding);
+	const float ForwardValue = GetInputAxisValue(MoveForwardBinding); // W S
+	const float RightValue = GetInputAxisValue(MoveRightBinding); // A D
 
 	// Clamp max size so that (X=1, Y=1) doesn't cause faster movement in diagonal directions
 	const FVector MoveDirection = FVector(ForwardValue, RightValue, 0.f).GetClampedToMaxSize(1.0f);
@@ -159,8 +155,9 @@ void ADroneRPGPlayerController::CanMoveCamera() {
 void ADroneRPGPlayerController::IncrementDrone() {
 	droneIndex++;
 
-	if (droneIndex > mGetDrones.Num() - 1)
+	if (droneIndex > mGetDrones.Num() - 1) {
 		droneIndex = 0;
+	}
 }
 
 void ADroneRPGPlayerController::ChangeView()
@@ -173,7 +170,7 @@ void ADroneRPGPlayerController::ChangeView()
 		IncrementDrone();
 	}
 
-	SetViewTargetWithBlend(drone, 1.0f, EViewTargetBlendFunction::VTBlend_EaseInOut, 1, false);
+	SetViewTargetWithBlend(drone, 1.0f, VTBlend_EaseInOut, 1, false);
 
 	IncrementDrone();
 

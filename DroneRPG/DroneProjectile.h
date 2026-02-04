@@ -1,7 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "DroneDamagerInterface.h"
@@ -25,6 +22,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	UPROPERTY()
 	ADroneRPGCharacter* shooter;
 	float damage;
 
@@ -46,7 +44,12 @@ protected:
 	void IgnoreActor(AActor* actor);
 	virtual int32 GetDamagerTeam() override;
 
+	UPROPERTY()
 	ADroneRPGCharacter* target;
+	UPROPERTY()
+	USoundBase* FireSound;
+	UPROPERTY()
+	USoundBase* HitSound;
 
 public:
 	ADroneProjectile();
@@ -67,7 +70,7 @@ public:
 	void SetShooter(ADroneRPGCharacter* val);
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
-	float GetDamage() const { return damage; }
+		float GetDamage() const { return damage; }
 	void SetDamage(float val) { damage = val; }
 
 	ADroneRPGCharacter* GetTarget() const { return target; }

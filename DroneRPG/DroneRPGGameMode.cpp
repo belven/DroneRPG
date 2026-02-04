@@ -1,14 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "DroneRPGGameMode.h"
 #include "DroneRPGPlayerController.h"
-#include "DroneRPGCharacter.h"
 #include "DroneDamagerInterface.h"
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
 #include "FunctionLibrary.h"
 
-ADroneRPGGameMode::ADroneRPGGameMode()
+ADroneRPGGameMode::ADroneRPGGameMode(): gameMode()
 {
 	// use our custom PlayerController class
 	PlayerControllerClass = ADroneRPGPlayerController::StaticClass();
@@ -19,7 +16,7 @@ ADroneRPGGameMode::ADroneRPGGameMode()
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
-	
+
 	static ConstructorHelpers::FClassFinder<AHUD> hud(TEXT("Blueprint'/Game/TopDownCPP/Blueprints/BaseHud.BaseHud_C'"));
 	HUDClass = hud.Class;
 }
@@ -64,6 +61,6 @@ FString ADroneRPGGameMode::GetTeamScoreText(int32 team)
 
 	TArray< FStringFormatArg > args;
 	args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
-	args.Add(FStringFormatArg((int)FMath::RoundHalfToEven(score)));
+	args.Add(FStringFormatArg(static_cast<int>(FMath::RoundHalfToEven(score))));
 	return FString::Format(TEXT("Team {0} has {1} points"), args);
 }

@@ -6,11 +6,10 @@
 #include "NiagaraSystem.h"
 #include "FunctionLibrary.h"
 #include <Components/StaticMeshComponent.h>
-#include "NavigationSystem.h"
 #include "DroneRPGGameMode.h"
 #include <Kismet/GameplayStatics.h>
 
-AObjective::AObjective() : Super()
+AObjective::AObjective()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
@@ -102,7 +101,7 @@ void AObjective::CalculateOwnership() {
 void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
-	if (currentControl > minControl&& preiviousAreaOwner == areaOwner) {
+	if (currentControl > minControl&& previousAreaOwner == areaOwner) {
 		FColor teamColour = *UFunctionLibrary::GetTeamColours().Find(areaOwner);
 
 		if (currentColour != teamColour) {
@@ -128,7 +127,7 @@ void AObjective::CalculateClaim() {
 	if (teamsInArea.Num() == 1) {
 
 		// If the preiviousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
-		if (preiviousAreaOwner == 0 && areaOwner != 0) {
+		if (previousAreaOwner == 0 && areaOwner != 0) {
 			currentControl += dronesInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
@@ -136,11 +135,11 @@ void AObjective::CalculateClaim() {
 
 			// Once the control exceeds the minimum control, the new team can have control
 			if (currentControl >= minControl) {
-				preiviousAreaOwner = areaOwner;
+				previousAreaOwner = areaOwner;
 			}
 		}
 		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
-		else if (preiviousAreaOwner != areaOwner && currentControl > 0) {
+		else if (previousAreaOwner != areaOwner && currentControl > 0) {
 			currentControl -= dronesInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
@@ -148,11 +147,11 @@ void AObjective::CalculateClaim() {
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
 			if (currentControl == 0)
-				preiviousAreaOwner = areaOwner;
+				previousAreaOwner = areaOwner;
 		}
-		// If the preiviousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
+		// If the previousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
 		// Check if we're not at the max control
-		else if (preiviousAreaOwner == areaOwner && currentControl < maxControl) {
+		else if (previousAreaOwner == areaOwner && currentControl < maxControl) {
 			currentControl += dronesInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 

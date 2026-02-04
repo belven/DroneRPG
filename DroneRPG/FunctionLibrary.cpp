@@ -2,14 +2,13 @@
 #include "Laser.h"
 #include "Shotgun.h"
 #include "DroneRPGCharacter.h"
-#include "Objective.h"
 #include "RocketLauncher.h"
 #include "Weapon.h"
 
-TMap<int32, FColor> UFunctionLibrary::teamColours = UFunctionLibrary::GetTeamColours();
-TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = UFunctionLibrary::GetDrones();
+TMap<int32, FColor> UFunctionLibrary::teamColours = GetTeamColours();
+TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = GetDrones();
 
-TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemysInRadius(float radius, FVector loc, int32 team)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemiesInRadius(float radius, const FVector& loc, int32 team)
 {
 	TArray<ADroneRPGCharacter*> drones;
 
@@ -24,7 +23,7 @@ TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemysInRadius(float radius, F
 	return drones;
 }
 
-TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, FVector loc)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, const FVector& loc)
 {
 	TArray<ADroneRPGCharacter*> dronesInRange;
 
@@ -41,14 +40,14 @@ TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, F
 }
 
 
-ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(float radius, FVector loc, int32 team)
+ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team)
 {
-	return mGetClosestActorInArray<ADroneRPGCharacter>(mGetEnemysInRadius(radius, loc, team), loc);
+	return mGetClosestActorInArray<ADroneRPGCharacter>(GetEnemiesInRadius(radius, loc, team), loc);
 }
 
 TArray <ADroneRPGCharacter*>& UFunctionLibrary::GetDrones()
 {
-	return UFunctionLibrary::dronesInGame;
+	return dronesInGame;
 }
 
 FString UFunctionLibrary::GetColourString(FColor color)
@@ -120,6 +119,7 @@ UWeapon* UFunctionLibrary::GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter
 	case EWeaponType::Mine:
 	case EWeaponType::Shotgun:
 		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+	default:
 		break;
 	}
 	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
@@ -138,6 +138,7 @@ UWeapon* UFunctionLibrary::GetWeapon(EWeaponType type, float inFireRate, float i
 		return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
 	case EWeaponType::Shotgun:
 		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+	default:
 		break;
 	}
 	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);

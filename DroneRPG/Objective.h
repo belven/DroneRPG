@@ -1,12 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
 #include "KeyActor.h"
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
-
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, AObjective*, objective);
 
@@ -67,7 +63,7 @@ protected:
 		int32 areaOwner;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
-		int32 preiviousAreaOwner;
+		int32 previousAreaOwner;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		float currentControl;

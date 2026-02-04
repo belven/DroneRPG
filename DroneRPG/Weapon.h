@@ -1,9 +1,5 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
-
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "FunctionLibrary.h"
 #include "Weapon.generated.h"
 
@@ -19,9 +15,9 @@ class DRONERPG_API UWeapon : public UObject
 public:
 	UWeapon();
 
-	 template <class T> static T* CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	template <class T> static T* CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
 
-	 virtual float GetRange();
+	virtual float GetRange();
 
 	ADroneRPGCharacter* GetOwner() const { return owner; }
 	void SetOwner(ADroneRPGCharacter* val) { owner = val; }
@@ -38,16 +34,18 @@ protected:
 	FVector GunOffset;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* weaponMeshComp;
+	UStaticMeshComponent* weaponMeshComp;
 
 	UPROPERTY()
-		ADroneRPGCharacter* owner;
+	ADroneRPGCharacter* owner;
 
 	UPROPERTY()
-		TSubclassOf<ADroneProjectile> projectileClass;
+	TSubclassOf<ADroneProjectile> projectileClass;
 
 	EWeaponType weaponType;
-	class USoundBase* FireSound;
+
+	UPROPERTY()
+	USoundBase* FireSound;
 	FTimerHandle TimerHandle_ShotTimerExpired;
 	void ShotTimerExpired();
 };

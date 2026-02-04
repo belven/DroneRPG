@@ -1,10 +1,9 @@
 #include "AsteroidField.h"
 #include "FunctionLibrary.h"
-#include <Kismet/GameplayStatics.h>
 #include "NavigationSystem.h"
-#include <EngineUtils.h>
 #include <Kismet/KismetMathLibrary.h>
 #include "KeyActor.h"
+#include "Components/InstancedStaticMeshComponent.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 
@@ -28,7 +27,7 @@ AAsteroidField::AAsteroidField()
 	maxScale = 2.0f;
 }
 
-void AAsteroidField::RemoveOverlapingComponents(AActor* other, float size) {
+void AAsteroidField::RemoveOverlappingComponents(AActor* other, float size) {
 	TArray<UInstancedStaticMeshComponent*> comps;
 	GetComponents<UInstancedStaticMeshComponent>(comps);
 
@@ -46,7 +45,7 @@ void AAsteroidField::RemoveOverlapingComponents(AActor* other, float size) {
 }
 
 void AAsteroidField::ClearOutOverlap(AActor* other, float size) {
-	RemoveOverlapingComponents(other, size);
+	RemoveOverlappingComponents(other, size);
 }
 
 void AAsteroidField::BeginPlay()
@@ -104,11 +103,11 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 
 		FTransform trans(UKismetMathLibrary::RandomRotator(), loc, FVector(x, y, z));
 
-		comp->AddInstanceWorldSpace(trans);
+		comp->AddInstance(trans, true);
 	}
 }
 
-bool AAsteroidField::IsAsteroidTooClose(FTransform asteroidTrans, FVector otherLoc, float inDist) {
+bool AAsteroidField::IsAsteroidTooClose(const FTransform& asteroidTrans, const FVector& otherLoc, float inDist) {
 	float dist = mDist(asteroidTrans.GetLocation(), otherLoc);
 
 	// Adds 1/2 of the scale to the distance, as asteroidTrans.Location is the center and the asteroid could be very large

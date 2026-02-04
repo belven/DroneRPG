@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "DroneRPGGameMode.h"
 #include "FunctionLibrary.h"
 #include "DroneBaseAI.generated.h"
 
@@ -13,7 +12,7 @@ class DRONERPG_API ADroneBaseAI : public AAIController
 {
 	GENERATED_BODY()
 public:
-	ADroneBaseAI();
+	ADroneBaseAI(const FObjectInitializer& ObjectInitializer);
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
 	void PerformActions();
@@ -32,10 +31,10 @@ public:
 		void CheckLastLocation();
 
 	EActionState GetCurrentState() const { return currentState; }
-	void SetCurrentState(EActionState val) { SetPreivousState(currentState); currentState = val; }
+	void SetCurrentState(EActionState val) { SetPreviousState(currentState); currentState = val; }
 
-	EActionState GetPreivousState() const { return preivousState; }
-	void SetPreivousState(EActionState val) { preivousState = val; }
+	EActionState GetPreviousState() const { return previousState; }
+	void SetPreviousState(EActionState val) { previousState = val; }
 
 	AActor* GetTargetObjective() const { return targetObjective; }
 	void SetTargetObjective(AActor* val) { targetObjective = val; }
@@ -56,22 +55,24 @@ private:
 	bool canCheckForEnemies;
 	bool canPerformActions;
 
+	UPROPERTY()
 	AActor* targetObjective;
+
+	UPROPERTY()
 	AActor* target;
 
 	EActionState currentState;
-	EActionState preivousState;
+	EActionState previousState;
 	EGameModeType currentGameMode;
 
 	ADroneRPGCharacter* GetDrone();
 	AActor* FindEnemyTarget(float distance = 0);
-	void FireShot(FVector FireDirection);
+	void FireShot(const FVector& FireDirection);
 
 	void FindTarget();
 	void CalculateObjective();
 	void RotateToFace();
 	void FindObjective();
-	void ShotTimerExpired();
 	void CanCheckForEnemies();
 	void CanPerformActions();
 	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
@@ -81,8 +82,8 @@ private:
 	bool ShootAttacker();
 	void EvadingDamage();
 	void AttackingTarget();
-	FHitResult LinetraceToLocation(FVector startLoc, FVector endLocation);
-	bool CanSee(AActor* other, FVector startLoc);
+	FHitResult LineTraceToLocation(const FVector& startLoc, const FVector& endLocation);
+	bool CanSee(AActor* other, const FVector& startLoc);
 	FVector GetPredictedLocation(AActor* actor);
 	void CapturingObjective();
 	bool GetEnemiesInArea();

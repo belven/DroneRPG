@@ -1,15 +1,14 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "Enums.generated.h"
 
 USTRUCT(BlueprintType)
 struct FScoreBoardStat
 {
 	GENERATED_USTRUCT_BODY()
-public:
-	FScoreBoardStat() {
 
+	FScoreBoardStat(): textColour()
+	{
 	}
 
 	FScoreBoardStat(FString inText, FColor inColour) {
@@ -18,10 +17,10 @@ public:
 	};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		FString text;
+	FString text;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		FColor textColour;
+	FColor textColour;
 };
 
 UENUM(BlueprintType)
@@ -41,7 +40,7 @@ enum class  EActionState : uint8 {
 	CapturingObjective,
 	DefendingObjective,
 	EvadingDamage,
-	ReturingToBase
+	ReturningToBase
 };
 
 UENUM(BlueprintType)

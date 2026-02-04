@@ -13,7 +13,7 @@ public:
 	ADroneRPGPlayerController();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone Controller")
-	class ADroneRPGCharacter* GetDrone();
+	ADroneRPGCharacter* GetDrone();
 protected:
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
@@ -39,10 +39,10 @@ protected:
 	static const FName FireRightBinding;
 
 	virtual void PlayerTick(float DeltaTime) override;
-	void FireShot(FVector FireDirection);
+	void FireShot(const FVector& FireDirection);
 	void UseTool();
 	void StopUsingTool();
-	void CalculateMovement(float DeltaSeconds);
+	void CalculateMovement(float DeltaSeconds) const;
 	virtual void SetupInputComponent() override;
 	void CanMoveCamera();
 	void IncrementDrone();

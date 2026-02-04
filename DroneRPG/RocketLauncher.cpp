@@ -5,7 +5,7 @@
 #include "DroneRPGCharacter.h"
 #include "Enums.h"
 
-URocketLauncher::URocketLauncher() : Super()
+URocketLauncher::URocketLauncher()
 {
 	weaponType = EWeaponType::Rocket;
 
@@ -23,7 +23,7 @@ float URocketLauncher::GetRange()
 
 URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
 {
-	URocketLauncher* weapon = NewObject<URocketLauncher>(URocketLauncher::StaticClass());
+	URocketLauncher* weapon = NewObject<URocketLauncher>(StaticClass());
 	weapon->fireRate = inFireRate;
 	weapon->damage = inDamage;
 	weapon->owner = inOwner;

@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DroneProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "DroneRPGCharacter.h"
@@ -92,7 +89,6 @@ int32 ADroneProjectile::GetDamagerTeam()
 void ADroneProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -109,7 +105,7 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 			if (droneHit->GetTeam() != shooter->GetTeam()) {
 
 				// Deal damage to enemy Drone
-				droneHit->RecieveHit(this);
+				droneHit->ReceiveHit(this);
 				Destroy();
 			}
 		}

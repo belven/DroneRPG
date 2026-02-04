@@ -85,7 +85,7 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective) {
 		}
 		else {
 			TArray< FStringFormatArg > args;
-			FString control = FString::FormatAsNumber((int32)FMath::RoundHalfToEven(objective->GetCurrentControlPercent()));
+			FString control = FString::FormatAsNumber(static_cast<int32>(FMath::RoundHalfToEven(objective->GetCurrentControlPercent())));
 			args.Add(FStringFormatArg(control));
 
 			// Write some text below the drone that states it's current kills and deaths
@@ -140,5 +140,5 @@ void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone) {
 }
 
 TArray<ADroneRPGCharacter*> ADroneHUD::GetEnemyDrones() {
-	return mGetEnemysInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam());
+	return mGetEnemiesInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam());
 }

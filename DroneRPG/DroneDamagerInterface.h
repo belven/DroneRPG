@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "DroneRPGGameMode.h"
 #include "Enums.h"
 #include "DroneDamagerInterface.generated.h"
 

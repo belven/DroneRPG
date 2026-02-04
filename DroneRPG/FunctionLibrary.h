@@ -1,6 +1,5 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include <EngineUtils.h>
 #include <Engine/World.h>
 #include "Enums.h"
@@ -32,13 +31,13 @@ class UWeapon;
 #define mGetDronesInRadius UFunctionLibrary::GetDronesInRadius
 #define mGetDrones UFunctionLibrary::GetDrones()
 
-#define mGetEnemysInRadius UFunctionLibrary::GetEnemysInRadius
+#define mGetEnemiesInRadius UFunctionLibrary::GetEnemiesInRadius
 #define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius
 
 #define mRandomReachablePointInRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(start, radius, loc);
 #define mRandomPointInNavigableRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomPointInNavigableRadius(start, radius, loc);
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
-#define mSetTimerWolrd(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
+#define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 
 
 UCLASS()
@@ -53,10 +52,10 @@ public:
 	template <class T> static T* GetClosestActorInWorld(UWorld* world, FVector loc);
 	template <class T> static T* GetClosestActorInArray(TArray<T*> actorArray, FVector loc);
 
-	static TArray <ADroneRPGCharacter*> GetEnemysInRadius(float radius, FVector loc, int32 team);
-	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, FVector loc, int32 team);
+	static TArray <ADroneRPGCharacter*> GetEnemiesInRadius(float radius, const FVector& loc, int32 team);
+	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team);
 
-	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, FVector loc);
+	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, const FVector& loc);
 	static TArray <ADroneRPGCharacter*>& GetDrones();
 
 	template<class T> static	T ClampValue(T value, T max, T min);
@@ -165,5 +164,5 @@ T UFunctionLibrary::GetRandomObject(TArray<T>& arrayIn)
 template<class T>
 T UFunctionLibrary::GetRandomEnum(T end)
 {
-	return static_cast<T>(rand() % ((int)end - 1));
+	return static_cast<T>(rand() % (static_cast<int>(end) - 1));
 }

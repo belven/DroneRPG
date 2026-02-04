@@ -16,5 +16,5 @@ public:
 	virtual TArray<FScoreBoardStat> GetScoreBoardStats() override;
 
 	TMap<int32, float> GetTeamScores() const { return teamScores; }
-	void SetTeamScores(TMap<int32, float> val) { teamScores = val; }
+	void SetTeamScores(const TMap<int32, float>& val) { teamScores = val; }
 };
