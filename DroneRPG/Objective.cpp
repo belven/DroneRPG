@@ -22,8 +22,8 @@ AObjective::AObjective()
 
 	keyActorSize = 2000;
 
-	smallParticle = 50;
-	bigParticle = 75;
+	smallParticle = 100;
+	bigParticle = 150;
 
 	objectiveName = "";
 
@@ -102,7 +102,7 @@ void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
 	if (currentControl > minControl&& previousAreaOwner == areaOwner) {
-		FColor teamColour = *UFunctionLibrary::GetTeamColours().Find(areaOwner);
+		FColor teamColour = UFunctionLibrary::GetTeamColour(areaOwner);
 
 		if (currentColour != teamColour) {
 			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));

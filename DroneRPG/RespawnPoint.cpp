@@ -50,24 +50,24 @@ void ARespawnPoint::SpawnTeam()
 	}
 }
 
+void ARespawnPoint::SetupParticles()
+{
+	// Create our particle system
+	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+
+	FColor teamColour = UFunctionLibrary::GetTeamColour(GetTeam());
+
+	// Set up the systems defaults
+	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
+	captureParticle->SetFloatParameter(TEXT("Size"), 200);
+	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
+}
+
 void ARespawnPoint::BeginPlay()
 {
 	Super::BeginPlay();
 	respawnArea->OnComponentBeginOverlap.AddDynamic(this, &ARespawnPoint::BeginOverlap);
 	respawnArea->OnComponentEndOverlap.AddDynamic(this, &ARespawnPoint::EndOverlap);
-
-	// Create our particle system
-	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
-
-	// Set up the systems defaults
-	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
-	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-	captureParticle->SetFloatParameter(TEXT("Size"), 200);
-	FColor teamColour = *UFunctionLibrary::GetTeamColours().Find(GetTeam());
-
-	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
-
-	SpawnTeam();
 }
 
 void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,

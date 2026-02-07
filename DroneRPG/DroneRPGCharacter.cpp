@@ -165,7 +165,7 @@ void ADroneRPGCharacter::SetDefaults() {
 }
 
 FColor ADroneRPGCharacter::GetTeamColour() {
-	return *UFunctionLibrary::GetTeamColours().Find(GetTeam());
+	return UFunctionLibrary::GetTeamColour(GetTeam());
 }
 
 void ADroneRPGCharacter::SetUpDrone()

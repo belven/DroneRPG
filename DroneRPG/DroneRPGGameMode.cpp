@@ -56,7 +56,7 @@ void ADroneRPGGameMode::AddTeamScore(int32 team, float bonusScore)
 FString ADroneRPGGameMode::GetTeamScoreText(int32 team)
 {
 	// Create a basic team score text string using colour and points
-	FColor tc = *UFunctionLibrary::GetTeamColours().Find(team);
+	FColor tc = UFunctionLibrary::GetTeamColour(team);
 	float& score = teamScores.FindOrAdd(team);
 
 	TArray< FStringFormatArg > args;

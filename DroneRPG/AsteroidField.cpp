@@ -3,21 +3,23 @@
 #include "NavigationSystem.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "KeyActor.h"
+#include "Objective.h"
+#include "RespawnPoint.h"
 #include "Components/InstancedStaticMeshComponent.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 
-AAsteroidField::AAsteroidField()
+AAsteroidField::AAsteroidField() : objectives(0), teams(0)
 {
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> asteroidOne(TEXT("StaticMesh'/Game/TopDownCPP/Models/Terrain/Asteroids/Asteriod_1.Asteriod_1'"));
 
 	if (asteroidOne.Succeeded())
-		meshes.Add(asteroidOne.Object, 100);
+		meshes.Add(asteroidOne.Object);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> asteroidTwo(TEXT("StaticMesh'/Game/TopDownCPP/Models/Terrain/Asteroids/Asteriod_2.Asteriod_2'"));
 
 	if (asteroidTwo.Succeeded())
-		meshes.Add(asteroidTwo.Object, 100);
+		meshes.Add(asteroidTwo.Object);
 
 	PrimaryActorTick.bCanEverTick = false;
 	minDist = 2000;
@@ -25,6 +27,8 @@ AAsteroidField::AAsteroidField()
 
 	minScale = 1.0f;
 	maxScale = 2.0f;
+
+	asteroids = 30;
 }
 
 void AAsteroidField::RemoveOverlappingComponents(AActor* other, float size) {
@@ -37,7 +41,7 @@ void AAsteroidField::RemoveOverlappingComponents(AActor* other, float size) {
 			float dist = MAX(minDist, size);
 
 			comp->GetInstanceTransform(i, trans);
-			if (IsAsteroidTooClose(trans, other->GetActorLocation(), size)) {
+			if (IsAsteroidTooClose(trans, other->GetActorLocation(), dist)) {
 				comp->RemoveInstance(i);
 			}
 		}
@@ -48,19 +52,29 @@ void AAsteroidField::ClearOutOverlap(AActor* other, float size) {
 	RemoveOverlappingComponents(other, size);
 }
 
-void AAsteroidField::BeginPlay()
+void AAsteroidField::PushVectors(TMap<int32, FNode>& locations, const FVector& originPoint)
 {
-	Super::BeginPlay();
+	for (auto& Elem : locations)
+	{
+		if (Elem.Value.type == ENodeType::Asteroid || Elem.Value.type == ENodeType::Objective) {
+			FVector& Location = Elem.Value.location;
 
-	// Create all the asteroids
-	for (auto& pair : meshes) {
-		for (int32 i = 0; i < pair.Value; i++) {
-			SpawnAsteroid(pair.Key);
+			FVector Direction = Location - originPoint;
+
+			if (!Direction.IsNearlyZero())
+			{
+				Direction.Normalize();
+				Location = originPoint + Direction * minDist;
+				Location.Z = GetActorLocation().Z;
+			}
 		}
 	}
+}
 
+void AAsteroidField::ClearUpAroundKeyActors()
+{
 	// Make sure we don't overlap with a KeyActor, like a respawn point or objective
-	TArray<AKeyActor*> keyActors = mGetActorsInWorld<AKeyActor>(GetWorld());
+	TArray<AKeyActor*> keyActors = UFunctionLibrary::GetActorsInWorld<AKeyActor>(GetWorld());
 
 	for (AKeyActor* keyActor : keyActors)
 	{
@@ -68,7 +82,117 @@ void AAsteroidField::BeginPlay()
 	}
 }
 
-void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
+void AAsteroidField::SpaceTooCloseVectors(TMap<int32, FNode>& locations)
+{
+	for (auto& locationA : locations) {
+		for (auto& locationB : locations) {
+			if (locationA.Key == locationB.Key) continue;
+
+			ENodeType locationAType = locationA.Value.type;
+			if ((locationAType == ENodeType::Asteroid || locationAType == ENodeType::Objective) 
+				&& locationB.Value.type != ENodeType::SpawnPoint && locationAType != ENodeType::SpawnPoint) {
+				FVector Delta = locationA.Value.location - locationB.Value.location;
+				float Dist = Delta.Size();
+
+				if (Dist < minDist && Dist > KINDA_SMALL_NUMBER)
+				{
+					locationA.Value.location += Delta.GetSafeNormal() * (minDist - Dist) * 0.5f;
+				}
+			}
+		}
+	}
+}
+
+void AAsteroidField::CreateSpawnPoint(TArray<ARespawnPoint*>& respawnPoints, int32 team, const FVector& newLocation)
+{
+	ARespawnPoint* respawn = GetWorld()->SpawnActor<ARespawnPoint>(ARespawnPoint::StaticClass(), newLocation, newLocation.Rotation());
+	respawn->SetTeam(team);
+	respawn->SetupParticles();
+	respawn->SetTeamSize(5);
+	respawnPoints.Add(respawn);
+}
+
+void AAsteroidField::CreateObjective(const FVector& centre)
+{
+	GetWorld()->SpawnActor<AObjective>(AObjective::StaticClass(), centre, centre.Rotation());
+}
+
+void AAsteroidField::BeginPlay()
+{
+	Super::BeginPlay();
+
+	int32 lastID = 0;
+	TMap<int32, FNode> locations;
+	TArray<ARespawnPoint*> respawnPoints;
+
+	const float distance = radius * .4;
+
+	const FVector centre(0.f, 0.f, 0.f);
+
+	CreateObjective(centre);
+	locations.Add(lastID++, FNode(centre, ENodeType::Objective));
+
+	for (int32 i = 0; i < teams; ++i)
+	{
+		const float angleStep = 360.f / teams;
+		const float angleDeg = i * angleStep;
+		const float angleRad = FMath::DegreesToRadians(angleDeg);
+
+		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
+
+		locations.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
+	}
+
+	for (int i = 0; i < objectives; ++i)
+	{
+		const float angleStep = 360.f / objectives;
+		const float angleDeg = i * angleStep * FMath::RandRange(0.8, 1.2);
+		const float angleRad = FMath::DegreesToRadians(angleDeg);
+
+		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
+
+		locations.Add(lastID++, FNode(newLocation, ENodeType::Objective));
+		PushVectors(locations, newLocation);
+	}
+
+	SpaceTooCloseVectors(locations);
+
+	for (int i = 0; i < asteroids; ++i)
+	{
+		FVector newLocation = GetAsteroidLocation();
+		locations.Add(lastID++, FNode(newLocation, ENodeType::Asteroid));
+
+		PushVectors(locations, newLocation);
+		SpaceTooCloseVectors(locations);
+	}
+
+	int32 team = 0;
+	// Create all the asteroids
+	for (auto& location : locations) {
+
+		if (location.Value.type == ENodeType::SpawnPoint)
+		{
+			CreateSpawnPoint(respawnPoints, team++, location.Value.location);
+		}
+		else if (location.Value.type == ENodeType::Objective)
+		{
+			CreateObjective(location.Value.location);
+		}
+		else {
+			UStaticMesh* mesh = UFunctionLibrary::GetRandomObject(meshes);
+			SpawnAsteroid(mesh, location.Value.location);
+		}
+	}
+
+	ClearUpAroundKeyActors();
+
+	for (ARespawnPoint* respawnPoint : respawnPoints)
+	{
+		respawnPoint->SpawnTeam();
+	}
+}
+
+void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh, const FVector& location) {
 	UInstancedStaticMeshComponent* comp;
 
 	// Create a UInstancedStaticMeshComponent for each type of mesh, this is more efficient later on
@@ -84,10 +208,8 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 		comp = *meshInstances.Find(mesh);
 	}
 
-	FVector loc = GetAsteroidLocation();
-
 	// If we found a location, spawn an mesh
-	if (!loc.IsNearlyZero()) {
+	if (!location.IsNearlyZero()) {
 
 		// Get a random fixed scale
 		float rand = FMath::RandRange(minScale, maxScale);
@@ -101,7 +223,7 @@ void AAsteroidField::SpawnAsteroid(UStaticMesh* mesh) {
 		float y = FMath::RandRange(min, max);
 		float z = FMath::RandRange(min, max);
 
-		FTransform trans(UKismetMathLibrary::RandomRotator(), loc, FVector(x, y, z));
+		FTransform trans(UKismetMathLibrary::RandomRotator(), location, FVector(x, y, z));
 
 		comp->AddInstance(trans, true);
 	}
@@ -117,44 +239,12 @@ bool AAsteroidField::IsAsteroidTooClose(const FTransform& asteroidTrans, const F
 }
 
 FVector AAsteroidField::GetAsteroidLocation() {
-	bool locTooClose = true;
-	int32 count = 0;
 	FNavLocation loc;
-
-	// Get all other UInstancedStaticMeshComponent, to check we don't spawn too close to them
-	TArray<UInstancedStaticMeshComponent*> comps;
-	GetComponents<UInstancedStaticMeshComponent>(comps);
 
 	// Get a random point
 	mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
-
-	// Iterate over all other current UInstancedStaticMeshComponents, and check if we're too close
-	// Keep checking a new location each time
-	while (locTooClose && count < 20) {
-		locTooClose = false;
-		count++;
-
-		for (UInstancedStaticMeshComponent* comp : comps) {
-			for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) {
-				FTransform trans;
-
-				comp->GetInstanceTransform(i, trans);
-
-				if (IsAsteroidTooClose(trans, loc, minDist)) {
-					locTooClose = true;
-					mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
-					break;
-				}
-			}
-		}
-	}
-
-	if (count == 20) {
-		return FVector::ZeroVector;
-	}
-
-	// Increase the Z so they spawn blocking line of sight for the drones
-	loc.Location.Z += 350;
+	loc.Location.Z = GetActorLocation().Z;
+	loc.Location.Z += 600;
 
 	return loc;
 }

@@ -15,9 +15,10 @@ class DRONERPG_API ARespawnPoint : public AKeyActor
 
 public:
 	ARespawnPoint();
+	void SpawnTeam();
+	void SetupParticles();
 
 protected:
-	void SpawnTeam();
 	virtual void BeginPlay() override;
 
 	void RespawnCharacter(ADroneRPGCharacter* character);
@@ -26,6 +27,19 @@ protected:
 		int32 team;
 
 		int32 teamSize;
+
+public:
+	int32 GetTeamSize() const
+	{
+		return teamSize;
+	}
+
+	void SetTeamSize(int32 inTeamSize)
+	{
+		teamSize = inTeamSize;
+	}
+
+protected:
 	UPROPERTY()
 		UBoxComponent* respawnArea;
 public:

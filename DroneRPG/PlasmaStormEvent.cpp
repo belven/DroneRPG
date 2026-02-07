@@ -90,7 +90,7 @@ void APlasmaStormEvent::BeginPlay()
 	stormParticle = mSpawnSystemAttached(stormSystem, TEXT("Storm Particles"));
 	stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
 	stormParticle->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Purple));
-	stormParticle->SetFloatParameter(TEXT("Size"), 100);
+	stormParticle->SetFloatParameter(TEXT("Size"), 175);
 
 	TriggerEvent();
 	Move();
