@@ -1,14 +1,18 @@
 #pragma once
 #include "DroneBaseAI.h"
-#include "DroneRPGCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "Weapons/DroneProjectile.h"
 #include <Kismet/KismetMathLibrary.h>
+
 #include "NavigationSystem.h"
-#include "Weapons/Weapon.h"
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/Enums.h"
+#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/LevelActors/Objective.h"
+#include "DroneRPG/LevelActors/RespawnPoint.h"
+#include "DroneRPG/Weapons/DroneProjectile.h"
+#include "DroneRPG/Weapons/Weapon.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "LevelActors/Objective.h"
-#include "LevelActors/RespawnPoint.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 

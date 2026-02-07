@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "FunctionLibrary.h"
+#include "DroneRPG/Enums.h"
 #include "DroneBaseAI.generated.h"
 
 class ADroneRPGCharacter;

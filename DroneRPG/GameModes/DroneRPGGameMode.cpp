@@ -2,8 +2,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
 #include "DroneRPG/DroneDamagerInterface.h"
-#include "DroneRPG/DroneRPGPlayerController.h"
 #include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 
 ADroneRPGGameMode::ADroneRPGGameMode(): gameMode()
 {

@@ -4,9 +4,9 @@
 #include "Components/BoxComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
-#include "DroneRPG/DroneBaseAI.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Controllers/DroneBaseAI.h"
 
 ARespawnPoint::ARespawnPoint() : teamSize(6)
 {

@@ -2,7 +2,7 @@
 #include "FunctionLibrary.h"
 #include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
-#include "DroneRPGPlayerController.h"
+#include "Controllers/DroneRPGPlayerController.h"
 #include "GameModes/DroneRPGGameMode.h"
 #include "LevelActors/Objective.h"
 

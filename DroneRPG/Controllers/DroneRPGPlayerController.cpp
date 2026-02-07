@@ -1,12 +1,12 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "DroneRPGPlayerController.h"
-#include "DroneRPGCharacter.h"
 #include "Engine/World.h"
 #include <Kismet/KismetMathLibrary.h>
-#include "Weapons/DroneProjectile.h"
-#include "FunctionLibrary.h"
-#include "Weapons/Weapon.h"
+
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Weapons/Weapon.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()
