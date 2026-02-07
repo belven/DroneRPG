@@ -14,6 +14,9 @@ const float ADroneProjectile::Default_Initial_Lifespan = 1.2f;
 // Sets default values
 ADroneProjectile::ADroneProjectile()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Projectiles"));
+#endif
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 

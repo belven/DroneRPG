@@ -11,6 +11,9 @@
 
 AObjective::AObjective()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Objectives"));
+#endif
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
 	areaOwner = 0;

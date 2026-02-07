@@ -28,6 +28,9 @@
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Characters"));
+#endif
 	team = 1;
 	// Set size for player capsule
 	const float capWidth = 120.0f;

@@ -47,6 +47,9 @@ const FName ADroneRPGPlayerController::FireRightBinding("FireRight");
 
 ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), isFiring(false)
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Controllers"));
+#endif
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;

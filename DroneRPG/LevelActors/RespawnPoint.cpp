@@ -10,6 +10,10 @@
 
 ARespawnPoint::ARespawnPoint() : teamSize(6)
 {
+#if WITH_EDITOR
+		SetFolderPath(TEXT("Respawn Points"));
+#endif
+
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
 

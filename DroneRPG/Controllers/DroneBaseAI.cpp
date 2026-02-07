@@ -18,6 +18,10 @@
 
 ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), targetObjective(nullptr), target(nullptr), currentState(), previousState()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Controllers"));
+#endif
+	AActor::SetIsTemporarilyHiddenInEditor(true);
 	PrimaryActorTick.TickInterval = 0.1;
 	minCaptureDistance = 650;
 	targetRange = 3000;

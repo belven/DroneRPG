@@ -10,6 +10,10 @@
 
 APlasmaStormEvent::APlasmaStormEvent()
 {
+#if WITH_EDITOR
+	if (IsRunningGame())
+		SetFolderPath(TEXT("Environmental Effects"));
+#endif
 	radius = 2000.0f;
 	powerDrainLimit = radius * 3;
 	damage = 20.0f;
@@ -115,7 +119,7 @@ void APlasmaStormEvent::Move()
 		}
 	}
 	// Otherwise, find a random player and move to thier location
-	else if(mGetDrones.Num() > 0) {
+	else if (mGetDrones.Num() > 0) {
 		targetLocation.Location = mGetRandomObject(mGetDrones)->GetActorLocation();
 	}
 
