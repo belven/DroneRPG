@@ -20,8 +20,8 @@
 #include "Materials/MaterialInstanceConstant.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include "DroneDamagerInterface.h"
-#include "DroneRPGGameMode.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "GameModes/DroneRPGGameMode.h"
 #include "Weapons/Weapon.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)

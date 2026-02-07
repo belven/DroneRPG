@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "DroneRPGGameMode.h"
-#include "DroneDamagerInterface.h"
 #include "PlasmaStormGameMode.generated.h"
 
 struct FScoreBoardStat;

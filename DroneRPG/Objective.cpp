@@ -6,8 +6,9 @@
 #include "NiagaraSystem.h"
 #include "FunctionLibrary.h"
 #include <Components/StaticMeshComponent.h>
-#include "DroneRPGGameMode.h"
 #include <Kismet/GameplayStatics.h>
+
+#include "GameModes/DroneRPGGameMode.h"
 
 AObjective::AObjective()
 {

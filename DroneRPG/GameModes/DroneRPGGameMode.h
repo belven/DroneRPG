@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "DroneRPG/Enums.h"
 #include "GameFramework/GameModeBase.h"
-#include "Enums.h"
 #include "DroneRPGGameMode.generated.h"
 
 UCLASS(minimalapi)

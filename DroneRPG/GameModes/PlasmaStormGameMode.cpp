@@ -1,8 +1,9 @@
 #include "PlasmaStormGameMode.h"
-#include "DroneDamagerInterface.h"
-#include "FunctionLibrary.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include <Kismet/GameplayStatics.h>
+
+#include "DroneRPG/DroneDamagerInterface.h"
+#include "DroneRPG/FunctionLibrary.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"
 
