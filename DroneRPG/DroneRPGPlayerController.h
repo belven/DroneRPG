@@ -1,8 +1,10 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "Enums.h"
 #include "GameFramework/PlayerController.h"
-#include "Weapon.h"
 #include "DroneRPGPlayerController.generated.h"
+
+class ADroneRPGCharacter;
 
 UCLASS()
 class ADroneRPGPlayerController : public APlayerController

@@ -1,6 +1,5 @@
 #pragma once
 #include "Laser.h"
-#include "Enums.h"
 
 ULaser::ULaser()
 {

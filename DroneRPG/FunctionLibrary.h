@@ -20,8 +20,6 @@ class UWeapon;
 
 #define mClampValue UFunctionLibrary::ClampValue
 #define mShuffleArray UFunctionLibrary::ShuffleArray
-#define mGetWeapon UFunctionLibrary::GetWeapon
-#define mGetDefaultWeapon UFunctionLibrary::GetDefaultWeapon
 #define mGetRandomObject UFunctionLibrary::GetRandomObject
 
 #define mGetActorsInWorld UFunctionLibrary::GetActorsInWorld
@@ -66,8 +64,6 @@ public:
 	static  TMap<int32, FColor>& GetTeamColours();
 
 	static FString GetColourString(FColor color);
-	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
-	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
 	template<class T> static T GetRandomEnum(T end);
 
 private:

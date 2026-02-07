@@ -12,7 +12,7 @@
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
-#include "DroneProjectile.h"
+#include "Weapons/DroneProjectile.h"
 #include "DroneBaseAI.h"
 #include "FunctionLibrary.h"
 #include "RespawnPoint.h"
@@ -22,6 +22,7 @@
 #include "DroneDamagerInterface.h"
 #include "DroneRPGGameMode.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Weapons/Weapon.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 

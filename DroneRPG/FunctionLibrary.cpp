@@ -1,9 +1,5 @@
 #include "FunctionLibrary.h"
-#include "Laser.h"
-#include "Shotgun.h"
 #include "DroneRPGCharacter.h"
-#include "RocketLauncher.h"
-#include "Weapon.h"
 
 TMap<int32, FColor> UFunctionLibrary::teamColours = GetTeamColours();
 TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = GetDrones();
@@ -119,40 +115,4 @@ TMap<int32, FColor>& UFunctionLibrary::GetTeamColours()
 		teamColours.Add(4, FColor::Magenta);
 	}
 	return teamColours;
-}
-
-UWeapon* UFunctionLibrary::GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner)
-{
-	switch (type) {
-	case EWeaponType::Rail_Gun:
-	case EWeaponType::Laser:
-		return ULaser::CreateLaser(0.3f, 25.0f, inOwner);
-	case EWeaponType::Rocket:
-		return URocketLauncher::CreateRocketLauncher(1.5f, 50.0f, inOwner);
-	case EWeaponType::Mine:
-	case EWeaponType::Shotgun:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
-	default:
-		break;
-	}
-	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
-}
-
-UWeapon* UFunctionLibrary::GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
-{
-	switch (type) {
-	case EWeaponType::Laser:
-		return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
-	case EWeaponType::Rocket:
-		return URocketLauncher::CreateRocketLauncher(1.5f, 60.0f, inOwner);
-	case EWeaponType::Mine:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
-	case EWeaponType::Rail_Gun:
-		return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
-	case EWeaponType::Shotgun:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
-	default:
-		break;
-	}
-	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
 }

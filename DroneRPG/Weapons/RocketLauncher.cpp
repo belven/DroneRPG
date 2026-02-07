@@ -2,8 +2,7 @@
 #include "RocketLauncher.h"
 #include "DroneProjectile.h"
 #include "Rocket.h"
-#include "DroneRPGCharacter.h"
-#include "Enums.h"
+#include "DroneRPG/DroneRPGCharacter.h"
 
 URocketLauncher::URocketLauncher()
 {

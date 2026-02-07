@@ -2,11 +2,11 @@
 #include "DroneBaseAI.h"
 #include "DroneRPGCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "DroneProjectile.h"
+#include "Weapons/DroneProjectile.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Objective.h"
 #include "NavigationSystem.h"
-#include "Weapon.h"
+#include "Weapons/Weapon.h"
 #include "RespawnPoint.h"
 #include "GameFramework/SpringArmComponent.h"
 

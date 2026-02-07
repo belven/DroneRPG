@@ -4,9 +4,9 @@
 #include "DroneRPGCharacter.h"
 #include "Engine/World.h"
 #include <Kismet/KismetMathLibrary.h>
-#include "DroneProjectile.h"
+#include "Weapons/DroneProjectile.h"
 #include "FunctionLibrary.h"
-#include "Weapon.h"
+#include "Weapons/Weapon.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()

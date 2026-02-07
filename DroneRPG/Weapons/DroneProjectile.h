@@ -1,7 +1,5 @@
 #pragma once
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "DroneDamagerInterface.h"
+#include "../DroneDamagerInterface.h"
 #include "DroneProjectile.generated.h"
 
 class UProjectileMovementComponent;

@@ -6,7 +6,7 @@
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"
 
-ADominationGameMode::ADominationGameMode() : Super()
+ADominationGameMode::ADominationGameMode()
 {
 	gameMode = EGameModeType::Domination;
 }

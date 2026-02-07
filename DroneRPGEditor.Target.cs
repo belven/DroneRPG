@@ -11,7 +11,6 @@ public class DroneRPGEditorTarget : TargetRules
         DefaultBuildSettings = BuildSettingsVersion.V5;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_5;
         ExtraModuleNames.Add("DroneRPG");
-        bLegacyParentIncludePaths = true; // TODO update this - would require a lot of changes
         WindowsPlatform.bStrictConformanceMode = true;
         bValidateFormatStrings = true;
 	}

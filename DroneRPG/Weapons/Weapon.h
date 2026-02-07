@@ -1,9 +1,11 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "FunctionLibrary.h"
+#include "DroneRPG/Enums.h"
 #include "Weapon.generated.h"
 
 #define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation)
+#define mGetWeapon UWeapon::GetWeapon
+#define mGetDefaultWeapon UWeapon::GetDefaultWeapon
 
 class ADroneRPGCharacter;
 class ADroneProjectile;
@@ -27,6 +29,9 @@ public:
 
 	virtual void FireShot(FVector FireDirection, AActor* target = NULL);
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target);
+
+	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
+	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
 protected:
 	float fireRate;
 	float damage;
