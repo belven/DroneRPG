@@ -1,10 +1,10 @@
 #include "DroneHUD.h"
-#include "FunctionLibrary.h"
-#include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
-#include "Controllers/DroneRPGPlayerController.h"
-#include "GameModes/DroneRPGGameMode.h"
-#include "LevelActors/Objective.h"
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Controllers/DroneRPGPlayerController.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/LevelActors/Objective.h"
 
 #define mGetController Cast<ADroneRPGPlayerController>(GetPlayerDrone()->GetController())
 
