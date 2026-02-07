@@ -13,6 +13,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Perception/AIPerceptionComponent.h"
+#include "Perception/AISenseConfig_Sight.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
@@ -24,11 +26,30 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	PrimaryActorTick.TickInterval = 0.1;
 	minCaptureDistance = 650;
-	targetRange = 3000;
+	targetRange = 10000;
 
 	canCheckForEnemies = true;
 	canPerformActions = true;
 	currentGameMode = EGameModeType::Domination;
+
+	// Create and configure perception components
+	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
+	sightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+
+	// Set up sight config for AI perception
+	sightConfig->SightRadius = targetRange / 2;
+	sightConfig->LoseSightRadius = targetRange * 1.1;
+	sightConfig->PeripheralVisionAngleDegrees = 360.0f;
+
+	// This section is important, as without setting at least bDetectNeutrals to true, the AI will never perceive anything
+	// Still not tried to set this up correctly at all
+	sightConfig->DetectionByAffiliation.bDetectEnemies = true;
+	sightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+	sightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+
+	PerceptionComponent->SetDominantSense(sightConfig->GetSenseImplementation());
+	PerceptionComponent->ConfigureSense(*sightConfig);
+	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADroneBaseAI::TargetPerceptionUpdated);
 }
 
 void ADroneBaseAI::CheckLastLocation() {
@@ -36,6 +57,27 @@ void ADroneBaseAI::CheckLastLocation() {
 		GetDrone()->Respawn();
 	}
 	lastLocation = FVector::ZeroVector;
+}
+
+void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
+{
+	if (Stimulus.WasSuccessfullySensed()) {
+		ADroneRPGCharacter* character = Cast<ADroneRPGCharacter>(Actor);
+		if ((!IsValid(GetDroneTarget()) || !GetDroneTarget()->IsAlive()) && IsValid(character)) {
+			if (character->GetTeam() != GetDrone()->GetTeam())
+			{
+				target = character;
+			}
+		}
+	}
+	else
+	{
+		if (currentState == EActionState::AttackingTarget || currentState == EActionState::SearchingForObjective || currentState == EActionState::EvadingDamage)
+		{
+			target = NULL;
+			MoveToLocation(Stimulus.StimulusLocation);
+		}
+	}
 }
 
 void ADroneBaseAI::CalculateObjective()
@@ -90,9 +132,14 @@ void ADroneBaseAI::FindObjective() {
 	}
 }
 
+ADroneRPGCharacter* ADroneBaseAI::GetDroneTarget()
+{
+	return Cast<ADroneRPGCharacter>(target);
+}
+
 void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	// If we don't have a target OR we have one but it's different to the one we have, then target it
-	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
+	ADroneRPGCharacter* droneTarget = GetDroneTarget();
 	ADroneRPGCharacter* droneAttacker = Cast<ADroneRPGCharacter>(attacker);
 
 	// We have no target
@@ -101,7 +148,7 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	}
 	else if (droneTarget != droneAttacker) {
 		// Something else has attacked us and our current target is out of line of sight or dead
-		if (!droneTarget->IsAlive() || !CanSee(droneTarget, mDroneLocation)) {
+		if (!droneTarget->IsAlive()) {
 			target = droneAttacker;
 		}
 	}
@@ -188,8 +235,12 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 	// We don't do anything if we're dead!
 	if (GetDrone()->IsAlive()) {
-		if (target != NULL && !IsTargetValid()) {
+		if (!IsTargetValid()) {
 			target = NULL;
+		}
+		else
+		{
+			ShootTargetIfValid();
 		}
 
 		if (lastLocation.IsZero()) {
@@ -280,12 +331,6 @@ void ADroneBaseAI::DefendingObjective() {
 	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance) {
 		MoveToObjective();
 	}
-
-	// Do we have a valid target
-	// Is there an enemy nearby the area
-	if (!ShootAttacker() && canCheckForEnemies) {
-		GetEnemiesInArea();
-	}
 }
 
 void ADroneBaseAI::ReturningToBase() {
@@ -296,26 +341,16 @@ void ADroneBaseAI::ReturningToBase() {
 	else {
 		currentState = EActionState::SearchingForObjective;
 	}
-
-	// Do we have a valid target
-	// Is there an enemy nearby the area
-	if (!ShootAttacker() && canCheckForEnemies) {
-		GetEnemiesInArea();
-	}
 }
 
-bool ADroneBaseAI::ShootAttacker() {
+bool ADroneBaseAI::ShootTargetIfValid() {
+	bool result = false;
 	if (IsTargetValid()) {
 		// Attempt to attack the target, don't move to the target if we can't see it
-		if (!AttackTarget(target, false)) {
-			// We're in here due to us loosing line of sight to the target
-			target = NULL;
-		}
-		else {
-			return true;
-		}
+		AttackTarget(target);
+		result = true;
 	}
-	return false;
+	return result;
 }
 
 void ADroneBaseAI::EvadingDamage() {
@@ -332,8 +367,6 @@ void ADroneBaseAI::EvadingDamage() {
 			}
 			MoveToLocation(loc);
 		}
-
-		ShootAttacker();
 	}
 	else {
 		currentState = EActionState::SearchingForObjective;
@@ -379,28 +412,17 @@ FVector ADroneBaseAI::GetPredictedLocation(AActor* actor) {
 	return actor->GetActorLocation() + (actor->GetVelocity() * time);
 }
 
-bool ADroneBaseAI::AttackTarget(AActor* targetToAttack, bool moveIfCantSee)
+void ADroneBaseAI::AttackTarget(AActor* targetToAttack)
 {
-	// Do we have line of sight to our target?
-	if (CanSee(targetToAttack, mDroneLocation))
-	{
-		FireShot(lookAt.Vector());
-		return true;
-	}
-	// We don't have line of sight
-
-		// Only move to the target if told to do so
-	if (moveIfCantSee) {
-		MoveToActor(targetToAttack);
-	}
-	return false;
+	FireShot(lookAt.Vector());
 }
 
 bool ADroneBaseAI::IsTargetValid() {
-	ADroneRPGCharacter* droneTarget = Cast<ADroneRPGCharacter>(target);
+	ADroneRPGCharacter* droneTarget = GetDroneTarget();
+	float range = GetDrone()->GetWeapon()->GetRange();
 
-	if (droneTarget != NULL && !droneTarget->IsActorBeingDestroyed()
-		&& mDist(droneTarget->GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange()) {
+	if (IsValid(droneTarget)
+		&& mDist(droneTarget->GetActorLocation(), mDroneLocation) <= range) {
 		return droneTarget->IsAlive();
 	}
 
@@ -418,32 +440,6 @@ void ADroneBaseAI::CapturingObjective() {
 	else if (currentObjective != NULL && currentObjective->HasCompleteControl(GetDrone()->GetTeam())) {
 		currentState = EActionState::SearchingForObjective;
 	}
-
-	// Do we have a valid target
-	// Is there an enemy nearby the area
-	if (!ShootAttacker() && canCheckForEnemies) {
-		GetEnemiesInArea();
-	}
-}
-
-bool ADroneBaseAI::GetEnemiesInArea() {
-	mSetTimer(TimerHandle_CanCheckForEnemies, &ADroneBaseAI::CanCheckForEnemies, 0.1f);
-	canCheckForEnemies = false;
-	AActor* targetFound = FindEnemyTarget(GetDrone()->GetWeapon()->GetRange());
-
-	if (targetFound != NULL) {
-		if (CanSee(targetFound, mDroneLocation)) {
-			target = targetFound;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-void ADroneBaseAI::CanCheckForEnemies()
-{
-	canCheckForEnemies = true;
 }
 
 void ADroneBaseAI::CanPerformActions()

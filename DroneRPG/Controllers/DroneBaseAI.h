@@ -2,8 +2,10 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "DroneRPG/Utilities/Enums.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "DroneBaseAI.generated.h"
 
+class UAISenseConfig_Sight;
 class ADroneRPGCharacter;
 class AObjective;
 
@@ -41,8 +43,11 @@ public:
 
 	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
 	void SetCurrentGameMode(EGameModeType val) { currentGameMode = val; }
+
+	UFUNCTION()
+	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 private:
-	FTimerHandle TimerHandle_CanCheckForEnemies;
+//	FTimerHandle TimerHandle_CanCheckForEnemies;
 	FTimerHandle TimerHandle_CanPerformActions;
 	FTimerHandle TimerHandle_CheckLastLocation;
 
@@ -54,6 +59,9 @@ private:
 	bool isFiring;
 	bool canCheckForEnemies;
 	bool canPerformActions;
+
+	UPROPERTY()
+	UAISenseConfig_Sight* sightConfig;
 
 	UPROPERTY()
 	AActor* targetObjective;
@@ -73,18 +81,18 @@ private:
 	void CalculateObjective();
 	void RotateToFace();
 	void FindObjective();
-	void CanCheckForEnemies();
+	ADroneRPGCharacter* GetDroneTarget();
 	void CanPerformActions();
-	bool AttackTarget(AActor* targetToAttack, bool moveIfCantSee = true);
+	void AttackTarget(AActor* targetToAttack);
 
 	void DefendingObjective();
 	void ReturningToBase();
-	bool ShootAttacker();
+	bool ShootTargetIfValid();
 	void EvadingDamage();
 	void AttackingTarget();
 	FHitResult LineTraceToLocation(const FVector& startLoc, const FVector& endLocation);
 	bool CanSee(AActor* other, const FVector& startLoc);
 	FVector GetPredictedLocation(AActor* actor);
 	void CapturingObjective();
-	bool GetEnemiesInArea();
+//	bool GetEnemiesInArea();
 };
