@@ -1,7 +1,7 @@
 #include "DroneHUD.h"
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/LevelActors/Objective.h"

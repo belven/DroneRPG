@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "DroneRPG/Enums.h"
+#include "DroneRPG/Utilities/Enums.h"
 #include "Weapon.generated.h"
 
 #define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation)

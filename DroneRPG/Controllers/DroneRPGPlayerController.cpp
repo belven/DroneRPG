@@ -5,7 +5,7 @@
 #include <Kismet/KismetMathLibrary.h>
 
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Weapons/Weapon.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()

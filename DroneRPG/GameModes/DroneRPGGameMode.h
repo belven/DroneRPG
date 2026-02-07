@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "DroneRPG/Enums.h"
+#include "DroneRPG/Utilities/Enums.h"
 #include "GameFramework/GameModeBase.h"
 #include "DroneRPGGameMode.generated.h"
 

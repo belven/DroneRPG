@@ -5,7 +5,7 @@
 #include "RocketLauncher.h"
 #include "Shotgun.h"
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 UWeapon::UWeapon() : weaponMeshComp(nullptr), owner(nullptr), FireSound(nullptr)
 {

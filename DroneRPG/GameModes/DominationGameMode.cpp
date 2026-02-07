@@ -2,7 +2,7 @@
 #include "DominationGameMode.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include <Kismet/GameplayStatics.h>
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"
 

@@ -4,8 +4,8 @@
 
 #include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/Enums.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/Enums.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/LevelActors/Objective.h"
 #include "DroneRPG/LevelActors/RespawnPoint.h"
 #include "DroneRPG/Weapons/DroneProjectile.h"

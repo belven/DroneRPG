@@ -5,7 +5,7 @@
 #include "Objective.h"
 #include "RespawnPoint.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 

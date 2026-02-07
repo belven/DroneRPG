@@ -1,5 +1,5 @@
 #include "FunctionLibrary.h"
-#include "DroneRPGCharacter.h"
+#include "DroneRPG/DroneRPGCharacter.h"
 
 TMap<int32, FColor> UFunctionLibrary::teamColours = GetTeamColours();
 TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = GetDrones();

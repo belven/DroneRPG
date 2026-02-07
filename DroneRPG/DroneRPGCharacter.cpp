@@ -13,7 +13,7 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Weapons/DroneProjectile.h"
-#include "FunctionLibrary.h"
+#include "Utilities/FunctionLibrary.h"
 #include "NavigationSystem.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include <Kismet/KismetSystemLibrary.h>

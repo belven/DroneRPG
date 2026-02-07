@@ -3,7 +3,7 @@
 #include "DroneProjectile.h"
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 const float UShotgun::Default_Initial_Lifespan = 0.7f;
 

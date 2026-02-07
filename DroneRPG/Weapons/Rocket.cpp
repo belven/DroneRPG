@@ -2,7 +2,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 const float ARocket::Default_Initial_Speed = 1000.0f;
 const float ARocket::Default_Initial_Lifespan = 3.5f;
