@@ -1,11 +1,11 @@
 #include "AsteroidField.h"
-#include "FunctionLibrary.h"
-#include "NavigationSystem.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "KeyActor.h"
+#include "NavigationSystem.h"
 #include "Objective.h"
 #include "RespawnPoint.h"
 #include "Components/InstancedStaticMeshComponent.h"
+#include "DroneRPG/FunctionLibrary.h"
 
 #define mAddComponentByClass(classType, trans) Cast<classType>(AddComponentByClass(classType::StaticClass(), false, trans, false));
 

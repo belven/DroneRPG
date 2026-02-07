@@ -3,8 +3,8 @@
 #include "DroneRPGCharacter.h"
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPGPlayerController.h"
-#include "Objective.h"
 #include "GameModes/DroneRPGGameMode.h"
+#include "LevelActors/Objective.h"
 
 #define mGetController Cast<ADroneRPGPlayerController>(GetPlayerDrone()->GetController())
 

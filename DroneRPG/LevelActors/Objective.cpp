@@ -1,14 +1,13 @@
 #include "Objective.h"
 #include "Components/BoxComponent.h"
-#include "DroneRPGCharacter.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
-#include "FunctionLibrary.h"
 #include <Components/StaticMeshComponent.h>
 #include <Kismet/GameplayStatics.h>
-
-#include "GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/FunctionLibrary.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
 
 AObjective::AObjective()
 {

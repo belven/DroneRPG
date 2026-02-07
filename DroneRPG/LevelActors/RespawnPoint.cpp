@@ -1,12 +1,12 @@
 #include "RespawnPoint.h"
 
-#include "DroneBaseAI.h"
-#include "DroneRPGCharacter.h"
-#include "Components/BoxComponent.h"
-#include "FunctionLibrary.h"
 #include "NavigationSystem.h"
+#include "Components/BoxComponent.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "DroneRPG/DroneBaseAI.h"
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/FunctionLibrary.h"
 
 ARespawnPoint::ARespawnPoint() : teamSize(6)
 {

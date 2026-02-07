@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "TriggeredEvent.h"
-#include "DroneDamagerInterface.h"
+#include "DroneRPG/DroneDamagerInterface.h"
+#include "DroneRPG/TriggeredEvent.h"
 #include "PlasmaStormEvent.generated.h"
 
 class UNiagaraSystem;

@@ -15,13 +15,13 @@
 #include "Weapons/DroneProjectile.h"
 #include "DroneBaseAI.h"
 #include "FunctionLibrary.h"
-#include "RespawnPoint.h"
 #include "NavigationSystem.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include <Kismet/KismetSystemLibrary.h>
 #include "DroneDamagerInterface.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "GameModes/DroneRPGGameMode.h"
+#include "LevelActors/RespawnPoint.h"
 #include "Weapons/Weapon.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)

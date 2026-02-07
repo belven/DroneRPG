@@ -4,11 +4,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Weapons/DroneProjectile.h"
 #include <Kismet/KismetMathLibrary.h>
-#include "Objective.h"
 #include "NavigationSystem.h"
 #include "Weapons/Weapon.h"
-#include "RespawnPoint.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "LevelActors/Objective.h"
+#include "LevelActors/RespawnPoint.h"
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 

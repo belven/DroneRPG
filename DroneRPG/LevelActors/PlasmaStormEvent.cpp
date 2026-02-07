@@ -1,11 +1,10 @@
 #include "PlasmaStormEvent.h"
-#include "DroneRPGCharacter.h"
-#include "FunctionLibrary.h"
 #include "NavigationSystem.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
-#include "Enums.h"
+#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/FunctionLibrary.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 
@@ -77,7 +76,7 @@ void APlasmaStormEvent::Tick(float DeltaTime)
 	// Update our location every tick, moving a rate towards our target location
 	SetActorLocation(FMath::Lerp(GetActorLocation(), targetLocation.Location, acceleration));
 
-	// If we our a Power Drainer then, update our radius, as it may have changed
+	// If we are a Power Drainer then, update our radius, as it may have changed
 	if (isPowerDrainer) {
 		stormParticle->SetFloatParameter(TEXT("Radius"), GetRadius());
 	}
