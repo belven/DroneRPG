@@ -89,7 +89,7 @@ void AAsteroidField::SpaceTooCloseVectors(TMap<int32, FNode>& locations)
 			if (locationA.Key == locationB.Key) continue;
 
 			ENodeType locationAType = locationA.Value.type;
-			if ((locationAType == ENodeType::Asteroid || locationAType == ENodeType::Objective) 
+			if ((locationAType == ENodeType::Asteroid || locationAType == ENodeType::Objective)
 				&& locationB.Value.type != ENodeType::SpawnPoint && locationAType != ENodeType::SpawnPoint) {
 				FVector Delta = locationA.Value.location - locationB.Value.location;
 				float Dist = Delta.Size();
@@ -122,7 +122,7 @@ void AAsteroidField::BeginPlay()
 	Super::BeginPlay();
 
 	int32 lastID = 0;
-	TMap<int32, FNode> locations;
+	TMap<int32, FNode> nodes;
 	TArray<ARespawnPoint*> respawnPoints;
 
 	const float distance = radius * .4;
@@ -130,7 +130,7 @@ void AAsteroidField::BeginPlay()
 	const FVector centre(0.f, 0.f, 0.f);
 
 	CreateObjective(centre);
-	locations.Add(lastID++, FNode(centre, ENodeType::Objective));
+	nodes.Add(lastID++, FNode(centre, ENodeType::Objective));
 
 	for (int32 i = 0; i < teams; ++i)
 	{
@@ -140,7 +140,7 @@ void AAsteroidField::BeginPlay()
 
 		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
 
-		locations.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
+		nodes.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
 	}
 
 	for (int i = 0; i < objectives; ++i)
@@ -149,26 +149,50 @@ void AAsteroidField::BeginPlay()
 		const float angleDeg = i * angleStep * FMath::RandRange(0.8, 1.2);
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
-		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
+		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
 
-		locations.Add(lastID++, FNode(newLocation, ENodeType::Objective));
-		PushVectors(locations, newLocation);
+		for (auto node : nodes)
+		{
+			if (FVector::Dist(node.Value.location, newLocation) <= minDist)
+			{
+				//newLocation.X -= 50;
+				//newLocation.Y -= 50;
+				FVector Delta = newLocation - centre;
+		//		float Dist = Delta.Size();
+				newLocation -= Delta.GetSafeNormal() * minDist;
+			}
+		}
+
+		nodes.Add(lastID++, FNode(newLocation, ENodeType::Objective));
 	}
 
-	SpaceTooCloseVectors(locations);
-
-	for (int i = 0; i < asteroids; ++i)
+	float radius1 = radius * .5;
+	for (int x = -radius1; x < radius1; x += minDist)
 	{
-		FVector newLocation = GetAsteroidLocation();
-		locations.Add(lastID++, FNode(newLocation, ENodeType::Asteroid));
+		for (int y = -radius1; y < radius1; y += minDist)
+		{
+			FVector location = FVector(x, y, centre.Z + 500);
+			bool tooClose = false;
 
-		PushVectors(locations, newLocation);
-		SpaceTooCloseVectors(locations);
+			for (auto node : nodes)
+			{
+				if ((node.Value.type == ENodeType::Objective || node.Value.type == ENodeType::SpawnPoint)
+					&& FVector::Dist(node.Value.location, location) <= minDist)
+				{
+					tooClose = true;
+					break;
+				}
+			}
+
+			if (!tooClose) {
+				nodes.Add(lastID++, FNode(location, ENodeType::Asteroid));
+			}
+		}
 	}
 
 	int32 team = 0;
 	// Create all the asteroids
-	for (auto& location : locations) {
+	for (auto& location : nodes) {
 
 		if (location.Value.type == ENodeType::SpawnPoint)
 		{
@@ -184,7 +208,7 @@ void AAsteroidField::BeginPlay()
 		}
 	}
 
-	ClearUpAroundKeyActors();
+	//	ClearUpAroundKeyActors();
 
 	for (ARespawnPoint* respawnPoint : respawnPoints)
 	{

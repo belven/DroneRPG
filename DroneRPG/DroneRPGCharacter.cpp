@@ -269,17 +269,19 @@ void ADroneRPGCharacter::Respawn() {
 
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
-	// Get all the respawn points
-	TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
+	if (!IsValid(respawnPoint)) {
+		// Get all the respawn points
+		TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
 
-	for (ARespawnPoint* respawnPoint : respawnPoints) {
-		// Check if the respawn point belongs to our team 
-		if (respawnPoint->GetTeam() == team) {
-			return respawnPoint;
+		for (ARespawnPoint* respawnPointFound : respawnPoints) {
+			// Check if the respawn point belongs to our team 
+			if (respawnPointFound->GetTeam() == team) {
+				respawnPoint = respawnPointFound;
+			}
 		}
 	}
 
-	return NULL;
+	return respawnPoint;
 }
 
 void ADroneRPGCharacter::KillDrone(AActor* killer)

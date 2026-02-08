@@ -116,6 +116,9 @@ private:
 	float energyRegenDelay;
 	float shieldRegenDelay;
 
+	UPROPERTY()
+	ARespawnPoint* respawnPoint;
+
 	float wipeValue;
 	float maxWipe;
 	float minWipe;

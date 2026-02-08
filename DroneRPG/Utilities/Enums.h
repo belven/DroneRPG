@@ -39,7 +39,6 @@ enum class  EActionState : uint8 {
 	AttackingTarget,
 	CapturingObjective,
 	DefendingObjective,
-	EvadingDamage,
 	ReturningToBase
 };
 

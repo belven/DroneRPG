@@ -80,6 +80,7 @@ private:
 	void FindTarget();
 	void CalculateObjective();
 	void RotateToFace();
+	void GetNextVisibleTarget();
 	void FindObjective();
 	ADroneRPGCharacter* GetDroneTarget();
 	void CanPerformActions();

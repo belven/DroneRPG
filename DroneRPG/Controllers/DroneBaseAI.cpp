@@ -1,7 +1,6 @@
 #pragma once
 #include "DroneBaseAI.h"
 #include <Kismet/KismetMathLibrary.h>
-
 #include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/Enums.h"
@@ -11,8 +10,8 @@
 #include "DroneRPG/Weapons/DroneProjectile.h"
 #include "DroneRPG/Weapons/Weapon.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/PawnMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Navigation/PathFollowingComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -53,7 +52,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 }
 
 void ADroneBaseAI::CheckLastLocation() {
-	if (lastLocation == mDroneLocation) {
+	if (lastLocation == mDroneLocation && currentState != EActionState::DefendingObjective && currentState != EActionState::CapturingObjective) {
 		GetDrone()->Respawn();
 	}
 	lastLocation = FVector::ZeroVector;
@@ -72,7 +71,7 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	}
 	else
 	{
-		if (currentState == EActionState::AttackingTarget || currentState == EActionState::SearchingForObjective || currentState == EActionState::EvadingDamage)
+		if (currentState == EActionState::AttackingTarget || currentState == EActionState::SearchingForObjective)
 		{
 			target = NULL;
 			MoveToLocation(Stimulus.StimulusLocation);
@@ -229,33 +228,52 @@ void ADroneBaseAI::RotateToFace() {
 	GetCharacter()->SetActorRotation(targetRotation);
 }
 
+void ADroneBaseAI::GetNextVisibleTarget()
+{
+	TArray<AActor*> actorsSeen;
+	PerceptionComponent->GetCurrentlyPerceivedActors(sightConfig->GetSenseImplementation(), actorsSeen);
+
+	for (auto seen : actorsSeen)
+	{
+		ADroneRPGCharacter* other = Cast<ADroneRPGCharacter>(seen);
+
+		if (IsValid(other) && other->GetTeam() != GetDrone()->GetTeam() && other->IsAlive()) {
+			target = other;
+			break;
+		}
+	}
+}
+
 void ADroneBaseAI::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
 	// We don't do anything if we're dead!
 	if (GetDrone()->IsAlive()) {
+		if (currentState != EActionState::ReturningToBase && !GetDrone()->IsHealthy()) {
+			currentState = EActionState::ReturningToBase;
+			ReturningToBase();
+		}
+
 		if (!IsTargetValid()) {
 			target = NULL;
+			GetNextVisibleTarget();
 		}
-		else
+
+		RotateToFace();
+
+		if (IsTargetValid())
 		{
+			if (currentState != EActionState::ReturningToBase) {
+				EvadingDamage();
+			}
+
 			ShootTargetIfValid();
 		}
 
 		if (lastLocation.IsZero()) {
 			lastLocation = mDroneLocation;
 			mSetTimer(TimerHandle_CheckLastLocation, &ADroneBaseAI::CheckLastLocation, 15.0f);
-		}
-
-		RotateToFace();
-
-		if (currentState != EActionState::ReturningToBase && !GetDrone()->IsHealthy()) {
-			currentState = EActionState::ReturningToBase;
-		}
-		else if (currentState != EActionState::EvadingDamage && currentState != EActionState::ReturningToBase && IsTargetValid()) {
-			currentState = EActionState::EvadingDamage;
-			GetDrone()->GetMovementComponent()->StopActiveMovement();
 		}
 
 		if (canPerformActions) {
@@ -294,11 +312,8 @@ void ADroneBaseAI::PerformActions() {
 	case EActionState::DefendingObjective:
 		DefendingObjective();
 		break;
-	case EActionState::EvadingDamage:
-		EvadingDamage();
-		break;
 	case EActionState::ReturningToBase:
-		ReturningToBase();
+		// Do Nothing
 		break;
 	default:
 		// Something went wrong!!
@@ -334,12 +349,13 @@ void ADroneBaseAI::DefendingObjective() {
 }
 
 void ADroneBaseAI::ReturningToBase() {
-	if (!GetDrone()->IsHealthy()) {
-		FVector loc = GetDrone()->GetRespawnPoint()->GetActorLocation();
-		MoveToLocation(loc);
-	}
-	else {
-		currentState = EActionState::SearchingForObjective;
+	// TODO fix this, drone is just idle during this
+	FVector loc = GetDrone()->GetRespawnPoint()->GetActorLocation();
+	EPathFollowingRequestResult::Type result = MoveToLocation(loc, 300);
+
+	if (result == EPathFollowingRequestResult::Type::Failed)
+	{
+
 	}
 }
 
@@ -354,22 +370,19 @@ bool ADroneBaseAI::ShootTargetIfValid() {
 }
 
 void ADroneBaseAI::EvadingDamage() {
-	if (IsTargetValid()) {
-		if (GetDrone()->GetVelocity().IsNearlyZero()) {
-			int32 closeDistance = GetDrone()->GetWeapon()->GetRange() * 0.8;
-			int32 count = 0;
-			FNavLocation loc;
-			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
+	if (GetDrone()->GetVelocity().IsNearlyZero()) {
+		int32 closeDistance = GetDrone()->GetWeapon()->GetRange();
+		int32 count = 0;
+		FNavLocation loc;
+		mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
 
-			while (mDist(target->GetActorLocation(), loc) <= closeDistance / 2 && !CanSee(target, loc) && count < 20) {
-				mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
-				count++;
-			}
-			MoveToLocation(loc);
+		double dist = mDist(target->GetActorLocation(), loc);
+		while (dist <= closeDistance && dist > closeDistance * 0.8 && !CanSee(target, loc) && count < 20) {
+			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
+			dist = mDist(target->GetActorLocation(), loc);
+			count++;
 		}
-	}
-	else {
-		currentState = EActionState::SearchingForObjective;
+		MoveToLocation(loc);
 	}
 }
 
