@@ -4,6 +4,7 @@
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
 
+class ADroneRPGGameMode;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, AObjective*, objective);
 
 class UBoxComponent;
@@ -23,7 +24,8 @@ public:
 
 	UFUNCTION()
 		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-	
+	void CheckForOverlaps();
+
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
@@ -67,7 +69,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		float currentControl;
+
+		ADroneRPGGameMode* GetGameMode();
 private:
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
+
 	UPROPERTY()
 		UBoxComponent* objectiveArea;
 
@@ -78,6 +85,8 @@ private:
 	int32 maxControl;
 	int32 smallParticle;
 	int32 bigParticle;
+	float overlapTimePassed;
+	float overlapTimeRate;
 
 	UPROPERTY()
 		TArray<int32> teamsInArea;

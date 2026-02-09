@@ -33,16 +33,19 @@ public:
 		void CheckLastLocation();
 
 	EActionState GetCurrentState() const { return currentState; }
-	void SetCurrentState(EActionState val) { SetPreviousState(currentState); currentState = val; }
+	void SetCurrentState(EActionState val);
 
 	EActionState GetPreviousState() const { return previousState; }
-	void SetPreviousState(EActionState val) { previousState = val; }
+	void SetPreviousState(EActionState val);
 
 	AActor* GetTargetObjective() const { return targetObjective; }
 	void SetTargetObjective(AActor* val) { targetObjective = val; }
 
 	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
-	void SetCurrentGameMode(EGameModeType val) { currentGameMode = val; }
+	void SetCurrentGameMode(EGameModeType val);
+	FString GetStateString(EActionState state);
+
+	bool CompareState(EActionState state);
 
 	UFUNCTION()
 	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);

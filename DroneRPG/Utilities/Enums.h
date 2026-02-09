@@ -39,13 +39,15 @@ enum class  EActionState : uint8 {
 	AttackingTarget,
 	CapturingObjective,
 	DefendingObjective,
-	ReturningToBase
+	ReturningToBase,
+	Start	
 };
 
 UENUM(BlueprintType)
 enum class  EGameModeType : uint8 {
 	Domination,
 	TeamDeathMatch,
+	PlasmaStorm,
 	Hardpoint,
 	AttackDefend,
 	Payload

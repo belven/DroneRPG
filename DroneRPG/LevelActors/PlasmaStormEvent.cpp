@@ -3,6 +3,7 @@
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
+#include "Components/SphereComponent.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
@@ -14,14 +15,16 @@ APlasmaStormEvent::APlasmaStormEvent()
 	if (IsRunningGame())
 		SetFolderPath(TEXT("Environmental Effects"));
 #endif
-	radius = 2000.0f;
+	radius = 750.f;
 	powerDrainLimit = radius * 3;
-	damage = 20.0f;
-	travelDistance = 20000;
-	damageRate = 3.0f;
-	acceleration = 0.05f;
+	damage = 40.0f;
+	travelDistance = 10000;
+	damageRate = 2.0f;
+	acceleration = 0.001f;
 	moveRate = 10.0f;
 	targetLocation.Location = FVector::ZeroVector;
+	isPlayerHunter = true;
+	isPowerDrainer = true;
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/Plasma_Storm"));
 
@@ -31,6 +34,7 @@ APlasmaStormEvent::APlasmaStormEvent()
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> sphereMesh(TEXT("StaticMesh'/Game/TopDownCPP/Models/Shape_Sphere'"));
 
+	//TODO Change to using a Sphere comp and use overlap to track actors
 	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StormMesh"));
 	if (sphereMesh.Succeeded())
 	{
@@ -39,6 +43,11 @@ APlasmaStormEvent::APlasmaStormEvent()
 		meshComponent->SetupAttachment(RootComponent);
 		meshComponent->SetHiddenInGame(true);
 	}
+
+	sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("PlasmaStormArea"));
+	sphereComponent->SetSphereRadius(radius);
+	sphereComponent->SetupAttachment(GetRootComponent());
+	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
 }
 
 void APlasmaStormEvent::DroneKilled(ADroneRPGCharacter* drone)
@@ -63,10 +72,19 @@ FString APlasmaStormEvent::GetEventName()
 
 void APlasmaStormEvent::TriggerEvent()
 {
+	TArray<AActor*> overlaps;
+	GetOverlappingActors(overlaps);
+
 	// Get drones within our radius, deal damage to them
-	for (ADroneRPGCharacter* drone : mGetDronesInRadius(GetRadius(), GetActorLocation())) {
-		drone->DamageDrone(damage, this);
-		damageDealt += damage;
+	for (auto actor : overlaps) 
+	{
+		ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(actor);
+
+		if (IsValid(drone)) 
+		{
+			drone->DamageDrone(damage, this);
+			damageDealt += damage;
+		}
 	}
 
 	// Set the timer that runs this method on loop
@@ -103,6 +121,14 @@ float APlasmaStormEvent::GetRadius()
 {
 	// Radius can be influenced by damage done if we are a Power Drainer
 	return isPowerDrainer ? MIN(radius + damageDealt, powerDrainLimit) : radius;
+}
+
+void APlasmaStormEvent::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+}
+
+void APlasmaStormEvent::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
 }
 
 void APlasmaStormEvent::Move()

@@ -138,7 +138,7 @@ void AAsteroidField::BeginPlay()
 		const float angleDeg = i * angleStep;
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
-		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
+		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + 500);
 
 		nodes.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
 	}
@@ -149,7 +149,7 @@ void AAsteroidField::BeginPlay()
 		const float angleDeg = i * angleStep * FMath::RandRange(0.8, 1.2);
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
-		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z);
+		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + 500);
 
 		for (auto node : nodes)
 		{

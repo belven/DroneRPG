@@ -3,9 +3,23 @@
 #include <Kismet/GameplayStatics.h>
 
 #include "DroneRPG/DroneDamagerInterface.h"
+#include "DroneRPG/LevelActors/PlasmaStormEvent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"
+
+APlasmaStormGameMode::APlasmaStormGameMode() : Super(), kills(0)
+{
+	gameMode = EGameModeType::PlasmaStorm;
+}
+
+void APlasmaStormGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	APlasmaStormEvent* plasmaStorm = GetWorld()->SpawnActor<APlasmaStormEvent>(APlasmaStormEvent::StaticClass(), FVector(0, 0, 0), FRotator());
+
+}
 
 void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 {

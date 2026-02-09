@@ -10,6 +10,8 @@ class DRONERPG_API APlasmaStormGameMode : public ADroneRPGGameMode
 {
 	GENERATED_BODY()
 public:
+	APlasmaStormGameMode();
+	virtual void BeginPlay() override;
 	virtual void EntityKilled(AActor* killedEntity, AActor* damager) override;
 	float GetKills() const { return kills; }
 	void SetKills(float val) { kills = val; }

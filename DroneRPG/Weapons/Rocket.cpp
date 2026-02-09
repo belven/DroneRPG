@@ -48,22 +48,12 @@ void ARocket::Tick(float DeltaTime)
 		canCheckForEnemies = false;
 		FindTarget();
 	}
-
-	//if (target != NULL && ProjectileMovement->HomingTargetComponent == NULL) {
-		//FRotator lookAt = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), target->GetActorLocation());
-		//lookAt.Pitch = GetActorRotation().Pitch;
-		//lookAt.Roll = GetActorRotation().Roll;
-		//SetActorRotation(lookAt);
-		//FVector force = GetActorForwardVector();
-		//force.Normalize();
-		//force * 2;
-		//ProjectileMovement->AddForce(force);
-	//}
 }
 
 void ARocket::FindTarget()
 {
 	if ((target == NULL || !target->IsAlive()) && GetShooter() != NULL) {
+		// TODO Change to sphere / cone comp
 		SetTarget(mGetClosestEnemyInRadius(4000, GetActorLocation(), GetShooter()->GetTeam()));
 	}
 }

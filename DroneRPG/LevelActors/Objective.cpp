@@ -25,8 +25,9 @@ AObjective::AObjective()
 
 	keyActorSize = 2000;
 
-	smallParticle = 100;
-	bigParticle = 150;
+	smallParticle = 150;
+	bigParticle = 300;
+	overlapTimeRate = 5;
 
 	objectiveName = "";
 
@@ -63,6 +64,20 @@ void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	}
 }
 
+void AObjective::CheckForOverlaps()
+{
+	TArray<AActor*> overlaps;
+	GetOverlappingActors(overlaps);
+
+	for (AActor* overlap : overlaps)
+	{
+		if (mIsA(overlap, ADroneRPGCharacter)) {
+			// Add it to the list and re-calculate ownership
+			Add(Cast<ADroneRPGCharacter>(overlap));
+		}
+	}
+}
+
 void AObjective::BeginPlay()
 {
 	Super::BeginPlay();
@@ -83,6 +98,8 @@ void AObjective::BeginPlay()
 
 	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
 	UpdateColour();
+
+	CheckForOverlaps();
 }
 
 void AObjective::CalculateOwnership() {
@@ -104,7 +121,7 @@ void AObjective::CalculateOwnership() {
 void AObjective::UpdateColour() {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
-	if (currentControl > minControl&& previousAreaOwner == areaOwner) {
+	if (currentControl > minControl && previousAreaOwner == areaOwner) {
 		FColor teamColour = UFunctionLibrary::GetTeamColour(areaOwner);
 
 		if (currentColour != teamColour) {
@@ -149,8 +166,9 @@ void AObjective::CalculateClaim() {
 			UpdateColour();
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
-			if (currentControl == 0)
+			if (currentControl == 0) {
 				previousAreaOwner = areaOwner;
+			}
 		}
 		// If the previousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
 		// Check if we're not at the max control
@@ -197,15 +215,30 @@ void AObjective::Remove(ADroneRPGCharacter* drone)
 	}
 }
 
+ADroneRPGGameMode* AObjective::GetGameMode()
+{
+	if (!IsValid(gameMode))
+	{
+		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	}
+	return gameMode;
+}
+
 void AObjective::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	CalculateClaim();
 
+	overlapTimePassed += DeltaTime;
+
 	// Every second add 5 points to the team that full owns this point
 	if (fullClaim) {
-		ADroneRPGGameMode* gm =  Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		gm->AddTeamScore(areaOwner, 5);
+		GetGameMode()->AddTeamScore(areaOwner, 5);
+	}
+	else if (overlapTimePassed > overlapTimeRate)
+	{
+		overlapTimePassed = 0;
+		CheckForOverlaps();
 	}
 }
 
