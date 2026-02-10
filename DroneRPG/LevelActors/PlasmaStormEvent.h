@@ -4,6 +4,7 @@
 #include "DroneRPG/TriggeredEvent.h"
 #include "PlasmaStormEvent.generated.h"
 
+class ADroneRPGGameMode;
 class USphereComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
@@ -32,12 +33,6 @@ public:
 
 	float GetDamage() const { return damage; }
 	void SetDamage(float val) { damage = val; }
-
-	UFUNCTION()
-	void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
 		float radius;
@@ -77,6 +72,8 @@ private:
 	UPROPERTY()
 		UNiagaraSystem* stormSystem;
 
+		ADroneRPGGameMode* GetGameMode();
+
 	UPROPERTY()
 		UNiagaraComponent* stormParticle;
 
@@ -88,4 +85,7 @@ private:
 
 	UPROPERTY()
 	USphereComponent* sphereComponent;
+
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 };

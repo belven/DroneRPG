@@ -24,6 +24,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	SetFolderPath(TEXT("Characters"));
 #endif
 	team = 1;
+
 	// Set size for player capsule
 	const float capWidth = 120.0f;
 	const float capHeight = 400.0f;
@@ -94,15 +95,16 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 void ADroneRPGCharacter::BeginDestroy()
 {
 	Super::BeginDestroy();
-
-	if (UFunctionLibrary::GetDrones().Contains(this))
-		UFunctionLibrary::GetDrones().Remove(this);
 }
 
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!GetGameMode()->GetDrones().Contains(this))
+	{
+		GetGameMode()->GetDrones().Add(this);
+	}
 }
 
 FColor ADroneRPGCharacter::GetTeamColour() {
@@ -111,11 +113,6 @@ FColor ADroneRPGCharacter::GetTeamColour() {
 
 void ADroneRPGCharacter::SetUpDrone()
 {
-	if (!UFunctionLibrary::GetDrones().Contains(this))
-	{
-		UFunctionLibrary::GetDrones().Add(this);
-	}
-
 	kills = 0;
 	deaths = 0;
 
@@ -127,14 +124,22 @@ void ADroneRPGCharacter::SetUpDrone()
 void ADroneRPGCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
 	SetUpDrone();
 }
 
 void ADroneRPGCharacter::SetTeam(int32 val)
 {
 	team = val;
-	healthComponent->SetTeamColour(UFunctionLibrary::GetTeamColour(GetTeam()));
+	healthComponent->SetTeamColour(GetTeamColour());
+}
+
+ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
+{
+	if (!IsValid(gameMode))
+	{
+		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	}
+	return gameMode;
 }
 
 void ADroneRPGCharacter::Respawn() {
@@ -180,13 +185,12 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 	// Check if the killer uses UDroneDamagerInterface
 	if (mImplements(killer, UDroneDamagerInterface)) {
 		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(killer);
-		ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 
 		// Tell the killer they've killed us
 		damageDealer->DroneKilled(this);
 
 		// Tell the gamemode we've died, to update score etc.
-		gm->EntityKilled(this, killer);
+		GetGameMode()->EntityKilled(this, killer);
 
 		// Add text to the kill feed TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
 		TArray< FStringFormatArg > args;
@@ -203,13 +207,9 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 }
 
 FString ADroneRPGCharacter::GetDroneName()
-{
-	if (mGetDrones.Contains(this))
-		return FString::FromInt(mGetDrones.IndexOfByKey(this));
-	return UKismetSystemLibrary::GetObjectName(this);
-}
-
-void ADroneRPGCharacter::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
+{	
+	if (droneName.IsEmpty() && GetGameMode()->GetDrones().Contains(this)) {
+		droneName = FString::FromInt(GetGameMode()->GetDrones().IndexOfByKey(this));
+	}
+	return droneName;
 }

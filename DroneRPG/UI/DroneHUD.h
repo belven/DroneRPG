@@ -3,6 +3,7 @@
 #include "GameFramework/HUD.h"
 #include "DroneHUD.generated.h"
 
+class ADroneRPGGameMode;
 class AObjective;
 class ADroneRPGCharacter;
 
@@ -32,7 +33,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 		void DrawEnemyIndicators(ADroneRPGCharacter* drone);
 
+		ADroneRPGGameMode* GetGameMode();
 protected:
 	UPROPERTY()
 	ADroneRPGCharacter* playerDrone;
+
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 };

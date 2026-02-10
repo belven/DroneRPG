@@ -5,8 +5,10 @@
 #include <Kismet/KismetMathLibrary.h>
 
 #include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Weapons/Weapon.h"
+#include "Kismet/GameplayStatics.h"
 
 #define mActorLocation GetCharacter()->GetActorLocation()
 #define mActorRotation GetCharacter()->GetActorRotation()
@@ -71,18 +73,12 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 	if (GetCharacter() != NULL && GetDrone()->GetHealthComponent()->IsAlive()) {
 		CalculateMovement(DeltaTime);
 
-		// Create fire direction vector
-		const float FireForwardValue = GetInputAxisValue(FireForwardBinding);
-		const float FireRightValue = GetInputAxisValue(FireRightBinding);
-		//	const FVector FireDirection = FVector(FireForwardValue, FireRightValue, 0.f);
-
 		FHitResult Hit;
 		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
 		FRotator lookAt = UKismetMathLibrary::FindLookAtRotation(mActorLocation, Hit.ImpactPoint);
 		lookAt.Pitch = mActorRotation.Pitch;
 		lookAt.Roll = mActorRotation.Roll;
 
-		//GetCharacter()->SetActorRotation(FMath::Lerp(mActorRotation, lookAt, 0.10f));
 		GetCharacter()->SetActorRotation(lookAt);
 
 		// Try and fire a shot
@@ -97,8 +93,7 @@ void ADroneRPGPlayerController::FireShot(const FVector& FireDirection)
 	{
 		FHitResult Hit;
 		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
-		ADroneRPGCharacter* target = mGetClosestEnemyInRadius(2000, Hit.ImpactPoint, GetDrone()->GetTeam());
-		GetDrone()->GetWeapon()->FireShot(FireDirection, target);
+		GetDrone()->GetWeapon()->FireShot(FireDirection);
 	}
 }
 
@@ -158,16 +153,24 @@ void ADroneRPGPlayerController::CanMoveCamera() {
 void ADroneRPGPlayerController::IncrementDrone() {
 	droneIndex++;
 
-	if (droneIndex > mGetDrones.Num() - 1) {
+	if (droneIndex > GetGameMode()->GetDrones().Num() - 1) {
 		droneIndex = 0;
 	}
+}
+ADroneRPGGameMode* ADroneRPGPlayerController::GetGameMode()
+{
+	if (!IsValid(gameMode))
+	{
+		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	}
+	return gameMode;
 }
 
 void ADroneRPGPlayerController::ChangeView()
 {
 	moveCamera = false;
 
-	ADroneRPGCharacter* drone = mGetDrones[droneIndex];
+	ADroneRPGCharacter* drone = GetGameMode()->GetDrones()[droneIndex];
 
 	if (drone->GetController() == this) {
 		IncrementDrone();

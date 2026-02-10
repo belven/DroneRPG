@@ -2,13 +2,12 @@
 #include "DroneRPG/DroneRPGCharacter.h"
 
 TMap<int32, FColor> UFunctionLibrary::teamColours = GetTeamColours();
-TArray <ADroneRPGCharacter*> UFunctionLibrary::dronesInGame = GetDrones();
 
-TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemiesInRadius(float radius, const FVector& loc, int32 team)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemiesInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones)
 {
 	TArray<ADroneRPGCharacter*> drones;
 
-	for (ADroneRPGCharacter* drone : mGetDronesInRadius(radius, loc))
+	for (ADroneRPGCharacter* drone : mGetDronesInRadius(radius, loc, allDrones))
 	{
 		// Check if the drone found is an enemy
 		if (team != drone->GetTeam()) {
@@ -19,11 +18,11 @@ TArray <ADroneRPGCharacter*> UFunctionLibrary::GetEnemiesInRadius(float radius, 
 	return drones;
 }
 
-TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, const FVector& loc)
+TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, const FVector& loc, TArray <ADroneRPGCharacter*>& drones)
 {
 	TArray<ADroneRPGCharacter*> dronesInRange;
 
-	for (ADroneRPGCharacter* drone : GetDrones())
+	for (ADroneRPGCharacter* drone : drones)
 	{
 		float dist = mDist(drone->GetActorLocation(), loc);
 
@@ -36,14 +35,9 @@ TArray <ADroneRPGCharacter*> UFunctionLibrary::GetDronesInRadius(float radius, c
 }
 
 
-ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team)
+ADroneRPGCharacter* UFunctionLibrary::GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones)
 {
-	return mGetClosestActorInArray<ADroneRPGCharacter>(GetEnemiesInRadius(radius, loc, team), loc);
-}
-
-TArray <ADroneRPGCharacter*>& UFunctionLibrary::GetDrones()
-{
-	return dronesInGame;
+	return mGetClosestActorInArray<ADroneRPGCharacter>(GetEnemiesInRadius(radius, loc, team, allDrones), loc);
 }
 
 FString UFunctionLibrary::GetColourString(FColor color)

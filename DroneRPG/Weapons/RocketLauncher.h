@@ -11,5 +11,5 @@ public:
 	URocketLauncher();
 	virtual float GetRange() override;
 	static URocketLauncher* CreateRocketLauncher(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
-	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target) override;
+	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation) override;
 };

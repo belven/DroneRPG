@@ -36,7 +36,7 @@ void ADroneHUD::DrawScore() {
 	// Get the viewport (current window) size
 	con->GetViewportSize(vpX, vpY);
 
-	for (ADroneRPGCharacter* drone : mGetDrones) {
+	for (ADroneRPGCharacter* drone : GetGameMode()->GetDrones()) {
 		totalScore.FindOrAdd(drone->GetTeam()) += drone->GetKills();
 	}
 
@@ -139,6 +139,15 @@ void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone) {
 	}
 }
 
+ADroneRPGGameMode* ADroneHUD::GetGameMode()
+{
+	if (!IsValid(gameMode))
+	{
+		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	}
+	return gameMode;
+}
+
 TArray<ADroneRPGCharacter*> ADroneHUD::GetEnemyDrones() {
-	return mGetEnemiesInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam());
+	return mGetEnemiesInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam(), GetGameMode()->GetDrones());
 }

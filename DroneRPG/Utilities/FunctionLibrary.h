@@ -26,7 +26,6 @@ class UWeapon;
 #define mGetClosestActorInArray UFunctionLibrary::GetClosestActorInArray
 #define mGetActorsInRadius UFunctionLibrary::GetActorsInRadius
 #define mGetDronesInRadius UFunctionLibrary::GetDronesInRadius
-#define mGetDrones UFunctionLibrary::GetDrones()
 
 #define mGetEnemiesInRadius UFunctionLibrary::GetEnemiesInRadius
 #define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius
@@ -36,25 +35,21 @@ class UWeapon;
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 
-
-
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject
 {
 	GENERATED_BODY()
 public:
-	static TArray<ADroneRPGCharacter*> dronesInGame;
 	template <class T> static TArray<T*> GetActorsInWorld(UWorld* world);
 	template <class T> static TArray <T*> GetActorsInRadius(UWorld* world, float radius, FVector loc);
 
 	template <class T> static T* GetClosestActorInWorld(UWorld* world, FVector loc);
 	template <class T> static T* GetClosestActorInArray(TArray<T*> actorArray, FVector loc);
 
-	static TArray <ADroneRPGCharacter*> GetEnemiesInRadius(float radius, const FVector& loc, int32 team);
-	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team);
+	static TArray <ADroneRPGCharacter*> GetEnemiesInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones);
+	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones);
 
-	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, const FVector& loc);
-	static TArray <ADroneRPGCharacter*>& GetDrones();
+	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, const FVector& loc, TArray <ADroneRPGCharacter*>& drones);
 
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);

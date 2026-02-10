@@ -4,6 +4,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "DroneRPGGameMode.generated.h"
 
+class ADroneRPGCharacter;
+
 UCLASS(minimalapi)
 class ADroneRPGGameMode : public AGameModeBase
 {
@@ -11,6 +13,7 @@ class ADroneRPGGameMode : public AGameModeBase
 
 public:
 	ADroneRPGGameMode();
+	TArray <ADroneRPGCharacter*>& GetDrones() { return  dronesInGame; };
 
 	virtual void BeginPlay() override;
 	virtual void EntityKilled(AActor* killedEntity, AActor* damager);
@@ -27,4 +30,7 @@ public:
 protected:
 	EGameModeType gameMode;
 	TMap<int32, float> teamScores;
+
+	UPROPERTY()
+	TArray <ADroneRPGCharacter*> dronesInGame;
 };

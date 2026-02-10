@@ -45,15 +45,12 @@ void UWeapon::ShotTimerExpired()
 	canFire = true;
 }
 
-ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target) {
+ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation) {
 	ADroneProjectile* projectile = mSpawnProjectile;
 	projectile->SetShooter(owner);
 	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
 	return projectile;
 }
-
-
-
 
 UWeapon* UWeapon::GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
 {
@@ -91,7 +88,7 @@ UWeapon* UWeapon::GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner
 	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
 }
 
-void UWeapon::FireShot(FVector FireDirection, AActor* target)
+void UWeapon::FireShot(FVector FireDirection)
 {
 	if (canFire)
 	{
@@ -99,7 +96,7 @@ void UWeapon::FireShot(FVector FireDirection, AActor* target)
 		{
 			const FRotator FireRotation = FireDirection.Rotation();
 			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
-			SpawnProjectile(gunLocation, FireRotation, target);
+			SpawnProjectile(gunLocation, FireRotation);
 
 			mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
 

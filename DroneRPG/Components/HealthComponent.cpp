@@ -72,7 +72,7 @@ void UHealthComponent::DamageDrone(float damage, AActor* damager)
 		{
 			// Take half damage taken away from max shields
 			maxStats.shields -= (damage * 0.5);
-			ClampValue(maxStats.shields, maxStats.shields, 50);
+			UFunctionLibrary::ClampValue(maxStats.shields, maxStats.shields, 50.f);
 		}
 
 		CalculateShieldParticles();
@@ -86,8 +86,8 @@ void UHealthComponent::DamageDrone(float damage, AActor* damager)
 		CalculateHealthColours();
 	}
 
-	ClampValue(currentStats.health, maxStats.health, 0);
-	ClampValue(currentStats.shields, maxStats.shields, 0);
+	UFunctionLibrary::ClampValue(currentStats.health, maxStats.health, 0.0f);
+	UFunctionLibrary::ClampValue(currentStats.shields, maxStats.shields, 0.0f);
 }
 
 void UHealthComponent::SetDefaults()
@@ -113,19 +113,6 @@ void UHealthComponent::SetDefaults()
 bool UHealthComponent::IsAlive()
 {
 	return currentStats.health > 0;
-}
-
-float UHealthComponent::ClampValue(float value, float max, float min) {
-	if (value < min)
-	{
-		value = min;
-	}
-	else if (value > max) 
-	{
-		value = max;
-	}
-
-	return value;
 }
 
 bool UHealthComponent::IsHealthy()
@@ -271,8 +258,8 @@ void UHealthComponent::CalculateShields(float DeltaSeconds)
 			currentStats.shields += value;
 			currentStats.energy -= value;
 
-			ClampValue(currentStats.shields, maxStats.shields, 0);
-			ClampValue(currentStats.energy, maxStats.energy, 0);
+			UFunctionLibrary::ClampValue(currentStats.shields, maxStats.shields, 0.f);
+			UFunctionLibrary::ClampValue(currentStats.energy, maxStats.energy, 0.f);
 		}
 
 		CalculateShieldParticles();
@@ -287,7 +274,7 @@ void UHealthComponent::CalculateEnergy(float DeltaSeconds)
 		float value = energyRegen * DeltaSeconds;
 		currentStats.energy += value;
 
-		ClampValue(currentStats.energy, maxStats.energy, 0);
+		UFunctionLibrary::ClampValue(currentStats.energy, maxStats.energy, 0.f);
 	}
 }
 

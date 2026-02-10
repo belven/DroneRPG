@@ -27,8 +27,8 @@ public:
 	EWeaponType GetWeaponType() const { return weaponType; }
 	void SetWeaponType(EWeaponType val) { weaponType = val; }
 
-	virtual void FireShot(FVector FireDirection, AActor* target = NULL);
-	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target);
+	virtual void FireShot(FVector FireDirection);
+	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation);
 
 	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
 	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);

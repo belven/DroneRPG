@@ -17,8 +17,6 @@ public:
 	virtual void SetTarget(ADroneRPGCharacter* val) override;
 	virtual void Tick(float DeltaTime) override;
 
-	void FindTarget();
-
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 private:
 	bool canCheckForEnemies;

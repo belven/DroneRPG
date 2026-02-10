@@ -41,7 +41,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	bool IsAlive();
-	float ClampValue(float value, float max, float min);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	bool IsHealthy();

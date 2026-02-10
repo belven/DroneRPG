@@ -5,7 +5,9 @@
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Components/SphereComponent.h"
 #include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 
@@ -123,18 +125,11 @@ float APlasmaStormEvent::GetRadius()
 	return isPowerDrainer ? MIN(radius + damageDealt, powerDrainLimit) : radius;
 }
 
-void APlasmaStormEvent::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-}
-
-void APlasmaStormEvent::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-}
-
 void APlasmaStormEvent::Move()
 {
 	// We're not a Player hunter, find a random location to move to, within a radius
-	if (!isPlayerHunter) {
+	if (!isPlayerHunter) 
+	{
 		int32 count = 0;
 		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 
@@ -145,9 +140,19 @@ void APlasmaStormEvent::Move()
 		}
 	}
 	// Otherwise, find a random player and move to thier location
-	else if (mGetDrones.Num() > 0) {
-		targetLocation.Location = mGetRandomObject(mGetDrones)->GetActorLocation();
+	else if (GetGameMode()->GetDrones().Num() > 0) 
+	{
+		targetLocation.Location = mGetRandomObject(GetGameMode()->GetDrones())->GetActorLocation();
 	}
 
 	mSetTimer(TimerHandle_Move, &APlasmaStormEvent::Move, moveRate);
+}
+
+ADroneRPGGameMode* APlasmaStormEvent::GetGameMode()
+{
+	if (!IsValid(gameMode))
+	{
+		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	}
+	return gameMode;
 }

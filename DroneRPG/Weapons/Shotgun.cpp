@@ -35,7 +35,7 @@ FRotator UShotgun::RandomDirection(FRotator fireRotation) {
 	return fireRotation;
 }
 
-void UShotgun::FireShot(FVector FireDirection, AActor* target)
+void UShotgun::FireShot(FVector FireDirection)
 {
 	if (canFire)
 	{
@@ -45,7 +45,7 @@ void UShotgun::FireShot(FVector FireDirection, AActor* target)
 				const FRotator FireRotation = RandomDirection(FireDirection.Rotation());
 				const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 
-				SpawnProjectile(gunLocation, FireRotation, target);
+				SpawnProjectile(gunLocation, FireRotation);
 				mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UShotgun::ShotTimerExpired, fireRate);
 			}
 
@@ -59,9 +59,9 @@ void UShotgun::FireShot(FVector FireDirection, AActor* target)
 	}
 }
 
-ADroneProjectile* UShotgun::SpawnProjectile(FVector gunLocation, FRotator FireRotation, AActor* target)
+ADroneProjectile* UShotgun::SpawnProjectile(FVector gunLocation, FRotator FireRotation)
 {
-	ADroneProjectile* proj = Super::SpawnProjectile(gunLocation, FireRotation, target);
+	ADroneProjectile* proj = Super::SpawnProjectile(gunLocation, FireRotation);
 	proj->SetLifeSpan(Default_Initial_Lifespan);
 	return proj;
 }

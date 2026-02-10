@@ -4,6 +4,7 @@
 #include "GameFramework/PlayerController.h"
 #include "DroneRPGPlayerController.generated.h"
 
+class ADroneRPGGameMode;
 class ADroneRPGCharacter;
 
 UCLASS()
@@ -48,6 +49,11 @@ protected:
 	virtual void SetupInputComponent() override;
 	void CanMoveCamera();
 	void IncrementDrone();
+	ADroneRPGGameMode* GetGameMode();
+
 private:
 	void ChangeView();
+
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 };

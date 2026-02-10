@@ -46,15 +46,6 @@ void ARocket::Tick(float DeltaTime)
 	if (canCheckForEnemies) {
 		mSetTimer(TimerHandle_CanCheckForEnemies, &ARocket::CanCheckForEnemies, 0.3f);
 		canCheckForEnemies = false;
-		FindTarget();
-	}
-}
-
-void ARocket::FindTarget()
-{
-	if ((target == NULL || !target->GetHealthComponent()->IsAlive()) && GetShooter() != NULL) {
-		// TODO Change to sphere / cone comp
-		SetTarget(mGetClosestEnemyInRadius(4000, GetActorLocation(), GetShooter()->GetTeam()));
 	}
 }
 

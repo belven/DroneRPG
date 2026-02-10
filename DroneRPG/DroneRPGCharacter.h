@@ -10,6 +10,7 @@ class ADroneProjectile;
 class ARespawnPoint;
 class UWeapon;
 class UMaterialInstanceConstant;
+class ADroneRPGGameMode;
 
 UCLASS(Blueprintable)
 class ADroneRPGCharacter : public ACharacter
@@ -29,7 +30,6 @@ public:
 	void KillDrone(AActor* killer);
 	FString GetDroneName();
 	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	ARespawnPoint* GetRespawnPoint();
@@ -61,10 +61,13 @@ public:
 	FORCEINLINE UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 	UHealthComponent* GetHealthComponent() const { return healthComponent; }
-private:
 
+	ADroneRPGGameMode* GetGameMode();
+
+private:
 	UPROPERTY()
 	ARespawnPoint* respawnPoint;
+	FString droneName;
 
 	UPROPERTY()
 	UHealthComponent* healthComponent;
@@ -89,4 +92,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UDecalComponent* CursorToWorld;
+
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 };

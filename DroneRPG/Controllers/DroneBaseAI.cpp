@@ -223,20 +223,20 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 }
 
 AActor* ADroneBaseAI::FindEnemyTarget(float distance) {
-	TArray<ADroneRPGCharacter*> drones = mGetEnemiesInRadius(distance, mDroneLocation, GetDrone()->GetTeam());
+	//TArray<ADroneRPGCharacter*> drones = mGetEnemiesInRadius(distance, mDroneLocation, GetDrone()->GetTeam()); TODO improve this 
 
-	if (drones.Num() > 0) {
-		mShuffleArray<ADroneRPGCharacter*>(drones);
-		return UFunctionLibrary::GetRandomObject<ADroneRPGCharacter*>(drones);
-	}
+	//if (drones.Num() > 0) {
+	//	mShuffleArray<ADroneRPGCharacter*>(drones);
+	//	return UFunctionLibrary::GetRandomObject<ADroneRPGCharacter*>(drones);
+	//}
 
 	return NULL;
 }
 
 void ADroneBaseAI::FindTarget() {
-	targetObjective = FindEnemyTarget();
-	target = Cast<ADroneRPGCharacter>(targetObjective);
-	SetCurrentState(EActionState::AttackingTarget);
+	//targetObjective = FindEnemyTarget();
+	//target = Cast<ADroneRPGCharacter>(targetObjective);
+	//SetCurrentState(EActionState::AttackingTarget);
 }
 
 void ADroneBaseAI::RotateToFace() {
@@ -522,5 +522,5 @@ ADroneRPGCharacter* ADroneBaseAI::GetDrone()
 
 void ADroneBaseAI::FireShot(const FVector& FireDirection)
 {
-	GetDrone()->GetWeapon()->FireShot(FireDirection, target);
+	GetDrone()->GetWeapon()->FireShot(FireDirection);
 }
