@@ -32,7 +32,7 @@ UHealthComponent::UHealthComponent()
 	wipeValue = FMath::RandRange(minWipe, maxWipe);
 
 	healthParticleSize = 20;
-	
+
 	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldInstance(TEXT("/ Script/Engine.MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
 
 	if (shieldInstance.Succeeded()) {
@@ -53,38 +53,47 @@ void UHealthComponent::DamageDrone(float damage, AActor* damager)
 	mSetTimer(TimerHandle_ShieldRegenRestart, &UHealthComponent::StartShieldRegen, shieldRegenDelay);
 
 	// Take damage to shields
-	if (HasShields()) 
+	if (HasShields())
 	{
 		// We have less shields than damage, so remove are shields from the damage, to allow us to take it as health
-		if (currentStats.shields < damage) 
+		if (currentStats.shields < damage)
 		{
-			damage -= currentStats.shields;
 			currentStats.shields = 0;
 		}
 		// We have more shields than damage dealt, so take it all to shields
-		else 
+		else
 		{
 			currentStats.shields -= damage;
 		}
 
 		// Weaken max shields, to prevent ships being as strong for the whole match
-		if (maxStats.shields > 50) 
+		if (maxStats.shields > 50)
 		{
 			// Take half damage taken away from max shields
 			maxStats.shields -= (damage * 0.5);
 			UFunctionLibrary::ClampValue(maxStats.shields, maxStats.shields, 50.f);
 		}
 
-		CalculateShieldParticles();
+		damage -= currentStats.shields;
 	}
 
-	// If we have 0 shields, then take health damage
-	if (currentStats.shields <= 0 && currentStats.health > 0) 
+	// Take any remaining damage as health damage
+	if (IsAlive() && damage > 0)
 	{
 		currentStats.health -= damage;
-		OnUnitDied.Broadcast(damager);
-		CalculateHealthColours();
+
+		if (!IsAlive())
+		{
+			OnUnitDied.Broadcast(damager);
+			shieldMeshComp->SetHiddenInGame(true);
+			healthParticle->SetHiddenInGame(true);
+			shieldsActive = false;
+			canRegenShields = false;
+		}
 	}
+
+	CalculateShieldParticles();
+	CalculateHealthColours();
 
 	UFunctionLibrary::ClampValue(currentStats.health, maxStats.health, 0.0f);
 	UFunctionLibrary::ClampValue(currentStats.shields, maxStats.shields, 0.0f);
@@ -108,6 +117,7 @@ void UHealthComponent::SetDefaults()
 	shieldsCritical = false;
 	healthStatus = FColor::Green;
 	shieldsActive = true;
+	canRegenShields = true;
 }
 
 bool UHealthComponent::IsAlive()
@@ -154,7 +164,8 @@ void UHealthComponent::BeginPlay()
 
 	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
 
-	if (shieldMesh != NULL) {
+	if (shieldMesh != NULL) 
+	{
 		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
 		// Otherwise we access the base mesh, that all drones use, and change it globally
 		shieldMeshComp = NewObject<UInstancedStaticMeshComponent>(this);
@@ -176,7 +187,7 @@ void UHealthComponent::BeginPlay()
 
 void UHealthComponent::ReceiveHit(ADroneProjectile* projectile) {
 	DamageDrone(projectile->GetDamage(), projectile);
-	OnUnitHit.Broadcast(projectile->GetShooter());	
+	OnUnitHit.Broadcast(projectile->GetShooter());
 }
 
 void UHealthComponent::SetTeamColour(FColor colour)
@@ -194,15 +205,18 @@ void UHealthComponent::SetTeamColour(FColor colour)
 void UHealthComponent::CalculateHealthColours()
 {
 	// Update the colours, above 70% Green, above 45% Orange and below 45% Red
-	if (currentStats.health < (maxStats.health * 0.45f) && healthStatus != FColor::Red) {
+	if (currentStats.health < (maxStats.health * 0.45f) && healthStatus != FColor::Red) 
+	{
 		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 		healthStatus = FColor::Red;
 	}
-	else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange && healthStatus != FColor::Red) {
+	else if (currentStats.health < (maxStats.health * 0.7f) && healthStatus != FColor::Orange && healthStatus != FColor::Red) 
+	{
 		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Orange));
 		healthStatus = FColor::Orange;
 	}
-	else if (currentStats.health > (maxStats.health * 0.7f) && healthStatus != FColor::Green) {
+	else if (currentStats.health > (maxStats.health * 0.7f) && healthStatus != FColor::Green) 
+	{
 		healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 		healthStatus = FColor::Green;
 	}
@@ -211,24 +225,24 @@ void UHealthComponent::CalculateHealthColours()
 void UHealthComponent::CalculateShieldParticles()
 {
 	// Change the colour and size of the particles base on shield value, they'll be smaller and darker if we have < 50% shields
-	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical) 
+	if (currentStats.shields < (maxStats.shields * 0.5f) && !shieldsCritical)
 	{
 		SetMaterialFloat(TEXT("Exp"), smallShieldExp);
 		shieldsCritical = true;
 	}
-	else if (currentStats.shields > (maxStats.shields * 0.5f) && shieldsCritical) 
+	else if (currentStats.shields > (maxStats.shields * 0.5f) && shieldsCritical)
 	{
 		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 		shieldsCritical = false;
 	}
 
 	// If we have 0 shields, disable the particle effect
-	if (currentStats.shields <= 0 && shieldsActive) 
+	if (currentStats.shields <= 0 && shieldsActive)
 	{
 		shieldMeshComp->SetHiddenInGame(true);
 		shieldsActive = false;
 	}
-	else if (currentStats.shields > 0 && !shieldsActive) 
+	else if (currentStats.shields > 0 && !shieldsActive)
 	{
 		shieldMeshComp->SetHiddenInGame(false);
 		shieldsActive = true;
@@ -248,12 +262,12 @@ void UHealthComponent::SetMaterialFloat(FName param, float value)
 void UHealthComponent::CalculateShields(float DeltaSeconds)
 {
 	// If our shields aren't at max and we haven't recently been hit, regen our shields
-	if (currentStats.shields < maxStats.shields && canRegenShields) 
+	if (currentStats.shields < maxStats.shields && canRegenShields)
 	{
 		float value = shieldRegen * DeltaSeconds;
 
 		// Do we have the energy to regen our shields?
-		if (currentStats.energy > value) 
+		if (currentStats.energy > value)
 		{
 			currentStats.shields += value;
 			currentStats.energy -= value;
@@ -269,7 +283,7 @@ void UHealthComponent::CalculateShields(float DeltaSeconds)
 void UHealthComponent::CalculateEnergy(float DeltaSeconds)
 {
 	// If our current energy isn't at max, restore some energy
-	if (currentStats.energy < maxStats.energy) 
+	if (currentStats.energy < maxStats.energy)
 	{
 		float value = energyRegen * DeltaSeconds;
 		currentStats.energy += value;
@@ -291,7 +305,7 @@ void UHealthComponent::PulseShield()
 	wipeValue += increment;
 
 	// If we've reached the top, reset to the bottom
-	if (wipeValue >= maxWipe) 
+	if (wipeValue >= maxWipe)
 	{
 		wipeValue = minWipe;
 	}

@@ -34,7 +34,7 @@ ADroneProjectile* URocketLauncher::SpawnProjectile(FVector gunLocation, FRotator
 	ARocket* proj = Cast<ARocket>(Super::SpawnProjectile(gunLocation, FireRotation));
 	// TODO find a better way to get target Component might be best
 	//ADroneRPGCharacter* targetEnemy = Cast<ADroneRPGCharacter>(target);
-
+	proj->team = GetOwner()->GetTeam();
 	//if (proj != NULL && targetEnemy != NULL) {
 	//	proj->SetTarget(targetEnemy);
 	//}

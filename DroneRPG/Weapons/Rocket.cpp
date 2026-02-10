@@ -1,20 +1,20 @@
 #include "Rocket.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
+#include "Components/SphereComponent.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
-const float ARocket::Default_Initial_Speed = 1000.0f;
-const float ARocket::Default_Initial_Lifespan = 3.5f;
+const float ARocket::Default_Initial_Speed = 2500.0f;
+const float ARocket::Default_Initial_Lifespan = 4.5f;
 
-ARocket::ARocket() 
+ARocket::ARocket()
 {
-	constexpr float speed = 3000.0f;
+	team = -1;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
-	ProjectileMovement->MaxSpeed = speed;
+	ProjectileMovement->MaxSpeed = 3500.0f;
 	ProjectileMovement->HomingAccelerationMagnitude = 15000;
 	InitialLifeSpan = Default_Initial_Lifespan;
-	canCheckForEnemies = true;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundAudio(TEXT("SoundCue'/Game/TopDownCPP/Sounds/Rocket_Booster_Cue.Rocket_Booster_Cue'"));
 	FireSound = FireSoundAudio.Object;
@@ -27,6 +27,35 @@ ARocket::ARocket()
 	if (rocketTrailSystem.Succeeded()) {
 		trailSystem = rocketTrailSystem.Object;
 	}
+
+	sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RocketOverlap"));
+	sphereComponent->SetSphereRadius(2000);
+	sphereComponent->SetupAttachment(GetRootComponent());
+	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
+	sphereComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ARocket::BeginOverlap);
+}
+
+bool ARocket::CheckIfValidTarget(ADroneRPGCharacter* droneFound)
+{
+	return IsValid(droneFound) && droneFound->GetHealthComponent()->IsAlive() && droneFound->GetTeam() != team;
+}
+
+void ARocket::SetTeam(int32 inTeam)
+{
+	team = inTeam;
+
+	TArray<AActor*> overlaps;
+	sphereComponent->GetOverlappingActors(overlaps);
+
+	for (auto overlap : overlaps)
+	{
+
+		ADroneRPGCharacter* droneFound = Cast<ADroneRPGCharacter>(overlap);
+		if (CheckIfValidTarget(droneFound))
+		{
+			target = droneFound;
+		}
+	}
 }
 
 void ARocket::SetTarget(ADroneRPGCharacter* val)
@@ -36,16 +65,6 @@ void ARocket::SetTarget(ADroneRPGCharacter* val)
 	if (target != NULL) {
 		ProjectileMovement->bIsHomingProjectile = true;
 		ProjectileMovement->HomingTargetComponent = target->GetRootComponent();
-	}
-}
-
-void ARocket::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (canCheckForEnemies) {
-		mSetTimer(TimerHandle_CanCheckForEnemies, &ARocket::CanCheckForEnemies, 0.3f);
-		canCheckForEnemies = false;
 	}
 }
 
@@ -80,7 +99,15 @@ void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 	}
 }
 
-void ARocket::CanCheckForEnemies()
+void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	canCheckForEnemies = true;
+	if (team != -1) 
+	{
+		ADroneRPGCharacter* droneFound = Cast<ADroneRPGCharacter>(OtherActor);
+
+		if ((target == NULL || !target->GetHealthComponent()->IsAlive()) && CheckIfValidTarget(droneFound))
+		{
+			SetTarget(droneFound);
+		}
+	}
 }

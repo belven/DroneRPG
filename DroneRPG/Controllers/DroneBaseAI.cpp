@@ -26,7 +26,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	PrimaryActorTick.TickInterval = 0.1;
 	minCaptureDistance = 650;
-	targetRange = 10000;
+	targetRange = 5000;
 
 	canCheckForEnemies = true;
 	canPerformActions = true;
@@ -107,8 +107,9 @@ bool ADroneBaseAI::CompareState(EActionState state)
 
 void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+	ADroneRPGCharacter* character = Cast<ADroneRPGCharacter>(Actor);
+
 	if (Stimulus.WasSuccessfullySensed()) {
-		ADroneRPGCharacter* character = Cast<ADroneRPGCharacter>(Actor);
 		if ((!IsValid(GetDroneTarget()) || !GetDroneTarget()->GetHealthComponent()->IsAlive()) && IsValid(character)) {
 			if (character->GetTeam() != GetDrone()->GetTeam())
 			{
@@ -116,7 +117,7 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 			}
 		}
 	}
-	else	if (CompareState(EActionState::AttackingTarget) || CompareState(EActionState::SearchingForObjective))
+	else	if (GetDroneTarget() == character)
 	{
 		target = NULL;
 		MoveToLocation(Stimulus.StimulusLocation);
@@ -328,6 +329,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	{
 		// If this is hit, then we've likely died and need to reset our state!
 		SetCurrentState(EActionState::SearchingForObjective);
+		StopMovement();
 	}
 }
 

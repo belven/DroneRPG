@@ -181,6 +181,10 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 void ADroneRPGCharacter::KillDrone(AActor* killer)
 {
 	deaths++;
+	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	meshComponent->SetHiddenInGame(true);
+
+	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 
 	// Check if the killer uses UDroneDamagerInterface
 	if (mImplements(killer, UDroneDamagerInterface)) {
@@ -192,18 +196,14 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 		// Tell the gamemode we've died, to update score etc.
 		GetGameMode()->EntityKilled(this, killer);
 
-		// Add text to the kill feed TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
+		// Add text to the kill feed
+		// TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
 		TArray< FStringFormatArg > args;
 		args.Add(FStringFormatArg(GetDroneName()));
 		args.Add(FStringFormatArg(damageDealer->GetDamagerName()));
 
 		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
 	}
-
-	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	meshComponent->SetHiddenInGame(true);
-
-	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 }
 
 FString ADroneRPGCharacter::GetDroneName()
