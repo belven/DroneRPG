@@ -14,7 +14,7 @@ void ADroneHUD::DrawHUD() {
 
 	// Get all the enemy drones in the game and display indicators where appropriate
 	for (ADroneRPGCharacter* drone : GetEnemyDrones()) {
-		if (drone->IsAlive())
+		if (drone->GetHealthComponent()->IsAlive())
 			DrawEnemyIndicators(drone);
 	}
 

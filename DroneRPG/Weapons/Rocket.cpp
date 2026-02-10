@@ -52,7 +52,7 @@ void ARocket::Tick(float DeltaTime)
 
 void ARocket::FindTarget()
 {
-	if ((target == NULL || !target->IsAlive()) && GetShooter() != NULL) {
+	if ((target == NULL || !target->GetHealthComponent()->IsAlive()) && GetShooter() != NULL) {
 		// TODO Change to sphere / cone comp
 		SetTarget(mGetClosestEnemyInRadius(4000, GetActorLocation(), GetShooter()->GetTeam()));
 	}
@@ -77,7 +77,7 @@ void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 					// Check if the drone found is an enemy
 					if (GetShooter()->GetTeam() != drone->GetTeam()) {
 						// Deal damage to enemy Drone
-						drone->ReceiveHit(this);
+						drone->GetHealthComponent()->ReceiveHit(this);
 						Destroy();
 					}
 				}

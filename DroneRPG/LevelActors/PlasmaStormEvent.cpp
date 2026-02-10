@@ -82,7 +82,7 @@ void APlasmaStormEvent::TriggerEvent()
 
 		if (IsValid(drone)) 
 		{
-			drone->DamageDrone(damage, this);
+			drone->GetHealthComponent()->DamageDrone(damage, this);
 			damageDealt += damage;
 		}
 	}

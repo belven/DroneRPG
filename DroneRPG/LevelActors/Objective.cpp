@@ -51,8 +51,14 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	}
 }
 
-void AObjective::DroneDied(ADroneRPGCharacter* drone) {
-	Remove(drone);
+void AObjective::UnitDied(AActor* unit)
+{
+	auto drone = Cast<ADroneRPGCharacter>(unit);
+
+	if (IsValid(drone)) 
+	{
+		Remove(drone);
+	}
 }
 
 void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -107,7 +113,7 @@ void AObjective::CalculateOwnership() {
 	teamsInArea.Empty();
 
 	for (ADroneRPGCharacter* drone : dronesInArea) {
-		if (!teamsInArea.Contains(drone->GetTeam()) && drone->IsAlive()) {
+		if (!teamsInArea.Contains(drone->GetTeam()) && drone->GetHealthComponent()->IsAlive()) {
 			teamsInArea.Add(drone->GetTeam());
 		}
 	}
@@ -199,18 +205,19 @@ void AObjective::CalculateClaim() {
 
 void AObjective::Add(ADroneRPGCharacter* drone)
 {
-	if (!dronesInArea.Contains(drone) && drone->IsAlive()) {
+	if (!dronesInArea.Contains(drone) && drone->GetHealthComponent()->IsAlive()) {
 		dronesInArea.Add(drone);
-		drone->DroneDied.AddDynamic(this, &AObjective::DroneDied);
+		drone->GetHealthComponent()->OnUnitDied.AddDynamic(this, &AObjective::UnitDied);
 		CalculateOwnership();
 	}
 }
 
 void AObjective::Remove(ADroneRPGCharacter* drone)
 {
-	if (dronesInArea.Contains(drone)) {
+	if (dronesInArea.Contains(drone)) 
+	{
 		dronesInArea.Remove(drone);
-		drone->DroneDied.RemoveDynamic(this, &AObjective::DroneDied);
+		drone->GetHealthComponent()->OnUnitDied.RemoveDynamic(this, &AObjective::UnitDied);
 		CalculateOwnership();
 	}
 }

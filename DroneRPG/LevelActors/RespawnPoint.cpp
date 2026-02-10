@@ -83,8 +83,8 @@ void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 {
 	if (mIsA(OtherActor, ADroneRPGCharacter)) {
 		ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(OtherActor);
-		if (drone->GetTeam() == GetTeam() && !drone->IsHealthy()) {
-			drone->FullHeal();
+		if (drone->GetTeam() == GetTeam() && !drone->GetHealthComponent()->IsHealthy()) {
+			drone->GetHealthComponent()->FullHeal();
 		}
 	}
 }

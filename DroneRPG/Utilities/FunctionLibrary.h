@@ -37,6 +37,7 @@ class UWeapon;
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 
 
+
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject
 {

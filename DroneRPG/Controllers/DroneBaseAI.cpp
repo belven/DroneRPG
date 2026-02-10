@@ -109,7 +109,7 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (Stimulus.WasSuccessfullySensed()) {
 		ADroneRPGCharacter* character = Cast<ADroneRPGCharacter>(Actor);
-		if ((!IsValid(GetDroneTarget()) || !GetDroneTarget()->IsAlive()) && IsValid(character)) {
+		if ((!IsValid(GetDroneTarget()) || !GetDroneTarget()->GetHealthComponent()->IsAlive()) && IsValid(character)) {
 			if (character->GetTeam() != GetDrone()->GetTeam())
 			{
 				target = character;
@@ -191,7 +191,7 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker) {
 	}
 	else if (droneTarget != droneAttacker) {
 		// Something else has attacked us and our current target is out of line of sight or dead
-		if (!droneTarget->IsAlive()) {
+		if (!droneTarget->GetHealthComponent()->IsAlive()) {
 			target = droneAttacker;
 		}
 	}
@@ -281,7 +281,7 @@ void ADroneBaseAI::GetNextVisibleTarget()
 	{
 		ADroneRPGCharacter* other = Cast<ADroneRPGCharacter>(seen);
 
-		if (IsValid(other) && other->GetTeam() != GetDrone()->GetTeam() && other->IsAlive()) {
+		if (IsValid(other) && other->GetTeam() != GetDrone()->GetTeam() && other->GetHealthComponent()->IsAlive()) {
 			target = other;
 			break;
 		}
@@ -293,8 +293,8 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	// We don't do anything if we're dead!
-	if (GetDrone()->IsAlive()) {
-		if (!CompareState(EActionState::ReturningToBase) && !GetDrone()->IsHealthy()) {
+	if (GetDrone()->GetHealthComponent()->IsAlive()) {
+		if (!CompareState(EActionState::ReturningToBase) && !GetDrone()->GetHealthComponent()->IsHealthy()) {
 			SetCurrentState(EActionState::ReturningToBase);
 			ReturningToBase();
 		}
@@ -487,7 +487,7 @@ bool ADroneBaseAI::IsTargetValid() {
 	ADroneRPGCharacter* droneTarget = GetDroneTarget();
 	//float range = GetDrone()->GetWeapon()->GetRange();
 
-	if (IsValid(droneTarget) && droneTarget->IsAlive())
+	if (IsValid(droneTarget) && droneTarget->GetHealthComponent()->IsAlive())
 		// TODO figure out a better way to handle range checks. Ignoring for now as LOS is more important
 		//&& mDist(droneTarget->GetActorLocation(), mDroneLocation) <= range)
 	{

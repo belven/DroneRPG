@@ -102,13 +102,13 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 		ADroneRPGCharacter* droneHit = Cast<ADroneRPGCharacter>(OtherActor);
 
 		// Did we hit a drone?
-		if (droneHit != NULL) {
-
+		if (droneHit != NULL) 
+		{
 			// Are we on a different team?
-			if (droneHit->GetTeam() != shooter->GetTeam()) {
-
+			if (droneHit->GetTeam() != shooter->GetTeam()) 
+			{
 				// Deal damage to enemy Drone
-				droneHit->ReceiveHit(this);
+				droneHit->GetHealthComponent()->ReceiveHit(this);
 				Destroy();
 			}
 		}
