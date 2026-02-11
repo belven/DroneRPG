@@ -7,17 +7,15 @@
 URocketLauncher::URocketLauncher()
 {
 	weaponType = EWeaponType::Rocket;
+	speed = ARocket::Default_Initial_Speed;
+	lifespan = ARocket::Default_Initial_Lifespan;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> rocketProjectile(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Rocket"));
 
-	if (rocketProjectile.Succeeded()) {
+	if (rocketProjectile.Succeeded()) 
+	{
 		projectileClass = rocketProjectile.Class;
 	}
-}
-
-float URocketLauncher::GetRange()
-{
-	return ARocket::Default_Initial_Speed * ARocket::Default_Initial_Lifespan;
 }
 
 URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
@@ -32,11 +30,6 @@ URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float i
 ADroneProjectile* URocketLauncher::SpawnProjectile(FVector gunLocation, FRotator FireRotation)
 {
 	ARocket* proj = Cast<ARocket>(Super::SpawnProjectile(gunLocation, FireRotation));
-	// TODO find a better way to get target Component might be best
-	//ADroneRPGCharacter* targetEnemy = Cast<ADroneRPGCharacter>(target);
 	proj->team = GetOwner()->GetTeam();
-	//if (proj != NULL && targetEnemy != NULL) {
-	//	proj->SetTarget(targetEnemy);
-	//}
 	return proj;
 }

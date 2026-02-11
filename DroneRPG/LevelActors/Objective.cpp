@@ -4,8 +4,8 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include <Components/StaticMeshComponent.h>
+#include <DroneRPG/Components/CombatantComponent.h>
 #include <Kismet/GameplayStatics.h>
-#include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
@@ -17,6 +17,8 @@ AObjective::AObjective()
 #endif
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
+	objectiveName = "";
+
 	areaOwner = 0;
 	currentControl = 0;
 	minControl = 3;
@@ -25,16 +27,13 @@ AObjective::AObjective()
 	currentColour = FColor::Red;
 
 	keyActorSize = 2000;
-
 	smallParticle = 150;
 	bigParticle = 300;
 	overlapTimeRate = 5;
 
-	objectiveName = "";
-
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
-	if (auraParticleSystem.Succeeded()) 
+	if (auraParticleSystem.Succeeded())
 	{
 		auraSystem = auraParticleSystem.Object;
 	}
@@ -46,31 +45,35 @@ AObjective::AObjective()
 
 void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Check if we have a drone and we don't already have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter)) 
+	UCombatantComponent* combatant = mGetCombatantComponent(OtherActor);
+
+	// Check if we have a drone and we have it in the list
+	if (IsValid(combatant)) 
 	{
 		// Add it to the list and re-calculate ownership
-		Add(Cast<ADroneRPGCharacter>(OtherActor));
+		Add(combatant);
 	}
 }
 
 void AObjective::UnitDied(AActor* unit)
 {
-	auto drone = Cast<ADroneRPGCharacter>(unit);
+	UCombatantComponent* combatant = mGetCombatantComponent(unit);
 
-	if (IsValid(drone)) 
+	if (IsValid(combatant))
 	{
-		Remove(drone);
+		Remove(combatant);
 	}
 }
 
 void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	UCombatantComponent* combatantComponent = mGetCombatantComponent(OtherActor);
+
 	// Check if we have a drone and we have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter)) 
+	if (IsValid(combatantComponent))
 	{
 		// Remove it from the list and re-calculate ownership
-		Remove(Cast<ADroneRPGCharacter>(OtherActor));
+		Remove(combatantComponent);
 	}
 }
 
@@ -81,10 +84,10 @@ void AObjective::CheckForOverlaps()
 
 	for (AActor* overlap : overlaps)
 	{
-		if (mIsA(overlap, ADroneRPGCharacter)) 
+		if (mIsA(overlap, UCombatantComponent))
 		{
 			// Add it to the list and re-calculate ownership
-			Add(Cast<ADroneRPGCharacter>(overlap));
+			Add(Cast<UCombatantComponent>(overlap));
 		}
 	}
 }
@@ -113,35 +116,45 @@ void AObjective::BeginPlay()
 	CheckForOverlaps();
 }
 
-void AObjective::CalculateOwnership() {
+void AObjective::CalculateOwnership()
+{
 	// Clear the teams list, as we're calculating it again 
 	teamsInArea.Empty();
 
-	for (ADroneRPGCharacter* drone : dronesInArea) {
-		if (!teamsInArea.Contains(drone->GetTeam()) && drone->GetHealthComponent()->IsAlive()) {
-			teamsInArea.Add(drone->GetTeam());
+	for (UCombatantComponent* component : combatantsInArea)
+	{
+		UHealthComponent* healthComponent = mGetHealthComponent(component->GetOwner());
+
+		if (!teamsInArea.Contains(component->GetTeam()) && healthComponent->IsAlive())
+		{
+			teamsInArea.Add(component->GetTeam());
 		}
 	}
 
 	// If there's only 1 team in the area, then they have full claim of it
-	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0]) {
+	if (teamsInArea.Num() == 1 && GetAreaOwner() != teamsInArea[0])
+	{
 		SetAreaOwner(teamsInArea[0]);
 	}
 }
 
-void AObjective::UpdateColour() {
+void AObjective::UpdateColour()
+{
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
-	// Check if the priviousAreaOwner and areaOwner are the same, this means the colour can change as the preiviousAreaOwner isn't an enemy team
-	if (currentControl > minControl && previousAreaOwner == areaOwner) {
+	// Check if the previousAreaOwner and areaOwner are the same, this means the colour can change as the previousAreaOwner isn't an enemy team
+	if (currentControl > minControl && previousAreaOwner == areaOwner)
+	{
 		FColor teamColour = UFunctionLibrary::GetTeamColour(areaOwner);
 
-		if (currentColour != teamColour) {
+		if (currentColour != teamColour)
+		{
 			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
 			currentColour = teamColour;
 		}
 	}
 	// If the control is less than the minimum then it's a neutral 
-	else if (currentControl <= minControl && currentColour != FColor::Red) {
+	else if (currentControl <= minControl && currentColour != FColor::Red)
+	{
 		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 		currentColour = FColor::Red;
 	}
@@ -152,39 +165,44 @@ void AObjective::SetAreaOwner(int32 val)
 	areaOwner = val;
 }
 
-void AObjective::CalculateClaim() {
-
+void AObjective::CalculateClaim()
+{
 	// If only one team is in the area, then they  can start to claim it
-	if (teamsInArea.Num() == 1) {
-
-		// If the preiviousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
-		if (previousAreaOwner == 0 && areaOwner != 0) {
-			currentControl += dronesInArea.Num();
+	if (teamsInArea.Num() == 1)
+	{
+		// If the previousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
+		if (previousAreaOwner == 0 && areaOwner != 0)
+		{
+			currentControl += combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			UpdateColour();
 
 			// Once the control exceeds the minimum control, the new team can have control
-			if (currentControl >= minControl) {
+			if (currentControl >= minControl)
+			{
 				previousAreaOwner = areaOwner;
 			}
 		}
 		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
-		else if (previousAreaOwner != areaOwner && currentControl > 0) {
-			currentControl -= dronesInArea.Num();
+		else if (previousAreaOwner != areaOwner && currentControl > 0)
+		{
+			currentControl -= combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			UpdateColour();
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
-			if (currentControl == 0) {
+			if (currentControl == 0)
+			{
 				previousAreaOwner = areaOwner;
 			}
 		}
 		// If the previousAreaOwner and areaOwner are the same, then that team has control and we can start claiming it
 		// Check if we're not at the max control
-		else if (previousAreaOwner == areaOwner && currentControl < maxControl) {
-			currentControl += dronesInArea.Num();
+		else if (previousAreaOwner == areaOwner && currentControl < maxControl)
+		{
+			currentControl += combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			UpdateColour();
@@ -192,37 +210,44 @@ void AObjective::CalculateClaim() {
 
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger
-		if (currentControl == maxControl && !fullClaim) {
+		if (currentControl == maxControl && !fullClaim)
+		{
 			captureParticle->SetFloatParameter(TEXT("Size"), bigParticle);
 			fullClaim = true;
 
-			if (OnObjectiveClaimed.IsBound()) {
+			if (OnObjectiveClaimed.IsBound())
+			{
 				OnObjectiveClaimed.Broadcast(this);
 			}
 		}
 		// If the control is less than max then make the particles smaller, this makes it easier to tell when it's fully claimed
-		else if (currentControl < maxControl && fullClaim) {
+		else if (currentControl < maxControl && fullClaim)
+		{
 			captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
 			fullClaim = false;
 		}
 	}
 }
 
-void AObjective::Add(ADroneRPGCharacter* drone)
+void AObjective::Add(UCombatantComponent* combatant)
 {
-	if (!dronesInArea.Contains(drone) && drone->GetHealthComponent()->IsAlive()) {
-		dronesInArea.Add(drone);
-		drone->GetHealthComponent()->OnUnitDied.AddDynamic(this, &AObjective::UnitDied);
+	UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+
+	if (!combatantsInArea.Contains(combatant) && IsValid(healthComponent) && healthComponent->IsAlive())
+	{
+		combatantsInArea.Add(combatant);
+		healthComponent->OnUnitDied.AddDynamic(this, &AObjective::UnitDied);
 		CalculateOwnership();
 	}
 }
 
-void AObjective::Remove(ADroneRPGCharacter* drone)
+void AObjective::Remove(UCombatantComponent* combatant)
 {
-	if (dronesInArea.Contains(drone)) 
+	if (combatantsInArea.Contains(combatant))
 	{
-		dronesInArea.Remove(drone);
-		drone->GetHealthComponent()->OnUnitDied.RemoveDynamic(this, &AObjective::UnitDied);
+		UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+		combatantsInArea.Remove(combatant);
+		healthComponent->OnUnitDied.RemoveDynamic(this, &AObjective::UnitDied);
 		CalculateOwnership();
 	}
 }
@@ -244,7 +269,8 @@ void AObjective::Tick(float DeltaTime)
 	overlapTimePassed += DeltaTime;
 
 	// Every second add 5 points to the team that full owns this point
-	if (fullClaim) {
+	if (fullClaim)
+	{
 		GetGameMode()->AddTeamScore(areaOwner, 5);
 	}
 	else if (overlapTimePassed > overlapTimeRate)

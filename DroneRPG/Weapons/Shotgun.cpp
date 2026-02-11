@@ -5,17 +5,13 @@
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
-const float UShotgun::Default_Initial_Lifespan = 0.7f;
 
 UShotgun::UShotgun(): pellets(0)
 {
 	weaponType = EWeaponType::Shotgun;
 	spread = 0.15f;
-}
-
-float UShotgun::GetRange()
-{
-	return ADroneProjectile::Default_Initial_Speed * Default_Initial_Lifespan;
+	lifespan = 0.7f;
+	speed = ADroneProjectile::Default_Initial_Speed;
 }
 
 UShotgun* UShotgun::CreateShotgun(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner, int32 inPellets)
@@ -59,9 +55,3 @@ void UShotgun::FireShot(FVector FireDirection)
 	}
 }
 
-ADroneProjectile* UShotgun::SpawnProjectile(FVector gunLocation, FRotator FireRotation)
-{
-	ADroneProjectile* proj = Super::SpawnProjectile(gunLocation, FireRotation);
-	proj->SetLifeSpan(Default_Initial_Lifespan);
-	return proj;
-}

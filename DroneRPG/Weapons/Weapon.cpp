@@ -10,7 +10,12 @@
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
-UWeapon::UWeapon() : weaponMeshComp(nullptr), owner(nullptr), FireSound(nullptr)
+UWeapon::UWeapon() :
+	lifespan(ADroneProjectile::Default_Initial_Lifespan),
+	speed(ADroneProjectile::Default_Initial_Speed),
+	weaponMeshComp(nullptr),
+	owner(nullptr),
+	FireSound(nullptr)
 {
 	fireRate = 0.3f;
 	damage = 15.0f;
@@ -30,17 +35,15 @@ template<class T>
 T* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
 {
 	T* weapon = NewObject<T>(T::StaticClass());
-
 	weapon->fireRate = inFireRate;
 	weapon->damage = inDamage;
 	weapon->owner = inOwner;
-
 	return weapon;
 }
 
 float UWeapon::GetRange()
 {
-	return ADroneProjectile::Default_Initial_Speed * ADroneProjectile::Default_Initial_Lifespan;
+	return  speed * lifespan;
 }
 
 void UWeapon::ShotTimerExpired()
@@ -52,6 +55,7 @@ ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRot
 	ADroneProjectile* projectile = mSpawnProjectile;
 	projectile->SetShooter(mGetCombatantComponent(GetOwner()));
 	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
+	projectile->SetLifeSpan(lifespan);
 	return projectile;
 }
 

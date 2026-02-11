@@ -27,7 +27,7 @@ ADroneProjectile::ADroneProjectile()
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> trailParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/TrailParticleSystem_2.TrailParticleSystem_2'"));
 
-	if (trailParticleSystem.Succeeded()) 
+	if (trailParticleSystem.Succeeded())
 	{
 		trailSystem = trailParticleSystem.Object;
 	}
@@ -65,7 +65,7 @@ void ADroneProjectile::BeginPlay()
 
 	TArray<ADroneProjectile*> projectiles = mGetActorsInWorld<ADroneProjectile>(GetWorld());
 
-	for (ADroneProjectile* projectile : projectiles) 
+	for (ADroneProjectile* projectile : projectiles)
 	{
 		IgnoreActor(projectile);
 		projectile->IgnoreActor(this);
@@ -97,17 +97,15 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 		FTargetData targetData = CreateTargetData(OtherActor);
 
 		// Did we hit a drone?
-		if (targetData.combatantComponent != NULL)
-		{
+		if (targetData.combatantComponent != NULL
 			// Are we on a different team?
-			if (targetData.combatantComponent->GetTeam() != shooter->GetTeam())
-			{
-				// Deal damage to enemy Drone
-				targetData.healthComponent->ReceiveDamage(GetDamage(), this);
-				Destroy();
-			}
+			&& targetData.combatantComponent->GetTeam() != shooter->GetTeam())
+		{
+			// Deal damage to enemy Drone
+			targetData.healthComponent->ReceiveDamage(GetDamage(), this);
+			Destroy();
 		}
-		else 
+		else
 		{
 			Destroy();
 		}
@@ -119,12 +117,17 @@ UCombatantComponent* ADroneProjectile::GetShooter()
 	return shooter;
 }
 
-void ADroneProjectile::SetUpCollision() {
-	TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
+void ADroneProjectile::SetUpCollision()
+{
+	TArray<AActor*> actors = mGetActorsInWorld<AActor>(GetWorld());
 
-	for (ADroneRPGCharacter* drone : drones) {
-		if (drone->GetTeam() == shooter->GetTeam()) {
-			ProjectileMesh->IgnoreActorWhenMoving(drone, true);
+	for (AActor* actor : actors)
+	{
+		UCombatantComponent* combatant = mGetCombatantComponent(actor);
+
+		if (IsValid(combatant) && combatant->GetTeam() == shooter->GetTeam())
+		{
+			ProjectileMesh->IgnoreActorWhenMoving(combatant->GetOwner(), true);
 		}
 	}
 }

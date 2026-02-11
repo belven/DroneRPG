@@ -35,6 +35,8 @@ public:
 protected:
 	float fireRate;
 	float damage;
+	float lifespan;
+	float speed;
 	bool canFire;
 	FVector GunOffset;
 

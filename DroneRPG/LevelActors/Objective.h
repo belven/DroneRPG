@@ -4,12 +4,12 @@
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
 
-class ADroneRPGGameMode;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, AObjective*, objective);
 
 class UBoxComponent;
-class ADroneRPGCharacter;
+class UCombatantComponent;
 class UNiagaraSystem;
+class ADroneRPGGameMode;
 
 UCLASS()
 class DRONERPG_API AObjective : public AKeyActor
@@ -50,7 +50,8 @@ public:
 	float GetCurrentControl() const { return currentControl; }
 	int32 GetMaxControl() const { return maxControl; }
 	float GetCurrentControlPercent();
-	TArray<ADroneRPGCharacter*> GetDronesInArea() const { return dronesInArea; }
+	TArray<UCombatantComponent*> GetDronesInArea() const { return combatantsInArea; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,8 +59,8 @@ protected:
 	void UpdateColour();
 	void CalculateClaim();
 
-	void Add(ADroneRPGCharacter* drone);
-	void Remove(ADroneRPGCharacter* drone);
+	void Add(UCombatantComponent* combatant);
+	void Remove(UCombatantComponent* combatant);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 		int32 areaOwner;
@@ -79,7 +80,7 @@ private:
 		UBoxComponent* objectiveArea;
 
 	UPROPERTY()
-		TArray<ADroneRPGCharacter*> dronesInArea;
+		TArray<UCombatantComponent*> combatantsInArea;
 
 	int32 minControl;
 	int32 maxControl;
