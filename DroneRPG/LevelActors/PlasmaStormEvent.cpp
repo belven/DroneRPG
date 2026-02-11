@@ -1,13 +1,15 @@
 #include "PlasmaStormEvent.h"
-#include "NavigationSystem.h"
-#include "Niagara/Public/NiagaraComponent.h"
-#include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Components/SphereComponent.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
+#include "Niagara/Public/NiagaraComponent.h"
+#include "Niagara/Public/NiagaraFunctionLibrary.h"
+#include <DroneRPG/Components/CombatantComponent.h>
+#include "DroneRPG/Components/HealthComponent.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 
@@ -50,26 +52,15 @@ APlasmaStormEvent::APlasmaStormEvent()
 	sphereComponent->SetSphereRadius(radius);
 	sphereComponent->SetupAttachment(GetRootComponent());
 	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
+	combatantComponent->SetupCombatantComponent("Plasma Storm", EDamagerType::PlasmaStorm, -1);
+	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &APlasmaStormEvent::UnitKilled);
 }
 
-void APlasmaStormEvent::DroneKilled(ADroneRPGCharacter* drone)
+void APlasmaStormEvent::UnitKilled(AActor* unitKilled)
 {
 	kills++;
-}
-
-FString APlasmaStormEvent::GetDamagerName()
-{
-	return GetEventName();
-}
-
-EDamagerType APlasmaStormEvent::GetDamagerType()
-{
-	return EDamagerType::PlasmaStorm;
-}
-
-FString APlasmaStormEvent::GetEventName()
-{
-	return "Plasma Storm";
 }
 
 void APlasmaStormEvent::TriggerEvent()
@@ -84,7 +75,7 @@ void APlasmaStormEvent::TriggerEvent()
 
 		if (IsValid(drone)) 
 		{
-			drone->GetHealthComponent()->DamageDrone(damage, this);
+			drone->GetHealthComponent()->ReceiveDamage(damage, this);
 			damageDealt += damage;
 		}
 	}

@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "DroneRPG/DroneDamagerInterface.h"
 #include "DroneRPG/TriggeredEvent.h"
 #include "PlasmaStormEvent.generated.h"
 
+class UCombatantComponent;
 class ADroneRPGGameMode;
 class USphereComponent;
 class UNiagaraSystem;
@@ -11,18 +11,16 @@ class UNiagaraComponent;
 class ADroneRPGCharacter;
 
 UCLASS()
-class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent, public IDroneDamagerInterface
+class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent
 {
 	GENERATED_BODY()
 
 public:
 	APlasmaStormEvent();
 
-	virtual void DroneKilled(ADroneRPGCharacter* drone) override;
-	virtual FString GetDamagerName() override;
-	virtual EDamagerType GetDamagerType() override;
+	UFUNCTION()
+	void UnitKilled(AActor* unitKilled);
 
-	virtual FString GetEventName() override;
 	virtual void TriggerEvent() override;
 
 	virtual void Tick(float DeltaTime) override;
@@ -35,47 +33,51 @@ public:
 	void SetDamage(float val) { damage = val; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float radius;
+	float radius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float damage;
+	float damage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float kills;
+	float kills;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float damageDealt;
+	float damageDealt;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float travelDistance;
+	float travelDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float damageRate;
+	float damageRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float moveRate;
+	float moveRate;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float acceleration;
+	float acceleration;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		bool isPlayerHunter;
+	bool isPlayerHunter;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		bool isPowerDrainer;
+	bool isPowerDrainer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plasma Storm")
-		float powerDrainLimit;
+	float powerDrainLimit;
 
 private:
 	void Move();
-	UPROPERTY()
-		UNiagaraSystem* stormSystem;
-
-		ADroneRPGGameMode* GetGameMode();
 
 	UPROPERTY()
-		UNiagaraComponent* stormParticle;
+	UNiagaraSystem* stormSystem;
+
+	ADroneRPGGameMode* GetGameMode();
+
+	UPROPERTY()
+	UNiagaraComponent* stormParticle;
+
+	UPROPERTY()
+	UCombatantComponent* combatantComponent;
 
 	FTimerHandle TimerHandle_Move;
 	FNavLocation targetLocation;

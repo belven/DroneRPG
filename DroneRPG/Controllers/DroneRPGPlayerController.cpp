@@ -5,6 +5,7 @@
 #include <Kismet/KismetMathLibrary.h>
 
 #include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Weapons/Weapon.h"

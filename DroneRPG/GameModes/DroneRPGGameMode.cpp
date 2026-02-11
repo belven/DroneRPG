@@ -1,7 +1,7 @@
 #include "DroneRPGGameMode.h"
+#include <DroneRPG/Components/CombatantComponent.h>
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
-#include "DroneRPG/DroneDamagerInterface.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 
@@ -28,22 +28,17 @@ void ADroneRPGGameMode::BeginPlay()
 
 void ADroneRPGGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 {
+	UCombatantComponent* damageDealer = mGetCombatantComponent(damager);
 	// Check if the damager uses the UDroneDamagerInterface, which it should
-	if (mImplements(damager, UDroneDamagerInterface)) {
-		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
-
+	if (IsValid(damageDealer)) 
+	{
 		// Get their team and their teams current score.
-		float& score = teamScores.FindOrAdd(damageDealer->GetDamagerTeam());
+		float& score = teamScores.FindOrAdd(damageDealer->GetTeam());
 
-		// Add extra points. TODO The game mode may want to override something called GetKilledScore etc. so the amount of points can change per game mode
+		//  TODO The game mode may want to override something called GetKilledScore etc. so the amount of points can change per game mode
+		// Add extra points.
 		score++;
 	}
-}
-
-TArray<FScoreBoardStat> ADroneRPGGameMode::GetScoreBoardStats()
-{
-	TArray<FScoreBoardStat> stats;
-	return stats;
 }
 
 void ADroneRPGGameMode::AddTeamScore(int32 team, float bonusScore)

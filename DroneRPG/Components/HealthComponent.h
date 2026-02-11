@@ -34,7 +34,7 @@ public:
 	// Sets default values for this component's properties
 	UHealthComponent();
 
-	void DamageDrone(float damage, AActor* damager);
+	void ReceiveDamage(float damage, AActor* damager);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	void SetDefaults();
@@ -64,8 +64,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	FUnitStats GetMaxStats() const { return maxStats; }
 	void SetMaxStats(FUnitStats val) { maxStats = val; }
-
-	void ReceiveHit(ADroneProjectile* projectile);
 
 	FColor GetTeamColour() {
 		return teamColour;

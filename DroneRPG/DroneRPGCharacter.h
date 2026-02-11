@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "Components/HealthComponent.h"
 #include "GameFramework/Character.h"
 #include "DroneRPGCharacter.generated.h"
 
+class UHealthComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ADroneProjectile;
@@ -11,6 +11,7 @@ class ARespawnPoint;
 class UWeapon;
 class UMaterialInstanceConstant;
 class ADroneRPGGameMode;
+class UCombatantComponent;
 
 UCLASS(Blueprintable)
 class ADroneRPGCharacter : public ACharacter
@@ -71,6 +72,9 @@ private:
 
 	UPROPERTY()
 	UHealthComponent* healthComponent;
+
+	UPROPERTY()
+	UCombatantComponent* combatantComponent;
 
 	int32 kills;
 	int32 deaths;

@@ -3,6 +3,7 @@
 #include "DroneProjectile.h"
 #include "Rocket.generated.h"
 
+class UHealthComponent;
 class USphereComponent;
 class ADroneRPGCharacter;
 
@@ -12,13 +13,16 @@ class DRONERPG_API ARocket : public ADroneProjectile
 	GENERATED_BODY()
 public:
 	ARocket();
-	bool CheckIfValidTarget(ADroneRPGCharacter* droneFound);
+
+	bool CheckIfValidTarget(const FTargetData& targetData);
+	bool CheckActorForValidTarget(const FTargetData& targetData);
+
 	static const float Default_Initial_Speed;
 	static const float Default_Initial_Lifespan;
 
 	void SetTeam(int32 inTeam);
 
-	virtual void SetTarget(ADroneRPGCharacter* val) override;
+	virtual  void SetTarget(FTargetData targetData) override;
 
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 

@@ -6,6 +6,7 @@
 #include <Components/StaticMeshComponent.h>
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 
@@ -33,7 +34,8 @@ AObjective::AObjective()
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
-	if (auraParticleSystem.Succeeded()) {
+	if (auraParticleSystem.Succeeded()) 
+	{
 		auraSystem = auraParticleSystem.Object;
 	}
 
@@ -45,7 +47,8 @@ AObjective::AObjective()
 void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Check if we have a drone and we don't already have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter)) {
+	if (mIsA(OtherActor, ADroneRPGCharacter)) 
+	{
 		// Add it to the list and re-calculate ownership
 		Add(Cast<ADroneRPGCharacter>(OtherActor));
 	}
@@ -64,7 +67,8 @@ void AObjective::UnitDied(AActor* unit)
 void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Check if we have a drone and we have it in the list
-	if (mIsA(OtherActor, ADroneRPGCharacter)) {
+	if (mIsA(OtherActor, ADroneRPGCharacter)) 
+	{
 		// Remove it from the list and re-calculate ownership
 		Remove(Cast<ADroneRPGCharacter>(OtherActor));
 	}
@@ -77,7 +81,8 @@ void AObjective::CheckForOverlaps()
 
 	for (AActor* overlap : overlaps)
 	{
-		if (mIsA(overlap, ADroneRPGCharacter)) {
+		if (mIsA(overlap, ADroneRPGCharacter)) 
+		{
 			// Add it to the list and re-calculate ownership
 			Add(Cast<ADroneRPGCharacter>(overlap));
 		}

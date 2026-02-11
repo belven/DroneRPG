@@ -1,8 +1,9 @@
 #include "Rocket.h"
+#include <DroneRPG/Components/CombatantComponent.h>
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Components/SphereComponent.h"
-#include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
 const float ARocket::Default_Initial_Speed = 2500.0f;
@@ -24,7 +25,8 @@ ARocket::ARocket()
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> rocketTrailSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/Rocket_Trail.Rocket_Trail'"));
 
-	if (rocketTrailSystem.Succeeded()) {
+	if (rocketTrailSystem.Succeeded())
+	{
 		trailSystem = rocketTrailSystem.Object;
 	}
 
@@ -35,9 +37,20 @@ ARocket::ARocket()
 	sphereComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ARocket::BeginOverlap);
 }
 
-bool ARocket::CheckIfValidTarget(ADroneRPGCharacter* droneFound)
+bool ARocket::CheckIfValidTarget(const FTargetData& targetData)
 {
-	return IsValid(droneFound) && droneFound->GetHealthComponent()->IsAlive() && droneFound->GetTeam() != team;
+	return IsValid(targetData.healthComponent) && targetData.healthComponent->IsAlive() && targetData.combatantComponent->GetTeam() != team;
+}
+
+bool ARocket::CheckActorForValidTarget(const FTargetData& targetData)
+{
+	bool result = false;
+	if (CheckIfValidTarget(targetData))
+	{
+		SetTarget(targetData);
+		result = true;
+	}
+	return result;
 }
 
 void ARocket::SetTeam(int32 inTeam)
@@ -49,65 +62,52 @@ void ARocket::SetTeam(int32 inTeam)
 
 	for (auto overlap : overlaps)
 	{
-
-		ADroneRPGCharacter* droneFound = Cast<ADroneRPGCharacter>(overlap);
-		if (CheckIfValidTarget(droneFound))
+		FTargetData data = CreateTargetData(overlap);
+		if (CheckActorForValidTarget(data))
 		{
-			target = droneFound;
+			break;
 		}
 	}
 }
 
-void ARocket::SetTarget(ADroneRPGCharacter* val)
+void ARocket::SetTarget(FTargetData targetData)
 {
-	Super::SetTarget(val);
-
-	if (target != NULL) {
+	if (target.isSet)
+	{
 		ProjectileMovement->bIsHomingProjectile = true;
-		ProjectileMovement->HomingTargetComponent = target->GetRootComponent();
+		ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
 	}
 }
 
 void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Only add impulse and destroy projectile if we hit a physics
-	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter && !mIsA(OtherActor, ADroneProjectile))
+	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter->GetOwner() && !mIsA(OtherActor, ADroneProjectile))
 	{
-		ADroneRPGCharacter* droneHit = Cast<ADroneRPGCharacter>(OtherActor);
+		TArray<AActor*> overlaps;
+		sphereComponent->GetOverlappingActors(overlaps);
 
-		// Did we hit a drone?
-		if (droneHit != NULL) {
-			TArray<ADroneRPGCharacter*> drones = mGetActorsInWorld<ADroneRPGCharacter>(GetWorld());
-
-			for (ADroneRPGCharacter* drone : drones)
+		for (auto overlap : overlaps)
+		{
+			FTargetData targetData = CreateTargetData(overlap);
+			if (CheckActorForValidTarget(targetData))
 			{
-				// Check if the distance is within the given range
-				if (mDist(droneHit->GetActorLocation(), drone->GetActorLocation()) <= 1000) {
-
-					// Check if the drone found is an enemy
-					if (GetShooter()->GetTeam() != drone->GetTeam()) {
-						// Deal damage to enemy Drone
-						drone->GetHealthComponent()->ReceiveHit(this);
-						Destroy();
-					}
-				}
+				targetData.healthComponent->ReceiveDamage(GetDamage(), this);
 			}
 		}
-		else {
-			Destroy();
-		}
+
+		Destroy();
+	}
+	else
+	{
+		Destroy();
 	}
 }
 
 void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (team != -1) 
+	if (team != -1 && !target.isSet)
 	{
-		ADroneRPGCharacter* droneFound = Cast<ADroneRPGCharacter>(OtherActor);
-
-		if ((target == NULL || !target->GetHealthComponent()->IsAlive()) && CheckIfValidTarget(droneFound))
-		{
-			SetTarget(droneFound);
-		}
+		CheckActorForValidTarget(CreateTargetData(OtherActor));
 	}
 }

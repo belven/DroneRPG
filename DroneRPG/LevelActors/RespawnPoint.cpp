@@ -5,6 +5,7 @@
 #include "NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "DroneRPG/DroneRPGCharacter.h"
+#include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Controllers/DroneBaseAI.h"
 

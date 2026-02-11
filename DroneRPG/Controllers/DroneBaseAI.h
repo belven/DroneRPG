@@ -50,8 +50,6 @@ public:
 	UFUNCTION()
 	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 private:
-//	FTimerHandle TimerHandle_CanCheckForEnemies;
-	FTimerHandle TimerHandle_CanPerformActions;
 	FTimerHandle TimerHandle_CheckLastLocation;
 
 	float minCaptureDistance;
@@ -61,7 +59,6 @@ private:
 
 	bool isFiring;
 	bool canCheckForEnemies;
-	bool canPerformActions;
 
 	UPROPERTY()
 	UAISenseConfig_Sight* sightConfig;
@@ -86,7 +83,6 @@ private:
 	void GetNextVisibleTarget();
 	void FindObjective();
 	ADroneRPGCharacter* GetDroneTarget();
-	void CanPerformActions();
 	void AttackTarget(AActor* targetToAttack);
 
 	void DefendingObjective();
@@ -98,5 +94,4 @@ private:
 	bool CanSee(AActor* other, const FVector& startLoc);
 	FVector GetPredictedLocation(AActor* actor);
 	void CapturingObjective();
-//	bool GetEnemiesInArea();
 };

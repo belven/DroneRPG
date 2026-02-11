@@ -1,5 +1,7 @@
 #pragma once
 #include "HealthComponent.h"
+
+#include "CombatantComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Niagara/Public/NiagaraComponent.h"
@@ -46,7 +48,7 @@ UHealthComponent::UHealthComponent()
 	}
 }
 
-void UHealthComponent::DamageDrone(float damage, AActor* damager)
+void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
 {
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
@@ -97,6 +99,8 @@ void UHealthComponent::DamageDrone(float damage, AActor* damager)
 
 	UFunctionLibrary::ClampValue(currentStats.health, maxStats.health, 0.0f);
 	UFunctionLibrary::ClampValue(currentStats.shields, maxStats.shields, 0.0f);
+
+	OnUnitHit.Broadcast(damager);
 }
 
 void UHealthComponent::SetDefaults()
@@ -183,11 +187,6 @@ void UHealthComponent::BeginPlay()
 		SetMaterialFloat(TEXT("Wipe"), minWipe);
 		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 	}
-}
-
-void UHealthComponent::ReceiveHit(ADroneProjectile* projectile) {
-	DamageDrone(projectile->GetDamage(), projectile);
-	OnUnitHit.Broadcast(projectile->GetShooter());
 }
 
 void UHealthComponent::SetTeamColour(FColor colour)

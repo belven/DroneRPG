@@ -18,7 +18,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EntityKilled(AActor* killedEntity, AActor* damager);
 
-	virtual TArray<FScoreBoardStat> GetScoreBoardStats();
+	virtual TArray<FScoreBoardStat> GetScoreBoardStats() { return {}; }
 
 	virtual void AddTeamScore(int32 team, float bonusScore);
 

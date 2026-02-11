@@ -1,22 +1,21 @@
 #pragma once
 #include "DroneRPGCharacter.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/HealthComponent.h"
+#include "Components/CombatantComponent.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Materials/Material.h"
-#include "Engine/World.h"
-#include <Kismet/GameplayStatics.h>
-#include "Utilities/FunctionLibrary.h"
-#include "NavigationSystem.h"
-#include <Kismet/KismetSystemLibrary.h>
-#include "DroneDamagerInterface.h"
-#include "Controllers/DroneBaseAI.h"
 #include "GameModes/DroneRPGGameMode.h"
 #include "LevelActors/RespawnPoint.h"
+#include "Materials/Material.h"
+#include "NavigationSystem.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Utilities/FunctionLibrary.h"
 #include "Weapons/Weapon.h"
+#include <Kismet/GameplayStatics.h>
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
@@ -88,8 +87,9 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
 
 	healthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
-
 	healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneRPGCharacter::KillDrone);
+
+	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 }
 
 void ADroneRPGCharacter::BeginDestroy()
@@ -119,6 +119,8 @@ void ADroneRPGCharacter::SetUpDrone()
 	// Give each drone a random weapon
 	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
 	SetWeapon(mGetDefaultWeapon(type, this));
+
+	combatantComponent->SetupCombatantComponent(GetDroneName(), EDamagerType::Drone, GetTeam());
 }
 
 void ADroneRPGCharacter::PossessedBy(AController* NewController)
@@ -186,12 +188,13 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
 
-	// Check if the killer uses UDroneDamagerInterface
-	if (mImplements(killer, UDroneDamagerInterface)) {
-		IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(killer);
+	UCombatantComponent* damageDealer = mGetCombatantComponent(killer);
 
+	// Check if the killer uses UDroneDamagerInterface
+	if (!IsValid(damageDealer)) 
+	{
 		// Tell the killer they've killed us
-		damageDealer->DroneKilled(this);
+		damageDealer->UnitKilled(this);
 
 		// Tell the gamemode we've died, to update score etc.
 		GetGameMode()->EntityKilled(this, killer);
@@ -200,7 +203,7 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 		// TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
 		TArray< FStringFormatArg > args;
 		args.Add(FStringFormatArg(GetDroneName()));
-		args.Add(FStringFormatArg(damageDealer->GetDamagerName()));
+		args.Add(FStringFormatArg(damageDealer->GetCombatantName()));
 
 		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
 	}

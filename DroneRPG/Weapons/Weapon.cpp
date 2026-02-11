@@ -1,5 +1,8 @@
 #pragma once
 #include "Weapon.h"
+
+#include <DroneRPG/Components/CombatantComponent.h>
+
 #include "DroneProjectile.h"
 #include "Laser.h"
 #include "RocketLauncher.h"
@@ -47,7 +50,7 @@ void UWeapon::ShotTimerExpired()
 
 ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation) {
 	ADroneProjectile* projectile = mSpawnProjectile;
-	projectile->SetShooter(owner);
+	projectile->SetShooter(mGetCombatantComponent(GetOwner()));
 	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
 	return projectile;
 }

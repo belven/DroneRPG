@@ -1,8 +1,7 @@
 #include "PlasmaStormGameMode.h"
+#include <DroneRPG/Components/CombatantComponent.h>
 #include <Kismet/KismetSystemLibrary.h>
 #include <Kismet/GameplayStatics.h>
-
-#include "DroneRPG/DroneDamagerInterface.h"
 #include "DroneRPG/LevelActors/PlasmaStormEvent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "GameFramework/GameState.h"
@@ -18,7 +17,6 @@ void APlasmaStormGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	APlasmaStormEvent* plasmaStorm = GetWorld()->SpawnActor<APlasmaStormEvent>(APlasmaStormEvent::StaticClass(), FVector(0, 0, 0), FRotator());
-
 }
 
 void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
@@ -27,14 +25,18 @@ void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 	Super::EntityKilled(killedEntity, damager);
 
 	// Check if the damager was an APlasmaStorm, if so add kills
-	IDroneDamagerInterface* damageDealer = Cast<IDroneDamagerInterface>(damager);
-	if (damageDealer->GetDamagerType() == EDamagerType::PlasmaStorm) {
+
+	UCombatantComponent* combatantComponent = mGetCombatantComponent(damager);
+	if (combatantComponent->GetCombatantType() == EDamagerType::PlasmaStorm) 
+	{
 		kills++;
 	}
 
 	// End the game after 100 kills
-	if (kills >= 100) {
-		for (APlayerState* ps : UGameplayStatics::GetGameState(GetWorld())->PlayerArray) {
+	if (kills >= 100) 
+	{
+		for (APlayerState* ps : UGameplayStatics::GetGameState(GetWorld())->PlayerArray) 
+		{
 			APlayerController* con = UGameplayStatics::GetPlayerController(GetWorld(), ps->GetPlayerId());
 			UKismetSystemLibrary::QuitGame(GetWorld(), con, EQuitPreference::Quit, false);
 		}
@@ -46,7 +48,8 @@ TArray<FScoreBoardStat> APlasmaStormGameMode::GetScoreBoardStats()
 	TArray<FScoreBoardStat> stats;
 
 	// Get the basic team scores
-	for (auto& team : UFunctionLibrary::GetTeamColours()) {
+	for (auto& team : UFunctionLibrary::GetTeamColours()) 
+	{
 		FScoreBoardStat stat;
 		stat.text = GetTeamScoreText(team.Key);
 		stat.textColour = team.Value;
@@ -56,7 +59,6 @@ TArray<FScoreBoardStat> APlasmaStormGameMode::GetScoreBoardStats()
 	// Add plasma storm kills to the score board
 	TArray< FStringFormatArg > args;
 	args.Add(FStringFormatArg(static_cast<int>(FMath::RoundHalfToEven(kills))));
-
 	stats.Add(FScoreBoardStat(FString::Format(TEXT("Plasma Storm has {0} kills"), args), FColor::Purple));
 	return stats;
 }

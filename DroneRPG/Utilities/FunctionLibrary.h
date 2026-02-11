@@ -34,6 +34,9 @@ class UWeapon;
 #define mRandomPointInNavigableRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomPointInNavigableRadius(start, radius, loc);
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
+#define mGetComponent(actor, clazz) Cast<clazz>(actor->GetComponentByClass(clazz::StaticClass()))
+#define mGetCombatantComponent(actor) mGetComponent(actor, UCombatantComponent)
+#define mGetHealthComponent(actor) mGetComponent(actor, UHealthComponent)
 
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject
