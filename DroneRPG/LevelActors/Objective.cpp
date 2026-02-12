@@ -146,7 +146,7 @@ void AObjective::UpdateColour()
 	// Check if the previousAreaOwner and areaOwner are the same, this means the colour can change as the previousAreaOwner isn't an enemy team
 	if (currentControl > minControl && previousAreaOwner == areaOwner)
 	{
-		FColor teamColour = UFunctionLibrary::GetTeamColour(areaOwner);
+		FColor teamColour = GetGameMode()->GetTeamColour(areaOwner);
 
 		if (currentColour != teamColour)
 		{

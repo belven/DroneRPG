@@ -94,7 +94,7 @@ void ADroneRPGCharacter::BeginDestroy()
 }
 
 FColor ADroneRPGCharacter::GetTeamColour() {
-	return UFunctionLibrary::GetTeamColour(GetTeam());
+	return GetGameMode()->GetTeamColour(GetTeam());
 }
 
 void ADroneRPGCharacter::BeginPlay()
@@ -136,7 +136,7 @@ int32 ADroneRPGCharacter::GetTeam() const
 void ADroneRPGCharacter::SetTeam(int32 val)
 {
 	combatantComponent->SetTeam(val);
-	healthComponent->SetTeamColour(UFunctionLibrary::GetTeamColour(GetTeam()));
+	healthComponent->SetTeamColour(GetGameMode()->GetTeamColour(GetTeam()));
 }
 
 ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()

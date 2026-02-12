@@ -41,7 +41,7 @@ FVector2D ADroneHUD::GetViewportSize()
 	int32 x;
 	int32 y;
 	GetOwningPlayerController()->GetViewportSize(x, y);
-	return FVector2D(x,y);
+	return FVector2D(x, y);
 }
 
 void ADroneHUD::DrawHUD()
@@ -77,13 +77,31 @@ void ADroneHUD::BeginPlay()
 
 void ADroneHUD::DrawScore()
 {
-	int32 y = 20;
+	float totalScore = 0;
+	float y = 20;
 	FVector2D viewportSize = GetViewportSize();
+	float maxLength = viewportSize.X / 3;
+	float centre = viewportSize.X / 2;
+	float xOffest = 0;
 
-	for (auto score : GetGameMode()->GetTeamScores())
+	for (auto team : GetGameMode()->GetTeamScores())
 	{
-		DrawText(score.Value.GetTeamScoreText(), FLinearColor(score.Value.teamColour), viewportSize.X / 2.1, y);
-		y += 20;
+		totalScore += team.Value.score;
+		//DrawText(score.Value.GetTeamScoreText(), FLinearColor(score.Value.teamColour), viewportSize.X / 2, y);
+	}
+
+	for (auto team : GetGameMode()->GetTeamScores())
+	{
+		if (team.Value.score > 0) {
+			float scorePercent = (team.Value.score / totalScore);
+			float length = maxLength * scorePercent;
+			float startX = centre + xOffest - (maxLength / 2);
+
+			DrawLine(startX, y, startX + length, y, FLinearColor(team.Value.teamColour), 15.0f);
+			//DrawLine(start.X, start.Y, end.X, end.Y, FLinearColor(objective->GetCurrentColour()), 15.0f);
+
+			xOffest += length;
+		}
 	}
 }
 
@@ -111,7 +129,7 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 			args.Add(FStringFormatArg(control));
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(objective->GetCurrentColour()), drawLocation.X, drawLocation.Y + 30);
+			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(UFunctionLibrary::InvertColorRGB(objective->GetCurrentColour())), drawLocation.X, drawLocation.Y + 30);
 		}
 	}
 }

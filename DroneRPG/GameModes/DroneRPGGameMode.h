@@ -25,6 +25,9 @@ public:
 	EGameModeType GetGameMode() const { return gameMode; }
 	void SetGameMode(EGameModeType val) { gameMode = val; }
 
+	FColor GetTeamColour(int32 team);
+	TMap<int32, FColor>& GetTeamColours();
+
 	TMap<int32, FTeamScore>& GetTeamScores()
 	{
 		return teamScores;
@@ -33,6 +36,9 @@ public:
 protected:
 	EGameModeType gameMode;
 	TMap<int32, FTeamScore> teamScores;
+	TMap<int32, FColor> teamColours;
+	TArray<FColor> colours;
+	bool coloursSet;
 
 	UPROPERTY()
 	TArray <ADroneRPGCharacter*> dronesInGame;

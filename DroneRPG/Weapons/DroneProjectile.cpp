@@ -8,6 +8,9 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include <DroneRPG/Components/CombatantComponent.h>
 
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "Kismet/GameplayStatics.h"
+
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, RootComponent, name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)
 
 const float ADroneProjectile::Default_Initial_Speed = 7000.0f;
@@ -135,7 +138,9 @@ void ADroneProjectile::SetUpCollision()
 void ADroneProjectile::SetShooter(UCombatantComponent* val)
 {
 	shooter = val;
-	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(UFunctionLibrary::GetTeamColour(val->GetTeam())));
+
+	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(gameMode->GetTeamColour(val->GetTeam())));
 	combatantComponent->SetupCombatantComponent(val->GetCombatantName(), val->GetCombatantType());
 	combatantComponent->SetTeam(val->GetTeam());
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(val, &UCombatantComponent::UnitKilled);

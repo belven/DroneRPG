@@ -8,6 +8,8 @@
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Controllers/DroneBaseAI.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 ARespawnPoint::ARespawnPoint() : teamSize(6)
 {
@@ -60,7 +62,8 @@ void ARespawnPoint::SetupParticles()
 	// Create our particle system
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
-	FColor teamColour = UFunctionLibrary::GetTeamColour(GetTeam());
+	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	FColor teamColour = gameMode->GetTeamColour(GetTeam());
 
 	// Set up the systems defaults
 	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));

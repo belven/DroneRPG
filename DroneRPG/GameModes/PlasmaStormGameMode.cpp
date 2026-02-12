@@ -19,7 +19,7 @@ void APlasmaStormGameMode::BeginPlay()
 	APlasmaStormEvent* plasmaStorm = GetWorld()->SpawnActor<APlasmaStormEvent>(APlasmaStormEvent::StaticClass(), FVector(0, 0, 0), FRotator());
 	FTeamScore();
 	int team = -1;
-	GetTeamScores().Add(team, FTeamScore(team,UFunctionLibrary::GetTeamColour(team), 0, "Plasma Storm"));
+	GetTeamScores().Add(team, FTeamScore(team, GetTeamColour(team), 0, "Plasma Storm"));
 }
 
 void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)

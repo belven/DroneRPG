@@ -41,6 +41,7 @@ class DRONERPG_API UFunctionLibrary : public UObject
 	GENERATED_BODY()
 public:
 	template <class T> static TArray<T*> GetActorsInWorld(UWorld* world);
+	static FColor InvertColorRGB(FColor original);
 	template <class T> static TArray <T*> GetActorsInRadius(UWorld* world, float radius, FVector loc);
 
 	template <class T> static T* GetClosestActorInWorld(UWorld* world, FVector loc);
@@ -50,19 +51,17 @@ public:
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 
-	UFUNCTION(BlueprintCallable, Category = "Utils")
-	static FColor GetTeamColour(int32 team);
-	static  TMap<int32, FColor>& GetTeamColours();
-
 	static FString GetColourString(FColor color);
 	template<class T> static T GetRandomEnum(T end);
-
-private:
-	static TMap<int32, FColor> teamColours;
-	static TArray<FColor> colours;
-	static bool coloursSet;
 };
 
+inline FColor UFunctionLibrary::InvertColorRGB(FColor original) {
+	FColor inverted = original;
+	inverted.R = 255 - original.R;
+	inverted.G = 255 - original.G;
+	inverted.B = 255 - original.B;
+	return inverted;
+}
 
 template <class T>
 TArray <T*> UFunctionLibrary::GetActorsInRadius(UWorld* world, float radius, FVector loc) {
