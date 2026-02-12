@@ -11,25 +11,18 @@ UCombatantComponent* ADroneHUD::GetCombatantComponent()
 	return combatantComponent;
 }
 
-void ADroneHUD::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-}
-
 FDrawLocation ADroneHUD::GetDrawLocation(const FVector& worldLocation, double offset)
 {
 	FDrawLocation drawLocation = FDrawLocation();
-	int32 vpX;
-	int32 vpY;
+	FVector2D viewportSize = GetViewportSize();
 
 	FVector screenPos = Project(worldLocation);
 
 	// Get the viewport (current window) size
-	GetOwningPlayerController()->GetViewportSize(vpX, vpY);
 
 	// Limit the objective location to the screen
-	drawLocation.Y = mClampValue(screenPos.Y, vpY - offset, offset);
-	drawLocation.X = mClampValue(screenPos.X, vpX - offset, offset);
+	drawLocation.Y = mClampValue(screenPos.Y, viewportSize.Y - offset, offset);
+	drawLocation.X = mClampValue(screenPos.X, viewportSize.X - offset, offset);
 
 	if (drawLocation.Y != screenPos.Y)
 	{
@@ -41,6 +34,14 @@ FDrawLocation ADroneHUD::GetDrawLocation(const FVector& worldLocation, double of
 		drawLocation.xOffscreen = true;
 	}
 	return drawLocation;
+}
+
+FVector2D ADroneHUD::GetViewportSize()
+{
+	int32 x;
+	int32 y;
+	GetOwningPlayerController()->GetViewportSize(x, y);
+	return FVector2D(x,y);
 }
 
 void ADroneHUD::DrawHUD()
@@ -77,15 +78,11 @@ void ADroneHUD::BeginPlay()
 void ADroneHUD::DrawScore()
 {
 	int32 y = 20;
-	int32 vpX;
-	int32 vpY;
-
-	// Get the viewport (current window) size
-	GetOwningPlayerController()->GetViewportSize(vpX, vpY);
+	FVector2D viewportSize = GetViewportSize();
 
 	for (FScoreBoardStat stat : GetGameMode()->GetScoreBoardStats())
 	{
-		DrawText(stat.text, FLinearColor(stat.textColour), vpX / 2.1, y);
+		DrawText(stat.text, FLinearColor(stat.textColour), viewportSize.X / 2.1, y);
 		y += 20;
 	}
 }
@@ -127,10 +124,10 @@ void ADroneHUD::DrawCombatantIndicators(ADroneRPGCharacter* drone)
 		FDrawLocation drawLocation = GetDrawLocation(drone->GetActorLocation(), offset);
 
 		// Only display a indicator if the drone is on screen
-		// If we've had to clamp a value, then the position is off screen
+		// If we've had to clamp a value, then the position is offscreen
 		if (!drawLocation.IsOffscreen())
 		{
-			TArray< FStringFormatArg > args;
+			TArray<FStringFormatArg> args;
 			args.Add(FStringFormatArg(drone->GetKills()));
 			args.Add(FStringFormatArg(drone->GetDeaths()));
 

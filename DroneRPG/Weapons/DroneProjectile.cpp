@@ -136,10 +136,9 @@ void ADroneProjectile::SetShooter(UCombatantComponent* val)
 {
 	shooter = val;
 	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(UFunctionLibrary::GetTeamColour(val->GetTeam())));
-
-	SetUpCollision();
-
 	combatantComponent->SetupCombatantComponent(val->GetCombatantName(), val->GetCombatantType());
 	combatantComponent->SetTeam(val->GetTeam());
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(val, &UCombatantComponent::UnitKilled);
+
+	SetUpCollision();
 }

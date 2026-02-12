@@ -23,6 +23,8 @@ public:
 
 	void Respawn();
 
+	UFUNCTION()
+	void UnitKilled(AActor* inUnitKilled);
 	ADroneRPGCharacter();
 	virtual void BeginDestroy() override;
 

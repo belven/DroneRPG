@@ -33,6 +33,7 @@ class DRONERPG_API UHealthComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UHealthComponent();
+	void DamageShields(float& damage);
 
 	void ReceiveDamage(float damage, AActor* damager);
 
@@ -72,7 +73,7 @@ public:
 	void SetTeamColour(FColor colour);
 	FUnitDied OnUnitDied;
 
-	FUnitDied OnUnitHit;
+	FUnitHit OnUnitHit;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

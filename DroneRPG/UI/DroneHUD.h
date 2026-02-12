@@ -19,12 +19,9 @@ struct FDrawLocation
 	bool xOffscreen = false;
 	bool yOffscreen = false;
 
-	FDrawLocation(): X(0), Y(0)	 {}
+	bool IsOffscreen() { return xOffscreen || yOffscreen; }
 
-	bool IsOffscreen()
-	{
-		return xOffscreen || yOffscreen;
-	}
+	FDrawLocation() : X(0), Y(0) {}
 };
 
 UCLASS()
@@ -32,33 +29,21 @@ class DRONERPG_API ADroneHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-	UCombatantComponent* GetCombatantComponent();
-	virtual void PostInitializeComponents() override;
-
 	FDrawLocation GetDrawLocation(const FVector& worldLocation, double offset);
+	FVector2D GetViewportSize();
 
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-		void SetCombatantComponent(UCombatantComponent* val) { combatantComponent = val; }
+	virtual void DrawHUD() override;
+	void DrawScore();
+	void DrawObjectiveIndicators(AObjective* objective);
+	void DrawCombatantIndicators(ADroneRPGCharacter* drone);
 
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-		virtual void DrawHUD() override;
+	ADroneRPGGameMode* GetGameMode();
+	UCombatantComponent* GetCombatantComponent();
+	void SetCombatantComponent(UCombatantComponent* val) { combatantComponent = val; }
 
 protected:
 	virtual void BeginPlay() override;
 
-public:
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-		void DrawScore();
-
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-		void DrawObjectiveIndicators(AObjective* objective);
-
-	UFUNCTION(BlueprintCallable, Category = "HUD")
-		void DrawCombatantIndicators(ADroneRPGCharacter* drone);
-
-		ADroneRPGGameMode* GetGameMode();
-protected:
 	UPROPERTY()
 	UCombatantComponent* combatantComponent;
 

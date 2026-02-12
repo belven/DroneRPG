@@ -19,9 +19,6 @@
 
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Characters"));
-#endif
 	// Set size for player capsule
 	const float capWidth = 120.0f;
 	const float capHeight = 400.0f;
@@ -88,6 +85,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneRPGCharacter::KillDrone);
 
 	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
+	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitKilled);
 }
 
 void ADroneRPGCharacter::BeginDestroy()
@@ -102,6 +100,10 @@ FColor ADroneRPGCharacter::GetTeamColour() {
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Characters"));
+#endif
 
 	if (!GetGameMode()->GetDrones().Contains(this))
 	{
@@ -167,6 +169,11 @@ void ADroneRPGCharacter::Respawn()
 	}
 }
 
+void ADroneRPGCharacter::UnitKilled(AActor* inUnitKilled)
+{
+	kills++;
+}
+
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
 	if (!IsValid(respawnPoint)) 
@@ -198,7 +205,7 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 	UCombatantComponent* damageDealer = mGetCombatantComponent(killer);
 
 	// Check if the killer uses UDroneDamagerInterface
-	if (!IsValid(damageDealer)) 
+	if (IsValid(damageDealer)) 
 	{
 		// Tell the killer they've killed us
 		damageDealer->UnitKilled(this);
@@ -212,7 +219,7 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 		args.Add(FStringFormatArg(GetDroneName()));
 		args.Add(FStringFormatArg(damageDealer->GetCombatantName()));
 
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("Drone {0} was killed by a {1}"), args));
+		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
 	}
 }
 
@@ -220,7 +227,7 @@ FString ADroneRPGCharacter::GetDroneName()
 {	
 	if (droneName.IsEmpty() && GetGameMode()->GetDrones().Contains(this)) 
 	{
-		droneName = FString::FromInt(GetGameMode()->GetDrones().IndexOfByKey(this));
+		droneName = "Drone " +  FString::FromInt(GetGameMode()->GetDrones().IndexOfByKey(this));
 	}
 	return droneName;
 }

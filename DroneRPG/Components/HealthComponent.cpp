@@ -44,6 +44,30 @@ UHealthComponent::UHealthComponent()
 	}
 }
 
+void UHealthComponent::DamageShields(float& damage)
+{
+	// We have less shields than damage, so remove are shields from the damage, to allow us to take it as health
+	if (currentStats.shields < damage)
+	{
+		currentStats.shields = 0;
+	}
+	// We have more shields than damage dealt, so take it all to shields
+	else
+	{
+		currentStats.shields -= damage;
+	}
+
+	// Weaken max shields, to prevent ships being as strong for the whole match
+	if (maxStats.shields > 50)
+	{
+		// Take half damage taken away from max shields
+		maxStats.shields -= (damage * 0.5);
+		UFunctionLibrary::ClampValue(maxStats.shields, maxStats.shields, 50.f);
+	}
+
+	damage -= currentStats.shields;
+}
+
 void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
 {
 	// Disable our shield regen as we've been hit
@@ -53,26 +77,7 @@ void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
 	// Take damage to shields
 	if (HasShields())
 	{
-		// We have less shields than damage, so remove are shields from the damage, to allow us to take it as health
-		if (currentStats.shields < damage)
-		{
-			currentStats.shields = 0;
-		}
-		// We have more shields than damage dealt, so take it all to shields
-		else
-		{
-			currentStats.shields -= damage;
-		}
-
-		// Weaken max shields, to prevent ships being as strong for the whole match
-		if (maxStats.shields > 50)
-		{
-			// Take half damage taken away from max shields
-			maxStats.shields -= (damage * 0.5);
-			UFunctionLibrary::ClampValue(maxStats.shields, maxStats.shields, 50.f);
-		}
-
-		damage -= currentStats.shields;
+		DamageShields(damage);
 	}
 
 	// Take any remaining damage as health damage
