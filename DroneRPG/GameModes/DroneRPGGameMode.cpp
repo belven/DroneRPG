@@ -32,30 +32,25 @@ void ADroneRPGGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 	// Check if the damager uses the UDroneDamagerInterface, which it should
 	if (IsValid(damageDealer)) 
 	{
-		// Get their team and their teams current score.
-		float& score = teamScores.FindOrAdd(damageDealer->GetTeam());
-
-		//  TODO The game mode may want to override something called GetKilledScore etc. so the amount of points can change per game mode
-		// Add extra points.
-		score++;
+		AddTeamScore(damageDealer->GetTeam(), 1);
 	}
 }
 
-void ADroneRPGGameMode::AddTeamScore(int32 team, float bonusScore)
+void ADroneRPGGameMode::AddTeamScore(int32 team, int32 bonusScore)
 {
-	// Find and add the points to the team, from AObjective
-	float& score = teamScores.FindOrAdd(team);
-	score += bonusScore;
+	FTeamScore* teamScore = teamScores.Find(team);
+	if (teamScore != NULL) 
+	{
+		teamScore->score += bonusScore;
+	}
+	else
+	{
+		teamScores.Add(team, FTeamScore(team, UFunctionLibrary::GetTeamColour(team), bonusScore));
+	}
 }
 
 FString ADroneRPGGameMode::GetTeamScoreText(int32 team)
 {
-	// Create a basic team score text string using colour and points
-	FColor tc = UFunctionLibrary::GetTeamColour(team);
-	float& score = teamScores.FindOrAdd(team);
-
-	TArray< FStringFormatArg > args;
-	args.Add(FStringFormatArg(UFunctionLibrary::GetColourString(tc)));
-	args.Add(FStringFormatArg(static_cast<int>(FMath::RoundHalfToEven(score))));
-	return FString::Format(TEXT("Team {0} has {1} points"), args);
+	FTeamScore& teamScore = teamScores.FindOrAdd(team);
+	return teamScore.GetTeamScoreText();
 }

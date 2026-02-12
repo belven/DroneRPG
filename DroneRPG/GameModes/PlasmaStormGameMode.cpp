@@ -7,7 +7,7 @@
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"
 
-APlasmaStormGameMode::APlasmaStormGameMode() : Super(), kills(0)
+APlasmaStormGameMode::APlasmaStormGameMode() : kills(0)
 {
 	gameMode = EGameModeType::PlasmaStorm;
 }
@@ -17,6 +17,9 @@ void APlasmaStormGameMode::BeginPlay()
 	Super::BeginPlay();
 
 	APlasmaStormEvent* plasmaStorm = GetWorld()->SpawnActor<APlasmaStormEvent>(APlasmaStormEvent::StaticClass(), FVector(0, 0, 0), FRotator());
+	FTeamScore();
+	int team = -1;
+	GetTeamScores().Add(team, FTeamScore(team,UFunctionLibrary::GetTeamColour(team), 0, "Plasma Storm"));
 }
 
 void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
@@ -41,24 +44,4 @@ void APlasmaStormGameMode::EntityKilled(AActor* killedEntity, AActor* damager)
 			UKismetSystemLibrary::QuitGame(GetWorld(), con, EQuitPreference::Quit, false);
 		}
 	}
-}
-
-TArray<FScoreBoardStat> APlasmaStormGameMode::GetScoreBoardStats()
-{
-	TArray<FScoreBoardStat> stats;
-
-	// Get the basic team scores
-	for (auto& team : UFunctionLibrary::GetTeamColours()) 
-	{
-		FScoreBoardStat stat;
-		stat.text = GetTeamScoreText(team.Key);
-		stat.textColour = team.Value;
-		stats.Add(stat);
-	}
-
-	// Add plasma storm kills to the score board
-	TArray< FStringFormatArg > args;
-	args.Add(FStringFormatArg(static_cast<int>(FMath::RoundHalfToEven(kills))));
-	stats.Add(FScoreBoardStat(FString::Format(TEXT("Plasma Storm has {0} kills"), args), FColor::Purple));
-	return stats;
 }

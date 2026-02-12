@@ -12,9 +12,5 @@ class DRONERPG_API ADominationGameMode : public ADroneRPGGameMode
 public:
 	ADominationGameMode();
 
-	virtual void AddTeamScore(int32 team, float bonusScore) override;
-	virtual TArray<FScoreBoardStat> GetScoreBoardStats() override;
-
-	TMap<int32, float> GetTeamScores() const { return teamScores; }
-	void SetTeamScores(const TMap<int32, float>& val) { teamScores = val; }
+	virtual void AddTeamScore(int32 team, int32 bonusScore) override;
 };

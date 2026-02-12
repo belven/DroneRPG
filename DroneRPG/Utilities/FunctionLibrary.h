@@ -1,19 +1,18 @@
 #pragma once
 #include "CoreMinimal.h"
-#include <EngineUtils.h>
 #include <Engine/World.h>
+#include <EngineUtils.h>
 #include "FunctionLibrary.generated.h"
-
-class ADroneRPGCharacter;
-class UWeapon;
 
 #define MIN(a,b) (a < b) ? (a) : (b)
 #define MAX(a,b) (a > b) ? (a) : (b)
 
 #define mDist(a, b) FVector::Dist(a, b)
+
 #define  mIsA(aObject, aClass)  aObject->IsA(aClass::StaticClass())
-#define  mImplements(aObject, aClass)  aObject->Implements<aClass>()
+
 #define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
+
 #define mDroneLocation GetCharacter()->GetActorLocation()
 #define mDroneRotation GetCharacter()->GetActorRotation()
 
@@ -25,15 +24,13 @@ class UWeapon;
 #define mGetClosestActorInWorld UFunctionLibrary::GetClosestActorInWorld
 #define mGetClosestActorInArray UFunctionLibrary::GetClosestActorInArray
 #define mGetActorsInRadius UFunctionLibrary::GetActorsInRadius
-#define mGetDronesInRadius UFunctionLibrary::GetDronesInRadius
-
-#define mGetEnemiesInRadius UFunctionLibrary::GetEnemiesInRadius
-#define mGetClosestEnemyInRadius UFunctionLibrary::GetClosestEnemyInRadius
 
 #define mRandomReachablePointInRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomReachablePointInRadius(start, radius, loc);
 #define mRandomPointInNavigableRadius(start, radius, loc) UNavigationSystemV1::GetCurrent(GetWorld())->GetRandomPointInNavigableRadius(start, radius, loc);
+
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
+
 #define mGetComponent(actor, clazz) Cast<clazz>(actor->GetComponentByClass(clazz::StaticClass()))
 #define mGetCombatantComponent(actor) mGetComponent(actor, UCombatantComponent)
 #define mGetHealthComponent(actor) mGetComponent(actor, UHealthComponent)
@@ -49,11 +46,6 @@ public:
 	template <class T> static T* GetClosestActorInWorld(UWorld* world, FVector loc);
 	template <class T> static T* GetClosestActorInArray(TArray<T*> actorArray, FVector loc);
 
-	static TArray <ADroneRPGCharacter*> GetEnemiesInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones);
-	static ADroneRPGCharacter* GetClosestEnemyInRadius(float radius, const FVector& loc, int32 team, TArray <ADroneRPGCharacter*>& allDrones);
-
-	static TArray <ADroneRPGCharacter*> GetDronesInRadius(float radius, const FVector& loc, TArray <ADroneRPGCharacter*>& drones);
-
 	template<class T> static	T ClampValue(T value, T max, T min);
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
@@ -67,7 +59,10 @@ public:
 
 private:
 	static TMap<int32, FColor> teamColours;
+	static TArray<FColor> colours;
+	static bool coloursSet;
 };
+
 
 template <class T>
 TArray <T*> UFunctionLibrary::GetActorsInRadius(UWorld* world, float radius, FVector loc) {
@@ -127,11 +122,11 @@ TArray<T*> UFunctionLibrary::GetActorsInWorld(UWorld* world) {
 template<class T>
 T UFunctionLibrary::ClampValue(T value, T max, T min)
 {
-	if (value < min) 
+	if (value < min)
 	{
 		value = min;
 	}
-	else if (value > max) 
+	else if (value > max)
 	{
 		value = max;
 	}

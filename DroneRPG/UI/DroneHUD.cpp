@@ -80,9 +80,9 @@ void ADroneHUD::DrawScore()
 	int32 y = 20;
 	FVector2D viewportSize = GetViewportSize();
 
-	for (FScoreBoardStat stat : GetGameMode()->GetScoreBoardStats())
+	for (auto score : GetGameMode()->GetTeamScores())
 	{
-		DrawText(stat.text, FLinearColor(stat.textColour), viewportSize.X / 2.1, y);
+		DrawText(score.Value.GetTeamScoreText(), FLinearColor(score.Value.teamColour), viewportSize.X / 2.1, y);
 		y += 20;
 	}
 }

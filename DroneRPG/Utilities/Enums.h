@@ -2,25 +2,41 @@
 #include "CoreMinimal.h"
 #include "Enums.generated.h"
 
+
 USTRUCT(BlueprintType)
-struct FScoreBoardStat
+struct FTeamScore
 {
 	GENERATED_USTRUCT_BODY()
-
-	FScoreBoardStat(): textColour()
+	FTeamScore() : team(0), teamColour(), score(0)
 	{
+		teamName = FString::FromInt(team);
 	}
 
-	FScoreBoardStat(FString inText, FColor inColour) {
-		text = inText;
-		textColour = inColour;
-	};
+	FTeamScore(int32 inTeam, const FColor& inTeamColour, int32 inScore, FString inTeamName = "")
+		: team(inTeam),
+		teamColour(inTeamColour),
+		score(inScore)
+	{
+		if (inTeamName.IsEmpty()) {
+			teamName = FString::FromInt(team);
+		} else
+		{
+			teamName = inTeamName;
+		}
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	FString text;
+	FString GetTeamScoreText()
+	{
+		TArray< FStringFormatArg > args;
+		args.Add(FStringFormatArg(teamName));
+		args.Add(FStringFormatArg(score));
+		return FString::Format(TEXT("Team {0} has {1} points"), args);
+	}
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	FColor textColour;
+	FString teamName;
+	int32 team;
+	FColor teamColour;
+	int32 score;
 };
 
 UENUM(BlueprintType)
@@ -40,7 +56,7 @@ enum class  EActionState : uint8 {
 	CapturingObjective,
 	DefendingObjective,
 	ReturningToBase,
-	Start	
+	Start
 };
 
 UENUM(BlueprintType)

@@ -18,18 +18,21 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EntityKilled(AActor* killedEntity, AActor* damager);
 
-	virtual TArray<FScoreBoardStat> GetScoreBoardStats() { return {}; }
-
-	virtual void AddTeamScore(int32 team, float bonusScore);
+	virtual void AddTeamScore(int32 team, int32 bonusScore);
 
 	virtual FString GetTeamScoreText(int32 team);
 
 	EGameModeType GetGameMode() const { return gameMode; }
 	void SetGameMode(EGameModeType val) { gameMode = val; }
 
+	TMap<int32, FTeamScore>& GetTeamScores()
+	{
+		return teamScores;
+	}
+
 protected:
 	EGameModeType gameMode;
-	TMap<int32, float> teamScores;
+	TMap<int32, FTeamScore> teamScores;
 
 	UPROPERTY()
 	TArray <ADroneRPGCharacter*> dronesInGame;
