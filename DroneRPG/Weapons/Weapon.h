@@ -7,6 +7,7 @@
 #define mGetWeapon UWeapon::GetWeapon
 #define mGetDefaultWeapon UWeapon::GetDefaultWeapon
 
+class UCombatantComponent;
 class ADroneRPGCharacter;
 class ADroneProjectile;
 
@@ -17,12 +18,12 @@ class DRONERPG_API UWeapon : public UObject
 public:
 	UWeapon();
 
-	template <class T> static T* CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	template <class T> static T* CreateWeapon(float inFireRate, float inDamage, UCombatantComponent* inOwner);
 
 	virtual float GetRange();
 
-	ADroneRPGCharacter* GetOwner() const { return owner; }
-	void SetOwner(ADroneRPGCharacter* val) { owner = val; }
+	UCombatantComponent* GetOwner() const { return owner; }
+	void SetOwner(UCombatantComponent* val) { owner = val; }
 
 	EWeaponType GetWeaponType() const { return weaponType; }
 	void SetWeaponType(EWeaponType val) { weaponType = val; }
@@ -30,8 +31,8 @@ public:
 	virtual void FireShot(FVector FireDirection);
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation);
 
-	static UWeapon* GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner);
-	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	static UWeapon* GetDefaultWeapon(EWeaponType type, UCombatantComponent* inOwner);
+	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, UCombatantComponent* inOwner);
 protected:
 	float fireRate;
 	float damage;
@@ -44,7 +45,7 @@ protected:
 	UStaticMeshComponent* weaponMeshComp;
 
 	UPROPERTY()
-	ADroneRPGCharacter* owner;
+	UCombatantComponent* owner;
 
 	UPROPERTY()
 	TSubclassOf<ADroneProjectile> projectileClass;

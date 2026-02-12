@@ -1,16 +1,12 @@
 #pragma once
 #include "HealthComponent.h"
-
-#include "CombatantComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Controllers/DroneBaseAI.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
-#include "DroneRPG/Weapons/DroneProjectile.h"
 #include "Materials/MaterialInstanceConstant.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, GetOwner()->GetRootComponent(), name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false)

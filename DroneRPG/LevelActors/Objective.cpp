@@ -84,10 +84,12 @@ void AObjective::CheckForOverlaps()
 
 	for (AActor* overlap : overlaps)
 	{
-		if (mIsA(overlap, UCombatantComponent))
+		UCombatantComponent* combatant = mGetCombatantComponent(overlap);
+
+		// Check if we have a drone and we have it in the list
+		if (IsValid(combatant))
 		{
-			// Add it to the list and re-calculate ownership
-			Add(Cast<UCombatantComponent>(overlap));
+			Add(combatant);
 		}
 	}
 }

@@ -1,5 +1,8 @@
 #pragma once
 #include "RocketLauncher.h"
+
+#include <DroneRPG/Components/CombatantComponent.h>
+
 #include "DroneProjectile.h"
 #include "Rocket.h"
 #include "DroneRPG/DroneRPGCharacter.h"
@@ -18,7 +21,7 @@ URocketLauncher::URocketLauncher()
 	}
 }
 
-URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float inDamage, UCombatantComponent* inOwner)
 {
 	URocketLauncher* weapon = NewObject<URocketLauncher>(StaticClass());
 	weapon->fireRate = inFireRate;

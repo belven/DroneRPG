@@ -6,7 +6,7 @@ ULaser::ULaser()
 	weaponType = EWeaponType::Laser;
 }
 
-ULaser* ULaser::CreateLaser(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+ULaser* ULaser::CreateLaser(float inFireRate, float inDamage, UCombatantComponent* inOwner)
 {
 	ULaser* weapon = NewObject<ULaser>(StaticClass());
 	weapon->fireRate = inFireRate;
@@ -16,7 +16,7 @@ ULaser* ULaser::CreateLaser(float inFireRate, float inDamage, ADroneRPGCharacter
 }
 
 template <class T>
-T* ULaser::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+T* ULaser::CreateWeapon(float inFireRate, float inDamage, UCombatantComponent* inOwner)
 {
 	ULaser* weapon = NewObject<ULaser>(StaticClass());
 	weapon->fireRate = inFireRate;

@@ -9,6 +9,6 @@ class DRONERPG_API URocketLauncher : public UWeapon
 	GENERATED_BODY()
 public:
 	URocketLauncher();
-	static URocketLauncher* CreateRocketLauncher(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner);
+	static URocketLauncher* CreateRocketLauncher(float inFireRate, float inDamage, UCombatantComponent* inOwner);
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation) override;
 };

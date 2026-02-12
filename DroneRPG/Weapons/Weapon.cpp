@@ -32,7 +32,7 @@ UWeapon::UWeapon() :
 }
 
 template<class T>
-T* UWeapon::CreateWeapon(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+T* UWeapon::CreateWeapon(float inFireRate, float inDamage, UCombatantComponent* inOwner)
 {
 	T* weapon = NewObject<T>(T::StaticClass());
 	weapon->fireRate = inFireRate;
@@ -53,13 +53,13 @@ void UWeapon::ShotTimerExpired()
 
 ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation) {
 	ADroneProjectile* projectile = mSpawnProjectile;
-	projectile->SetShooter(mGetCombatantComponent(GetOwner()));
+	projectile->SetShooter(GetOwner());
 	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
 	projectile->SetLifeSpan(lifespan);
 	return projectile;
 }
 
-UWeapon* UWeapon::GetWeapon(EWeaponType type, float inFireRate, float inDamage, ADroneRPGCharacter* inOwner)
+UWeapon* UWeapon::GetWeapon(EWeaponType type, float inFireRate, float inDamage, UCombatantComponent* inOwner)
 {
 	switch (type) {
 	case EWeaponType::Laser:
@@ -78,7 +78,7 @@ UWeapon* UWeapon::GetWeapon(EWeaponType type, float inFireRate, float inDamage, 
 	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
 }
 
-UWeapon* UWeapon::GetDefaultWeapon(EWeaponType type, ADroneRPGCharacter* inOwner)
+UWeapon* UWeapon::GetDefaultWeapon(EWeaponType type, UCombatantComponent* inOwner)
 {
 	switch (type) {
 	case EWeaponType::Rail_Gun:
@@ -102,7 +102,7 @@ void UWeapon::FireShot(FVector FireDirection)
 		if (FireDirection.SizeSquared() > 0.0f)
 		{
 			const FRotator FireRotation = FireDirection.Rotation();
-			const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
+			const FVector gunLocation = owner->GetOwner()->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 			SpawnProjectile(gunLocation, FireRotation);
 
 			mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);

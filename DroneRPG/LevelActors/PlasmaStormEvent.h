@@ -8,7 +8,6 @@ class ADroneRPGGameMode;
 class USphereComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
-class ADroneRPGCharacter;
 
 UCLASS()
 class DRONERPG_API APlasmaStormEvent : public ATriggeredEvent

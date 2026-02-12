@@ -3,11 +3,45 @@
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
-#include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/LevelActors/Objective.h"
 
-#define mGetController Cast<ADroneRPGPlayerController>(GetPlayerDrone()->GetController())
+UCombatantComponent* ADroneHUD::GetCombatantComponent()
+{
+	return combatantComponent;
+}
+
+void ADroneHUD::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+}
+
+FDrawLocation ADroneHUD::GetDrawLocation(const FVector& worldLocation, double offset)
+{
+	FDrawLocation drawLocation = FDrawLocation();
+	int32 vpX;
+	int32 vpY;
+
+	FVector screenPos = Project(worldLocation);
+
+	// Get the viewport (current window) size
+	GetOwningPlayerController()->GetViewportSize(vpX, vpY);
+
+	// Limit the objective location to the screen
+	drawLocation.Y = mClampValue(screenPos.Y, vpY - offset, offset);
+	drawLocation.X = mClampValue(screenPos.X, vpX - offset, offset);
+
+	if (drawLocation.Y != screenPos.Y)
+	{
+		drawLocation.yOffscreen = true;
+	}
+
+	if (drawLocation.X != screenPos.X)
+	{
+		drawLocation.xOffscreen = true;
+	}
+	return drawLocation;
+}
 
 void ADroneHUD::DrawHUD()
 {
@@ -15,10 +49,12 @@ void ADroneHUD::DrawHUD()
 	DrawScore();
 
 	// Get all the enemy drones in the game and display indicators where appropriate
-	for (ADroneRPGCharacter* drone : GetEnemyDrones()) 
+	for (ADroneRPGCharacter* drone : GetGameMode()->GetDrones())
 	{
 		if (drone->GetHealthComponent()->IsAlive())
-			DrawEnemyIndicators(drone);
+		{
+			DrawCombatantIndicators(drone);
+		}
 	}
 
 	// Get all the objectives in the game and display indicators where appropriate
@@ -28,26 +64,26 @@ void ADroneHUD::DrawHUD()
 	}
 }
 
+void ADroneHUD::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (IsValid(GetOwningPlayerController()) && IsValid(GetOwningPlayerController()->GetPawn()))
+	{
+		SetCombatantComponent(mGetCombatantComponent(GetOwningPlayerController()->GetPawn()));
+	}
+}
+
 void ADroneHUD::DrawScore()
 {
-	ADroneRPGPlayerController* con = mGetController;
-	TMap<int32, int32> totalScore;
-
 	int32 y = 20;
 	int32 vpX;
 	int32 vpY;
 
 	// Get the viewport (current window) size
-	con->GetViewportSize(vpX, vpY);
+	GetOwningPlayerController()->GetViewportSize(vpX, vpY);
 
-	for (ADroneRPGCharacter* drone : GetGameMode()->GetDrones()) 
-	{
-		totalScore.FindOrAdd(drone->GetTeam()) += drone->GetKills();
-	}
-
-	ADroneRPGGameMode* gm = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-
-	for (FScoreBoardStat stat : gm->GetScoreBoardStats()) 
+	for (FScoreBoardStat stat : GetGameMode()->GetScoreBoardStats())
 	{
 		DrawText(stat.text, FLinearColor(stat.textColour), vpX / 2.1, y);
 		y += 20;
@@ -56,97 +92,57 @@ void ADroneHUD::DrawScore()
 
 void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 {
-	ADroneRPGPlayerController* con = mGetController;
-
-	if (con != NULL) 
+	if (GetOwningPlayerController() != NULL)
 	{
-		int32 vpX;
-		int32 vpY;
-		int32 offset = 30;
+		constexpr int32 offset = 30;
+		FDrawLocation drawLocation = GetDrawLocation(objective->GetActorLocation(), offset);
 
-		// Get the objective screen location
-		FVector screenPos = Project(objective->GetActorLocation());
-
-		float screenX = screenPos.X;
-		float screenY = screenPos.Y;
-
-		// Get the viewport (current window) size
-		con->GetViewportSize(vpX, vpY);
-
-		// Limit the objective location to the screen
-		float clampY = mClampValue<float>(screenY, vpY - offset, offset);
-		float clampX = mClampValue<float>(screenX, vpX - offset, offset);
-
-		float x = clampX;
-		float y = clampY;
-
-		float startX = x - 5;
-		float startY = y;
-		float endX = x + 5;
-		float endY = y;
-
-		// Only display a indicator if the objective is off screen
-		// If we've had to clamp a value, then the position is off screen
-		if (clampY != screenY || clampX != screenX) 
+		// Only display an indicator if the objective is offscreen
+		// If we've had to clamp a value, then the position is offscreen
+		if (drawLocation.IsOffscreen())
 		{
+			FVector2D start = FVector2D(drawLocation.X - 5, drawLocation.Y);
+			FVector2D end = FVector2D(drawLocation.X + 5, drawLocation.Y);
+
 			// Draw a Line on the edge of the screen that's the colour of the objective
-			DrawLine(startX, startY, endX, endY, FLinearColor(objective->GetCurrentColour()), 15.0f);
+			DrawLine(start.X, start.Y, end.X, end.Y, FLinearColor(objective->GetCurrentColour()), 15.0f);
 		}
-		else 
+		else
 		{
 			TArray< FStringFormatArg > args;
-			FString control = FString::FormatAsNumber(static_cast<int32>(FMath::RoundHalfToEven(objective->GetCurrentControlPercent())));
+			FString control = FString::SanitizeFloat(FMath::RoundHalfToEven(objective->GetCurrentControlPercent()));
 			args.Add(FStringFormatArg(control));
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(objective->GetCurrentColour()), clampX, clampY + 30);
+			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(objective->GetCurrentColour()), drawLocation.X, drawLocation.Y + 30);
 		}
 	}
 }
 
-void ADroneHUD::DrawEnemyIndicators(ADroneRPGCharacter* drone)
+void ADroneHUD::DrawCombatantIndicators(ADroneRPGCharacter* drone)
 {
-	ADroneRPGPlayerController* con = mGetController;
-
-	if (con != NULL) {
-		int32 vpX;
-		int32 vpY;
-		int32 offset = 30;
-
-		// Get the drone screen location
-		FVector screenPos = Project(drone->GetActorLocation());
-
-		float screenX = screenPos.X;
-		float screenY = screenPos.Y;
-
-		// Get the viewport (current window) size
-		con->GetViewportSize(vpX, vpY);
-
-		// Limit the drone location to the screen
-		float clampY = mClampValue<float>(screenY, vpY - offset, offset);
-		float clampX = mClampValue<float>(screenX, vpX - offset, offset);
+	if (GetOwningPlayerController() != NULL)
+	{
+		constexpr int32 offset = 30;
+		FDrawLocation drawLocation = GetDrawLocation(drone->GetActorLocation(), offset);
 
 		// Only display a indicator if the drone is on screen
 		// If we've had to clamp a value, then the position is off screen
-		if (clampY == screenY && clampX == screenX) 
+		if (!drawLocation.IsOffscreen())
 		{
-			float x = clampX;
-			float y = clampY - 30;
-
-			float startX = x - 10;
-			float startY = y;
-			float endX = x + 10;
-			float endY = y;
-
-			// Draw a Line above the drone that has it's team colour
-			//DrawLine(startX, startY, endX, endY, FLinearColor(drone->GetTeamColour()), 5.0f);
-
 			TArray< FStringFormatArg > args;
 			args.Add(FStringFormatArg(drone->GetKills()));
 			args.Add(FStringFormatArg(drone->GetDeaths()));
 
+			FColor colour = FColor::Red;
+
+			if (drone->GetTeam() == GetCombatantComponent()->GetTeam())
+			{
+				colour = FColor::Green;
+			}
+
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}/{1}"), args), FLinearColor(FColor::Red), clampX, clampY + 30);
+			DrawText(FString::Format(TEXT("{0}/{1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
 		}
 	}
 }
@@ -158,9 +154,4 @@ ADroneRPGGameMode* ADroneHUD::GetGameMode()
 		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	}
 	return gameMode;
-}
-
-TArray<ADroneRPGCharacter*> ADroneHUD::GetEnemyDrones()
-{
-	return mGetEnemiesInRadius(0, FVector::ZeroVector, GetPlayerDrone()->GetTeam(), GetGameMode()->GetDrones());
 }

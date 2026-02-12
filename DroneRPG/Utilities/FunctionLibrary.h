@@ -58,6 +58,7 @@ public:
 	template <class T> static void ShuffleArray(TArray<T>& arrayIn);
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 
+	UFUNCTION(BlueprintCallable, Category = "Utils")
 	static FColor GetTeamColour(int32 team);
 	static  TMap<int32, FColor>& GetTeamColours();
 
@@ -126,11 +127,14 @@ TArray<T*> UFunctionLibrary::GetActorsInWorld(UWorld* world) {
 template<class T>
 T UFunctionLibrary::ClampValue(T value, T max, T min)
 {
-	if (value < min)
+	if (value < min) 
+	{
 		value = min;
-
-	if (value > max)
+	}
+	else if (value > max) 
+	{
 		value = max;
+	}
 
 	return value;
 }

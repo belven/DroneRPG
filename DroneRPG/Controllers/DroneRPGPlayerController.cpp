@@ -39,8 +39,9 @@ void ADroneRPGPlayerController::Five()
 	SetWeapon(static_cast<EWeaponType>(5));
 }
 
-void ADroneRPGPlayerController::SetWeapon(EWeaponType type) {
-	GetDrone()->SetWeapon(mGetWeapon(type, 0.3f, 0.3f, GetDrone()));
+void ADroneRPGPlayerController::SetWeapon(EWeaponType type)
+{
+	GetDrone()->SetWeapon(mGetWeapon(type, 0.3f, 0.3f, GetDrone()->GetCombatantComponent()));
 }
 
 const FName ADroneRPGPlayerController::MoveForwardBinding("MoveForward");
@@ -59,19 +60,22 @@ ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), isFiring
 	moveCamera = true;
 }
 
-ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() {
-	return Cast<ADroneRPGCharacter>(GetCharacter());
+ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() const
+{
+	return droneCharacter;
 }
 
 void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (moveCamera) {
+	if (moveCamera) 
+	{
 		ChangeView();
 	}
 
-	if (GetCharacter() != NULL && GetDrone()->GetHealthComponent()->IsAlive()) {
+	if (GetDrone() != NULL && GetDrone()->GetHealthComponent()->IsAlive())
+	{
 		CalculateMovement(DeltaTime);
 
 		FHitResult Hit;
@@ -80,7 +84,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 		lookAt.Pitch = mActorRotation.Pitch;
 		lookAt.Roll = mActorRotation.Roll;
 
-		GetCharacter()->SetActorRotation(lookAt);
+		GetDrone()->SetActorRotation(lookAt);
 
 		// Try and fire a shot
 		FireShot(mActorRotation.Vector());
@@ -98,11 +102,13 @@ void ADroneRPGPlayerController::FireShot(const FVector& FireDirection)
 	}
 }
 
-void ADroneRPGPlayerController::UseTool() {
+void ADroneRPGPlayerController::UseTool()
+{
 	isFiring = true;
 }
 
-void ADroneRPGPlayerController::StopUsingTool() {
+void ADroneRPGPlayerController::StopUsingTool()
+{
 	isFiring = false;
 }
 
@@ -121,8 +127,8 @@ void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds) const
 	// If non-zero size, move this actor
 	if (Movement.SizeSquared() > 0.0f)
 	{
-		GetCharacter()->AddMovementInput(FRotationMatrix(GetControlRotation()).GetScaledAxis(EAxis::X), ForwardValue);
-		GetCharacter()->AddMovementInput(FRotationMatrix(GetControlRotation()).GetScaledAxis(EAxis::Y), RightValue);
+		GetDrone()->AddMovementInput(FRotationMatrix(GetControlRotation()).GetScaledAxis(EAxis::X), ForwardValue);
+		GetDrone()->AddMovementInput(FRotationMatrix(GetControlRotation()).GetScaledAxis(EAxis::Y), RightValue);
 	}
 }
 
@@ -147,17 +153,21 @@ void ADroneRPGPlayerController::SetupInputComponent()
 	InputComponent->BindAxis(FireRightBinding);
 }
 
-void ADroneRPGPlayerController::CanMoveCamera() {
+void ADroneRPGPlayerController::CanMoveCamera()
+{
 	moveCamera = true;
 }
 
-void ADroneRPGPlayerController::IncrementDrone() {
+void ADroneRPGPlayerController::IncrementDrone()
+{
 	droneIndex++;
 
-	if (droneIndex > GetGameMode()->GetDrones().Num() - 1) {
+	if (droneIndex > GetGameMode()->GetDrones().Num() - 1)
+	{
 		droneIndex = 0;
 	}
 }
+
 ADroneRPGGameMode* ADroneRPGPlayerController::GetGameMode()
 {
 	if (!IsValid(gameMode))
@@ -167,13 +177,21 @@ ADroneRPGGameMode* ADroneRPGPlayerController::GetGameMode()
 	return gameMode;
 }
 
+void ADroneRPGPlayerController::OnPossess(APawn* aPawn)
+{
+	Super::OnPossess(aPawn);
+
+	droneCharacter = Cast<ADroneRPGCharacter>(aPawn);
+}
+
 void ADroneRPGPlayerController::ChangeView()
 {
 	moveCamera = false;
 
 	ADroneRPGCharacter* drone = GetGameMode()->GetDrones()[droneIndex];
 
-	if (drone->GetController() == this) {
+	if (drone->GetController() == this) 
+	{
 		IncrementDrone();
 	}
 

@@ -12,7 +12,7 @@ public:
 
 	UShotgun();
 	
-	static UShotgun* CreateShotgun(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner, int32 inPellets = 4);
+	static UShotgun* CreateShotgun(float inFireRate, float inDamage, UCombatantComponent* inOwner, int32 inPellets = 4);
 
 	FRotator RandomDirection(FRotator fireRotation);
 	virtual void FireShot(FVector FireDirection) override;

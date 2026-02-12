@@ -27,7 +27,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	PrimaryActorTick.TickInterval = 0.3;
 	minCaptureDistance = 650;
-	targetRange = 5000;
+	targetRange = 15000;
 
 	canCheckForEnemies = true;
 	currentGameMode = EGameModeType::Domination;

@@ -16,13 +16,16 @@ public:
 	ADroneRPGPlayerController();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone Controller")
-	ADroneRPGCharacter* GetDrone();
+	ADroneRPGCharacter* GetDrone() const;
 protected:
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float MoveSpeed;
 	bool moveCamera;
 	int32 droneIndex;
+
+	UPROPERTY()
+	ADroneRPGCharacter* droneCharacter;
 
 	bool isFiring;
 
@@ -50,6 +53,7 @@ protected:
 	void CanMoveCamera();
 	void IncrementDrone();
 	ADroneRPGGameMode* GetGameMode();
+	virtual void OnPossess(APawn* aPawn) override;
 
 private:
 	void ChangeView();

@@ -54,7 +54,8 @@ APlasmaStormEvent::APlasmaStormEvent()
 	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
 
 	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
-	combatantComponent->SetupCombatantComponent("Plasma Storm", EDamagerType::PlasmaStorm, -1);
+	combatantComponent->SetupCombatantComponent("Plasma Storm", EDamagerType::PlasmaStorm);
+	combatantComponent->SetTeam(-1);
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &APlasmaStormEvent::UnitKilled);
 }
 
@@ -71,11 +72,10 @@ void APlasmaStormEvent::TriggerEvent()
 	// Get drones within our radius, deal damage to them
 	for (auto actor : overlaps) 
 	{
-		ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(actor);
-
-		if (IsValid(drone)) 
+		UHealthComponent* healthComponent = mGetHealthComponent(actor);
+		if (IsValid(healthComponent))
 		{
-			drone->GetHealthComponent()->ReceiveDamage(damage, this);
+			healthComponent->ReceiveDamage(damage, this);
 			damageDealt += damage;
 		}
 	}
@@ -130,7 +130,7 @@ void APlasmaStormEvent::Move()
 			mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 		}
 	}
-	// Otherwise, find a random player and move to thier location
+	// Otherwise, find a random player and move to their location
 	else if (GetGameMode()->GetDrones().Num() > 0) 
 	{
 		targetLocation.Location = mGetRandomObject(GetGameMode()->GetDrones())->GetActorLocation();

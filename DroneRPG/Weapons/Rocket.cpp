@@ -15,6 +15,7 @@ ARocket::ARocket()
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = 3500.0f;
 	ProjectileMovement->HomingAccelerationMagnitude = 15000;
+	ProjectileMovement->bIsHomingProjectile = true;
 	InitialLifeSpan = Default_Initial_Lifespan;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundAudio(TEXT("SoundCue'/Game/TopDownCPP/Sounds/Rocket_Booster_Cue.Rocket_Booster_Cue'"));
@@ -72,10 +73,22 @@ void ARocket::SetTeam(int32 inTeam)
 
 void ARocket::SetTarget(FTargetData targetData)
 {
-	if (target.isSet)
+	Super::SetTarget(targetData);
+	ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
+}
+
+void ARocket::DealDamage()
+{
+	TArray<AActor*> overlaps;
+	sphereComponent->GetOverlappingActors(overlaps);
+
+	for (auto overlap : overlaps)
 	{
-		ProjectileMovement->bIsHomingProjectile = true;
-		ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
+		FTargetData targetData = CreateTargetData(overlap);
+		if (CheckIfValidTarget(targetData))
+		{
+			targetData.healthComponent->ReceiveDamage(GetDamage(), this);
+		}
 	}
 }
 
@@ -84,18 +97,7 @@ void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 	// Only add impulse and destroy projectile if we hit a physics
 	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter->GetOwner() && !mIsA(OtherActor, ADroneProjectile))
 	{
-		TArray<AActor*> overlaps;
-		sphereComponent->GetOverlappingActors(overlaps);
-
-		for (auto overlap : overlaps)
-		{
-			FTargetData targetData = CreateTargetData(overlap);
-			if (CheckActorForValidTarget(targetData))
-			{
-				targetData.healthComponent->ReceiveDamage(GetDamage(), this);
-			}
-		}
-
+		DealDamage();
 		Destroy();
 	}
 	else

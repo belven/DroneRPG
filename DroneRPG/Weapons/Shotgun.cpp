@@ -1,5 +1,8 @@
 #pragma once
 #include "Shotgun.h"
+
+#include <DroneRPG/Components/CombatantComponent.h>
+
 #include "DroneProjectile.h"
 #include <Kismet/GameplayStatics.h>
 #include "DroneRPG/DroneRPGCharacter.h"
@@ -14,7 +17,7 @@ UShotgun::UShotgun(): pellets(0)
 	speed = ADroneProjectile::Default_Initial_Speed;
 }
 
-UShotgun* UShotgun::CreateShotgun(float inFireRate, float inDamage, ADroneRPGCharacter* inOwner, int32 inPellets)
+UShotgun* UShotgun::CreateShotgun(float inFireRate, float inDamage, UCombatantComponent* inOwner, int32 inPellets)
 {
 	UShotgun* weapon = NewObject<UShotgun>(StaticClass());
 	weapon->fireRate = inFireRate;
@@ -39,7 +42,7 @@ void UShotgun::FireShot(FVector FireDirection)
 		{
 			for (int i = 0; i < pellets; i++) {
 				const FRotator FireRotation = RandomDirection(FireDirection.Rotation());
-				const FVector gunLocation = owner->GetActorLocation() + FireRotation.RotateVector(GunOffset);
+				const FVector gunLocation = owner->GetOwner()->GetActorLocation() + FireRotation.RotateVector(GunOffset);
 
 				SpawnProjectile(gunLocation, FireRotation);
 				mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UShotgun::ShotTimerExpired, fireRate);
@@ -47,7 +50,7 @@ void UShotgun::FireShot(FVector FireDirection)
 
 			if (FireSound != nullptr)
 			{
-				UGameplayStatics::PlaySoundAtLocation(this, FireSound, owner->GetActorLocation());
+				UGameplayStatics::PlaySoundAtLocation(this, FireSound, owner->GetOwner()->GetActorLocation());
 			}
 
 			canFire = false;

@@ -45,16 +45,16 @@ protected:
 	float damage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* ProjectileMesh;
+	UStaticMeshComponent* ProjectileMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-		UProjectileMovementComponent* ProjectileMovement;
+	UProjectileMovementComponent* ProjectileMovement;
 
 	UPROPERTY()
-		UNiagaraSystem* trailSystem;
+	UNiagaraSystem* trailSystem;
 
 	UPROPERTY()
-		UNiagaraComponent* trialParticle;
+	UNiagaraComponent* trialParticle;
 
 	void SetUpCollision();
 	void IgnoreActor(AActor* actor);
@@ -80,7 +80,7 @@ public:
 	FTargetData target;
 
 	UFUNCTION()
-		virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
@@ -90,6 +90,6 @@ public:
 	void SetShooter(UCombatantComponent* val);
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
-		float GetDamage() const { return damage; }
+	float GetDamage() const { return damage; }
 	void SetDamage(float val) { damage = val; }
 };

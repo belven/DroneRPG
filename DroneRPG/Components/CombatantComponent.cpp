@@ -1,15 +1,14 @@
 #include "CombatantComponent.h"
 
-UCombatantComponent::UCombatantComponent()
+UCombatantComponent::UCombatantComponent(): team(0), type()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-void UCombatantComponent::SetupCombatantComponent(FString inName, EDamagerType inType, int32 inTeam)
+void UCombatantComponent::SetupCombatantComponent(FString inName, EDamagerType inType)
 {
 	name = inName;
 	type = inType;
-	team = inTeam;
 }
 
 void UCombatantComponent::UnitKilled(AActor* unitKilled)

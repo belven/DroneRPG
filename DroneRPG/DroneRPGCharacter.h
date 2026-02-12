@@ -1,5 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "Components/CombatantComponent.h"
 #include "GameFramework/Character.h"
 #include "DroneRPGCharacter.generated.h"
 
@@ -19,13 +20,14 @@ class ADroneRPGCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	int32 team;
 
 	void Respawn();
 
 	ADroneRPGCharacter();
 	virtual void BeginDestroy() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+	FColor GetTeamColour();
 
 	UFUNCTION()
 	void KillDrone(AActor* killer);
@@ -35,8 +37,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	ARespawnPoint* GetRespawnPoint();
 
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	FColor GetTeamColour();
 	void SetUpDrone();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
@@ -50,7 +50,7 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
-	int32 GetTeam() const { return team; }
+	int32 GetTeam() const;
 	void SetTeam(int32 val);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
@@ -62,6 +62,7 @@ public:
 	FORCEINLINE UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 	UHealthComponent* GetHealthComponent() const { return healthComponent; }
+	UCombatantComponent* GetCombatantComponent() const { return combatantComponent; }
 
 	ADroneRPGGameMode* GetGameMode();
 

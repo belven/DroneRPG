@@ -5,6 +5,7 @@
 #include "CombatantComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitKilled, AActor*, unitKilled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTeamChanged);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class DRONERPG_API UCombatantComponent : public UActorComponent
@@ -17,12 +18,18 @@ public:
 	EDamagerType GetCombatantType() { return type; };
 	int32 GetTeam() { return team; };
 
-	void SetupCombatantComponent(FString inName, EDamagerType inType, int32 inTeam);
+	void SetTeam(int32 inTeam)
+	{
+		team = inTeam;
+	}
+
+	void SetupCombatantComponent(FString inName, EDamagerType inType);
 
 	UFUNCTION()
 	void UnitKilled(AActor* unitKilled);
 
 	FUnitKilled OnUnitKilled;
+	FTeamChanged OnTeamChanged;
 private:
 	int32 team;
 	FString name;

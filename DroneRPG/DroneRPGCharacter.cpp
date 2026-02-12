@@ -22,8 +22,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 #if WITH_EDITOR
 	SetFolderPath(TEXT("Characters"));
 #endif
-	team = 1;
-
 	// Set size for player capsule
 	const float capWidth = 120.0f;
 	const float capHeight = 400.0f;
@@ -97,6 +95,10 @@ void ADroneRPGCharacter::BeginDestroy()
 	Super::BeginDestroy();
 }
 
+FColor ADroneRPGCharacter::GetTeamColour() {
+	return UFunctionLibrary::GetTeamColour(GetTeam());
+}
+
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -107,20 +109,15 @@ void ADroneRPGCharacter::BeginPlay()
 	}
 }
 
-FColor ADroneRPGCharacter::GetTeamColour() {
-	return UFunctionLibrary::GetTeamColour(GetTeam());
-}
-
 void ADroneRPGCharacter::SetUpDrone()
 {
 	kills = 0;
 	deaths = 0;
 
 	// Give each drone a random weapon
+	combatantComponent->SetupCombatantComponent(GetDroneName(), EDamagerType::Drone);
 	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(mGetDefaultWeapon(type, this));
-
-	combatantComponent->SetupCombatantComponent(GetDroneName(), EDamagerType::Drone, GetTeam());
+	SetWeapon(mGetDefaultWeapon(type, GetCombatantComponent()));
 }
 
 void ADroneRPGCharacter::PossessedBy(AController* NewController)
@@ -129,10 +126,15 @@ void ADroneRPGCharacter::PossessedBy(AController* NewController)
 	SetUpDrone();
 }
 
+int32 ADroneRPGCharacter::GetTeam() const
+{
+	return IsValid(GetCombatantComponent()) ? GetCombatantComponent()->GetTeam() : -1;
+}
+
 void ADroneRPGCharacter::SetTeam(int32 val)
 {
-	team = val;
-	healthComponent->SetTeamColour(GetTeamColour());
+	combatantComponent->SetTeam(val);
+	healthComponent->SetTeamColour(UFunctionLibrary::GetTeamColour(GetTeam()));
 }
 
 ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
@@ -144,12 +146,14 @@ ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
 	return gameMode;
 }
 
-void ADroneRPGCharacter::Respawn() {
+void ADroneRPGCharacter::Respawn()
+{
 	// Get our teams respawn point
 	ARespawnPoint* respawn = GetRespawnPoint();
 
 	// Did we find a respawn point?
-	if (respawn != NULL) {
+	if (respawn != NULL) 
+	{
 		// Move us to the respawn point 
 		FNavLocation loc;
 		mRandomPointInNavigableRadius(respawn->GetActorLocation(), respawn->GetSize(), loc);
@@ -165,13 +169,16 @@ void ADroneRPGCharacter::Respawn() {
 
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
-	if (!IsValid(respawnPoint)) {
+	if (!IsValid(respawnPoint)) 
+	{
 		// Get all the respawn points
 		TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
 
-		for (ARespawnPoint* respawnPointFound : respawnPoints) {
+		for (ARespawnPoint* respawnPointFound : respawnPoints) 
+		{
 			// Check if the respawn point belongs to our team 
-			if (respawnPointFound->GetTeam() == team) {
+			if (respawnPointFound->GetTeam() == GetTeam()) 
+			{
 				respawnPoint = respawnPointFound;
 			}
 		}
@@ -211,7 +218,8 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 
 FString ADroneRPGCharacter::GetDroneName()
 {	
-	if (droneName.IsEmpty() && GetGameMode()->GetDrones().Contains(this)) {
+	if (droneName.IsEmpty() && GetGameMode()->GetDrones().Contains(this)) 
+	{
 		droneName = FString::FromInt(GetGameMode()->GetDrones().IndexOfByKey(this));
 	}
 	return droneName;
