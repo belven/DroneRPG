@@ -8,7 +8,7 @@ class UNiagaraSystem;
 class UNiagaraComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitDied, AActor*, killer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitHit, AActor*, attacker);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitHit, float, damage, AActor*, attacker);
 
 USTRUCT(BlueprintType)
 struct FUnitStats

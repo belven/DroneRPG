@@ -87,7 +87,6 @@ void ADroneHUD::DrawScore()
 	for (auto team : GetGameMode()->GetTeamScores())
 	{
 		totalScore += team.Value.score;
-		//DrawText(score.Value.GetTeamScoreText(), FLinearColor(score.Value.teamColour), viewportSize.X / 2, y);
 	}
 
 	for (auto team : GetGameMode()->GetTeamScores())
@@ -98,8 +97,6 @@ void ADroneHUD::DrawScore()
 			float startX = centre + xOffest - (maxLength / 2);
 
 			DrawLine(startX, y, startX + length, y, FLinearColor(team.Value.teamColour), 15.0f);
-			//DrawLine(start.X, start.Y, end.X, end.Y, FLinearColor(objective->GetCurrentColour()), 15.0f);
-
 			xOffest += length;
 		}
 	}
@@ -151,13 +148,13 @@ void ADroneHUD::DrawCombatantIndicators(ADroneRPGCharacter* drone)
 
 			FColor colour = FColor::Red;
 
-			if (drone->GetTeam() == GetCombatantComponent()->GetTeam())
+			if (IsValid(GetCombatantComponent()) && drone->GetTeam() == GetCombatantComponent()->GetTeam())
 			{
 				colour = FColor::Green;
 			}
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}/{1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
+			DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
 		}
 	}
 }

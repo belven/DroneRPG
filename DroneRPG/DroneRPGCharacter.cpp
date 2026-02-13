@@ -42,14 +42,14 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
 	CameraBoom->TargetArmLength = 6000.f;
-	CameraBoom->SetRelativeRotation(FRotator(-75.f, 0.f, 0.f));
+	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
 	// Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Perspective);
+	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
 	TopDownCameraComponent->SetOrthoWidth(10000);
 
 	// Create a decal in the world to show the cursor's location
@@ -83,6 +83,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	healthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
 	healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneRPGCharacter::KillDrone);
+	healthComponent->OnUnitHit.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitHit);
 
 	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitKilled);
@@ -144,6 +145,7 @@ ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
 	if (!IsValid(gameMode))
 	{
 		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+		combatantComponent->SetGameMode(gameMode);
 	}
 	return gameMode;
 }
@@ -174,6 +176,11 @@ void ADroneRPGCharacter::UnitKilled(AActor* inUnitKilled)
 	kills++;
 }
 
+void ADroneRPGCharacter::UnitHit(float damage, AActor* attacker)
+{
+	GetGameMode()->UnitHit(damage, attacker);
+}
+
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
 	if (!IsValid(respawnPoint)) 
@@ -200,7 +207,7 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	meshComponent->SetHiddenInGame(true);
 
-	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 1.5f);
+	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
 
 	UCombatantComponent* damageDealer = mGetCombatantComponent(killer);
 
@@ -209,18 +216,10 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 	{
 		// Tell the killer they've killed us
 		damageDealer->UnitKilled(this);
-
-		// Tell the gamemode we've died, to update score etc.
-		GetGameMode()->EntityKilled(this, killer);
-
-		// Add text to the kill feed
-		// TODO Move this into gamemode and make a log of kills, maybe with a rolling kill feed.
-		TArray< FStringFormatArg > args;
-		args.Add(FStringFormatArg(GetDroneName()));
-		args.Add(FStringFormatArg(damageDealer->GetCombatantName()));
-
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
 	}
+
+	// Tell the gamemode we've died, to update score etc.
+	GetGameMode()->EntityKilled(this, killer);
 }
 
 FString ADroneRPGCharacter::GetDroneName()

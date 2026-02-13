@@ -56,6 +56,7 @@ protected:
 	virtual void OnPossess(APawn* aPawn) override;
 
 private:
+	UFUNCTION()
 	void ChangeView();
 
 	UPROPERTY()

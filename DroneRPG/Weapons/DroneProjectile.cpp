@@ -144,6 +144,7 @@ void ADroneProjectile::SetShooter(UCombatantComponent* val)
 	combatantComponent->SetupCombatantComponent(val->GetCombatantName(), val->GetCombatantType());
 	combatantComponent->SetTeam(val->GetTeam());
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(val, &UCombatantComponent::UnitKilled);
+	combatantComponent->OnScoreGained.AddUniqueDynamic(val, &UCombatantComponent::AddCombatScore);
 
 	SetUpCollision();
 }

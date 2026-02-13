@@ -4,8 +4,10 @@
 #include <DroneRPG/Utilities/Enums.h>
 #include "CombatantComponent.generated.h"
 
+class ADroneRPGGameMode;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitKilled, AActor*, unitKilled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTeamChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreGained, float, score);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class DRONERPG_API UCombatantComponent : public UActorComponent
@@ -30,8 +32,30 @@ public:
 
 	FUnitKilled OnUnitKilled;
 	FTeamChanged OnTeamChanged;
+	FScoreGained OnScoreGained;
+
+	ADroneRPGGameMode* GetGameMode() const
+	{
+		return gameMode;
+	}
+
+	void SetGameMode(ADroneRPGGameMode* inGameMode);
+
+	UFUNCTION()
+	void AddCombatScore(float score);
+
+	float GetCombatScore() { return combatScore; }
+
+	UFUNCTION()
+	void ResetCombatScore();
 private:
+	FTimerHandle TimerHandle_ResetCombatScore;
+
 	int32 team;
 	FString name;
 	EDamagerType type;
+	float combatScore;
+
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 };

@@ -31,7 +31,7 @@ AObjective::AObjective()
 	bigParticle = 300;
 	overlapTimeRate = 5;
 
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
 
 	if (auraParticleSystem.Succeeded())
 	{
@@ -106,7 +106,8 @@ void AObjective::BeginPlay()
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
 	// Set up the systems defaults
-	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
+	//captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
+	captureParticle->SetFloatParameter(TEXT("Radius"), GetSize());
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
 	captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
 

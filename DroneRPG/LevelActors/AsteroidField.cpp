@@ -159,7 +159,7 @@ void AAsteroidField::BeginPlay()
 				//newLocation.Y -= 50;
 				FVector Delta = newLocation - centre;
 		//		float Dist = Delta.Size();
-				newLocation -= Delta.GetSafeNormal() * minDist;
+				newLocation -= Delta.GetSafeNormal() * minDist * 1.5;
 			}
 		}
 

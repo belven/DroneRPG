@@ -29,7 +29,7 @@ UHealthComponent::UHealthComponent()
 	minWipe = -0.2;
 	wipeValue = FMath::RandRange(minWipe, maxWipe);
 
-	healthParticleSize = 20;
+	healthParticleSize = 50;
 
 	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldInstance(TEXT("/ Script/Engine.MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
 
@@ -70,6 +70,8 @@ void UHealthComponent::DamageShields(float& damage)
 
 void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
 {
+	OnUnitHit.Broadcast(damage, damager);
+
 	// Disable our shield regen as we've been hit
 	canRegenShields = false;
 	mSetTimer(TimerHandle_ShieldRegenRestart, &UHealthComponent::StartShieldRegen, shieldRegenDelay);
@@ -100,8 +102,6 @@ void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
 
 	UFunctionLibrary::ClampValue(currentStats.health, maxStats.health, 0.0f);
 	UFunctionLibrary::ClampValue(currentStats.shields, maxStats.shields, 0.0f);
-
-	OnUnitHit.Broadcast(damager);
 }
 
 void UHealthComponent::SetDefaults()
@@ -163,7 +163,7 @@ void UHealthComponent::BeginPlay()
 
 	// Set up particle effect defaults
 	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
-	healthParticle->SetFloatParameter(TEXT("Radius"), 125);
+	healthParticle->SetFloatParameter(TEXT("Radius"), 225);
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
 

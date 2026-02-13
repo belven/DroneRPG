@@ -23,8 +23,12 @@ public:
 
 	void Respawn();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = "Drone")
 	void UnitKilled(AActor* inUnitKilled);
+
+	UFUNCTION(BlueprintCallable, Category = "Drone")
+	void UnitHit(float damage, AActor* attacker);
+
 	ADroneRPGCharacter();
 	virtual void BeginDestroy() override;
 

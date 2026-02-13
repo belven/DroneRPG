@@ -69,7 +69,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (moveCamera) 
+	if (moveCamera)
 	{
 		ChangeView();
 	}
@@ -188,16 +188,29 @@ void ADroneRPGPlayerController::ChangeView()
 {
 	moveCamera = false;
 
-	ADroneRPGCharacter* drone = GetGameMode()->GetDrones()[droneIndex];
+	UCombatantComponent* combatantFound = NULL;
 
-	if (drone->GetController() == this) 
+	for (auto combatant : GetGameMode()->GetCombatants())
 	{
-		IncrementDrone();
+		float combatScore = combatant->GetCombatScore();
+
+		if (combatantFound == NULL) 
+		{
+			combatantFound = combatant;
+		}
+		else if (combatScore > combatantFound->GetCombatScore())
+		{
+			combatantFound = combatant;
+		}
 	}
 
-	SetViewTargetWithBlend(drone, 1.0f, VTBlend_EaseInOut, 1, false);
-
-	IncrementDrone();
-
-	mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::CanMoveCamera, 8.0f);
+	if (IsValid(combatantFound))
+	{
+		//TArray< FStringFormatArg > args;
+		//args.Add(FStringFormatArg(combatantFound->GetCombatantName()));
+		//args.Add(FStringFormatArg(combatantFound->GetCombatScore()));
+	//	GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} has {1} points"), args));
+		SetViewTargetWithBlend(combatantFound->GetOwner(), 1.0f, VTBlend_EaseInOut, 1, false);
+		mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::ChangeView, 2.0f);
+	}
 }
