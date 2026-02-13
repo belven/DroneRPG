@@ -87,7 +87,7 @@ void ARocket::DealDamage()
 		FTargetData targetData = CreateTargetData(overlap);
 		if (CheckIfValidTarget(targetData))
 		{
-			targetData.healthComponent->ReceiveDamage(GetDamage(), this);
+			targetData.healthComponent->ReceiveDamage(GetDamage(), GetShooter());
 		}
 	}
 }

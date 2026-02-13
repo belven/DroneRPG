@@ -18,7 +18,7 @@ public:
 	APlasmaStormEvent();
 
 	UFUNCTION()
-	void UnitKilled(AActor* unitKilled);
+	void UnitKilled(UCombatantComponent* unitKilled);
 
 	virtual void TriggerEvent() override;
 

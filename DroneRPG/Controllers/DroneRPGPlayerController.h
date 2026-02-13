@@ -50,8 +50,6 @@ protected:
 	void StopUsingTool();
 	void CalculateMovement(float DeltaSeconds) const;
 	virtual void SetupInputComponent() override;
-	void CanMoveCamera();
-	void IncrementDrone();
 	ADroneRPGGameMode* GetGameMode();
 	virtual void OnPossess(APawn* aPawn) override;
 

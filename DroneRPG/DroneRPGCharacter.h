@@ -24,10 +24,10 @@ public:
 	void Respawn();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
-	void UnitKilled(AActor* inUnitKilled);
+	void UnitKilled(UCombatantComponent* inUnitKilled);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
-	void UnitHit(float damage, AActor* attacker);
+	void UnitHit(float damage, UCombatantComponent* attacker);
 
 	ADroneRPGCharacter();
 	virtual void BeginDestroy() override;
@@ -36,7 +36,7 @@ public:
 	FColor GetTeamColour();
 
 	UFUNCTION()
-	void KillDrone(AActor* killer);
+	void KillDrone(UCombatantComponent* killer);
 	FString GetDroneName();
 	virtual void BeginPlay() override;
 

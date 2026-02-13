@@ -29,7 +29,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-		void UnitDied(AActor* unit);
+		void UnitDied(UCombatantComponent* unit);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
 		UNiagaraComponent* captureParticle;

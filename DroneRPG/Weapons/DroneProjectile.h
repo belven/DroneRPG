@@ -68,8 +68,6 @@ protected:
 	UPROPERTY()
 	USoundBase* HitSound;
 
-	UPROPERTY()
-	UCombatantComponent* combatantComponent;
 public:
 	ADroneProjectile();
 

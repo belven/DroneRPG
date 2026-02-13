@@ -7,8 +7,8 @@
 class UNiagaraSystem;
 class UNiagaraComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitDied, AActor*, killer);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitHit, float, damage, AActor*, attacker);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitDied, UCombatantComponent*, killer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitHit, float, damage, UCombatantComponent*, attacker);
 
 USTRUCT(BlueprintType)
 struct FUnitStats
@@ -35,7 +35,7 @@ public:
 	UHealthComponent();
 	void DamageShields(float& damage);
 
-	void ReceiveDamage(float damage, AActor* damager);
+	void ReceiveDamage(float damage, UCombatantComponent* damager);
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	void SetDefaults();

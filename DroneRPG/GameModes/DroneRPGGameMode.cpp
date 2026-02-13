@@ -24,16 +24,11 @@ ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
 	colours.Add(FColor::Black);
 }
 
-void ADroneRPGGameMode::UnitHit(float inDamage, AActor* attacker)
+void ADroneRPGGameMode::UnitHit(float inDamage, UCombatantComponent* attacker)
 {
-	UCombatantComponent* damageDealer = mGetCombatantComponent(attacker);
-
-	if (IsValid(damageDealer)) 
-	{
 		float bonusScore = FMath::RoundHalfToEven(inDamage);
-		damageDealer->AddCombatScore(bonusScore);
-		AddTeamScore(damageDealer->GetTeam(), bonusScore);
-	}
+		attacker->AddCombatScore(bonusScore);
+		AddTeamScore(attacker->GetTeam(), bonusScore);	
 }
 
 void ADroneRPGGameMode::BeginPlay()
@@ -41,24 +36,19 @@ void ADroneRPGGameMode::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ADroneRPGGameMode::EntityKilled(AActor* killedEntity, AActor* killer)
+void ADroneRPGGameMode::EntityKilled(UCombatantComponent* killedEntity, UCombatantComponent* killer)
 {
-	UCombatantComponent* entityKilled = mGetCombatantComponent(killedEntity);
-	UCombatantComponent* damageDealer = mGetCombatantComponent(killer);
 
-	// Check if the damager uses the UDroneDamagerInterface, which it should
-	if (IsValid(entityKilled) && IsValid(damageDealer))
-	{
-		AddTeamScore(damageDealer->GetTeam(), 50);
-		damageDealer->AddCombatScore(50);
+		AddTeamScore(killer->GetTeam(), 50);
+		killer->AddCombatScore(50);
 
 		TArray< FStringFormatArg > args;
-		args.Add(FStringFormatArg(entityKilled->GetCombatantName()));
-		args.Add(FStringFormatArg(damageDealer->GetCombatantName()));
+		args.Add(FStringFormatArg(killedEntity->GetCombatantName()));
+		args.Add(FStringFormatArg(killer->GetCombatantName()));
 
 		// Add text to the kill feed
 		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
-	}
+	
 }
 
 void ADroneRPGGameMode::AddTeamScore(int32 team, int32 bonusScore)

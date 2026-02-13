@@ -68,7 +68,7 @@ void UHealthComponent::DamageShields(float& damage)
 	damage -= currentStats.shields;
 }
 
-void UHealthComponent::ReceiveDamage(float damage, AActor* damager)
+void UHealthComponent::ReceiveDamage(float damage, UCombatantComponent* damager)
 {
 	OnUnitHit.Broadcast(damage, damager);
 

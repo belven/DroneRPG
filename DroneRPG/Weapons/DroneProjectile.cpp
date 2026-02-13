@@ -22,12 +22,9 @@ ADroneProjectile::ADroneProjectile()
 #if WITH_EDITOR
 	SetFolderPath(TEXT("Other/Projectiles"));
 #endif
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Static reference to the mesh to use for the projectile
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ProjectileMeshAsset(TEXT("StaticMesh'/Game/StarterContent/Shapes/Shape_NarrowCapsule.Shape_NarrowCapsule'"));
-
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> trailParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/TrailParticleSystem_2.TrailParticleSystem_2'"));
 
 	if (trailParticleSystem.Succeeded())
@@ -35,18 +32,15 @@ ADroneProjectile::ADroneProjectile()
 		trailSystem = trailParticleSystem.Object;
 	}
 
-	// Create mesh component for the projectile sphere
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh0"));
 	ProjectileMesh->SetStaticMesh(ProjectileMeshAsset.Object);
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->BodyInstance.SetCollisionProfileName("Projectile");
-	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);		// set up a notification for when this component hits something
+	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);
 	ProjectileMesh->CastShadow = false;
-	//ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	RootComponent = ProjectileMesh;
 
-	// Use a ProjectileMovementComponent to govern this projectile's movement
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement0"));
 	ProjectileMovement->UpdatedComponent = ProjectileMesh;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
@@ -57,11 +51,8 @@ ADroneProjectile::ADroneProjectile()
 
 	InitialLifeSpan = Default_Initial_Lifespan;
 	RootComponent->SetHiddenInGame(true);
-
-	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 }
 
-// Called when the game starts or when spawned
 void ADroneProjectile::BeginPlay()
 {
 	Super::BeginPlay();
@@ -105,7 +96,7 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 			&& targetData.combatantComponent->GetTeam() != shooter->GetTeam())
 		{
 			// Deal damage to enemy Drone
-			targetData.healthComponent->ReceiveDamage(GetDamage(), this);
+			targetData.healthComponent->ReceiveDamage(GetDamage(), shooter);
 			Destroy();
 		}
 		else
@@ -141,10 +132,5 @@ void ADroneProjectile::SetShooter(UCombatantComponent* val)
 
 	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(gameMode->GetTeamColour(val->GetTeam())));
-	combatantComponent->SetupCombatantComponent(val->GetCombatantName(), val->GetCombatantType());
-	combatantComponent->SetTeam(val->GetTeam());
-	combatantComponent->OnUnitKilled.AddUniqueDynamic(val, &UCombatantComponent::UnitKilled);
-	combatantComponent->OnScoreGained.AddUniqueDynamic(val, &UCombatantComponent::AddCombatScore);
-
 	SetUpCollision();
 }

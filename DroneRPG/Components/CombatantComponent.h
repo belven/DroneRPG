@@ -5,7 +5,7 @@
 #include "CombatantComponent.generated.h"
 
 class ADroneRPGGameMode;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitKilled, AActor*, unitKilled);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitKilled, UCombatantComponent*, unitKilled);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTeamChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreGained, float, score);
 
@@ -28,7 +28,7 @@ public:
 	void SetupCombatantComponent(FString inName, EDamagerType inType);
 
 	UFUNCTION()
-	void UnitKilled(AActor* unitKilled);
+	void UnitKilled(UCombatantComponent* unitKilled);
 
 	FUnitKilled OnUnitKilled;
 	FTeamChanged OnTeamChanged;

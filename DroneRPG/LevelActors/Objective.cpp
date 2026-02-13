@@ -55,14 +55,9 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	}
 }
 
-void AObjective::UnitDied(AActor* unit)
+void AObjective::UnitDied(UCombatantComponent* unit)
 {
-	UCombatantComponent* combatant = mGetCombatantComponent(unit);
-
-	if (IsValid(combatant))
-	{
-		Remove(combatant);
-	}
+		Remove(unit);	
 }
 
 void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -238,7 +233,7 @@ void AObjective::Add(UCombatantComponent* combatant)
 
 	if (!combatantsInArea.Contains(combatant) && IsValid(healthComponent) && healthComponent->IsAlive())
 	{
-		combatantsInArea.Add(combatant);
+		combatantsInArea.AddUnique(combatant);
 		healthComponent->OnUnitDied.AddDynamic(this, &AObjective::UnitDied);
 		CalculateOwnership();
 	}
@@ -274,7 +269,7 @@ void AObjective::Tick(float DeltaTime)
 	// Every second add 5 points to the team that full owns this point
 	if (fullClaim)
 	{
-		GetGameMode()->AddTeamScore(areaOwner, 5);
+		GetGameMode()->AddTeamScore(areaOwner, 50);
 	}
 	else if (overlapTimePassed > overlapTimeRate)
 	{

@@ -15,10 +15,10 @@ class ADroneRPGGameMode : public AGameModeBase
 public:
 	ADroneRPGGameMode();
 	TArray <ADroneRPGCharacter*>& GetDrones() { return  dronesInGame; }
-	void UnitHit(float inDamage, AActor* attacker);
+	void UnitHit(float inDamage, UCombatantComponent* attacker);
 
 	virtual void BeginPlay() override;
-	virtual void EntityKilled(AActor* killedEntity, AActor* killer);
+	virtual void EntityKilled(UCombatantComponent* killedEntity, UCombatantComponent* killer);
 
 	virtual void AddTeamScore(int32 team, int32 bonusScore);
 

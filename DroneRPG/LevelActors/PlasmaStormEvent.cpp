@@ -59,7 +59,7 @@ APlasmaStormEvent::APlasmaStormEvent()
 	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &APlasmaStormEvent::UnitKilled);
 }
 
-void APlasmaStormEvent::UnitKilled(AActor* unitKilled)
+void APlasmaStormEvent::UnitKilled(UCombatantComponent* unitKilled)
 {
 	kills++;
 }
@@ -75,7 +75,7 @@ void APlasmaStormEvent::TriggerEvent()
 		UHealthComponent* healthComponent = mGetHealthComponent(actor);
 		if (IsValid(healthComponent))
 		{
-			healthComponent->ReceiveDamage(damage, this);
+			healthComponent->ReceiveDamage(damage, combatantComponent);
 			damageDealt += damage;
 		}
 	}

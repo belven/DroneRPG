@@ -69,11 +69,6 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (moveCamera)
-	{
-		ChangeView();
-	}
-
 	if (GetDrone() != NULL && GetDrone()->GetHealthComponent()->IsAlive())
 	{
 		CalculateMovement(DeltaTime);
@@ -153,21 +148,6 @@ void ADroneRPGPlayerController::SetupInputComponent()
 	InputComponent->BindAxis(FireRightBinding);
 }
 
-void ADroneRPGPlayerController::CanMoveCamera()
-{
-	moveCamera = true;
-}
-
-void ADroneRPGPlayerController::IncrementDrone()
-{
-	droneIndex++;
-
-	if (droneIndex > GetGameMode()->GetDrones().Num() - 1)
-	{
-		droneIndex = 0;
-	}
-}
-
 ADroneRPGGameMode* ADroneRPGPlayerController::GetGameMode()
 {
 	if (!IsValid(gameMode))
@@ -182,12 +162,15 @@ void ADroneRPGPlayerController::OnPossess(APawn* aPawn)
 	Super::OnPossess(aPawn);
 
 	droneCharacter = Cast<ADroneRPGCharacter>(aPawn);
+
+	if (moveCamera)
+	{
+		ChangeView();
+	}
 }
 
 void ADroneRPGPlayerController::ChangeView()
 {
-	moveCamera = false;
-
 	UCombatantComponent* combatantFound = NULL;
 
 	for (auto combatant : GetGameMode()->GetCombatants())
@@ -206,11 +189,7 @@ void ADroneRPGPlayerController::ChangeView()
 
 	if (IsValid(combatantFound))
 	{
-		//TArray< FStringFormatArg > args;
-		//args.Add(FStringFormatArg(combatantFound->GetCombatantName()));
-		//args.Add(FStringFormatArg(combatantFound->GetCombatScore()));
-	//	GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} has {1} points"), args));
 		SetViewTargetWithBlend(combatantFound->GetOwner(), 1.0f, VTBlend_EaseInOut, 1, false);
-		mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::ChangeView, 2.0f);
+		mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::ChangeView, 3.0f);
 	}
 }

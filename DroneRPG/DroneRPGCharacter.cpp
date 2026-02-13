@@ -171,12 +171,12 @@ void ADroneRPGCharacter::Respawn()
 	}
 }
 
-void ADroneRPGCharacter::UnitKilled(AActor* inUnitKilled)
+void ADroneRPGCharacter::UnitKilled(UCombatantComponent* inUnitKilled)
 {
 	kills++;
 }
 
-void ADroneRPGCharacter::UnitHit(float damage, AActor* attacker)
+void ADroneRPGCharacter::UnitHit(float damage, UCombatantComponent* attacker)
 {
 	GetGameMode()->UnitHit(damage, attacker);
 }
@@ -201,7 +201,7 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 	return respawnPoint;
 }
 
-void ADroneRPGCharacter::KillDrone(AActor* killer)
+void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
 {
 	deaths++;
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -209,17 +209,11 @@ void ADroneRPGCharacter::KillDrone(AActor* killer)
 
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
 
-	UCombatantComponent* damageDealer = mGetCombatantComponent(killer);
-
-	// Check if the killer uses UDroneDamagerInterface
-	if (IsValid(damageDealer)) 
-	{
 		// Tell the killer they've killed us
-		damageDealer->UnitKilled(this);
-	}
+		killer->UnitKilled(GetCombatantComponent());	
 
 	// Tell the gamemode we've died, to update score etc.
-	GetGameMode()->EntityKilled(this, killer);
+	GetGameMode()->EntityKilled(GetCombatantComponent(), killer);
 }
 
 FString ADroneRPGCharacter::GetDroneName()

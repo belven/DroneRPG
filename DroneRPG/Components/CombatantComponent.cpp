@@ -14,7 +14,7 @@ void UCombatantComponent::SetupCombatantComponent(FString inName, EDamagerType i
 	type = inType;
 }
 
-void UCombatantComponent::UnitKilled(AActor* unitKilled)
+void UCombatantComponent::UnitKilled(UCombatantComponent* unitKilled)
 {
 	OnUnitKilled.Broadcast(unitKilled);
 }
