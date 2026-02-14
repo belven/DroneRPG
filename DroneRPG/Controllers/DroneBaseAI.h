@@ -42,8 +42,8 @@ public:
 	EActionState GetPreviousState() const { return previousState; }
 	void SetPreviousState(EActionState val);
 
-	AActor* GetTargetObjective() const { return targetObjective; }
-	void SetTargetObjective(AActor* val) { targetObjective = val; }
+	AObjective* GetTargetObjective() const { return targetObjective; }
+	void SetTargetObjective(AObjective* val);
 
 	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
 	void SetCurrentGameMode(EGameModeType val);
@@ -77,7 +77,7 @@ private:
 	UAISenseConfig_Sight* sightConfig;
 
 	UPROPERTY()
-	AActor* targetObjective;
+	AObjective* targetObjective;
 
 	UPROPERTY()
 	FTargetData target;

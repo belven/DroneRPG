@@ -74,6 +74,16 @@ void ADroneBaseAI::SetPreviousState(EActionState val)
 	previousState = val;
 }
 
+void ADroneBaseAI::SetTargetObjective(AObjective* val)
+{
+	targetObjective = val;
+
+	if (IsValid(targetObjective))
+	{
+		targetObjective->OnObjectiveClaimed.AddUniqueDynamic(this, &ADroneBaseAI::ObjectiveTaken);
+	}
+}
+
 void ADroneBaseAI::SetCurrentGameMode(EGameModeType val)
 {
 	currentGameMode = val;
@@ -235,14 +245,6 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker)
 void ADroneBaseAI::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// We need to bind to the Objective Claimed method on all the objectives, so we can track when they get taken
-	// This allows the bot to move an objective as an enemy tries to take it
-	for (AObjective* objective : mGetActorsInWorld<AObjective>(GetWorld()))
-	{
-		// Bind to the Objective Claimed method on the objective
-		objective->OnObjectiveClaimed.AddDynamic(this, &ADroneBaseAI::ObjectiveTaken);
-	}
 }
 
 void ADroneBaseAI::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
@@ -359,6 +361,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		if (!CompareState(EActionState::ReturningToBase) && !GetDrone()->GetHealthComponent()->IsHealthy())
 		{
 			SetCurrentState(EActionState::ReturningToBase);
+			StopMovement();
 			ReturningToBase();
 		}
 
@@ -434,7 +437,7 @@ void ADroneBaseAI::PerformActions()
 		DefendingObjective();
 		break;
 	case EActionState::ReturningToBase:
-		// Do Nothing
+		ReturningToBase();
 		break;
 	default:
 		// Something went wrong!!
@@ -477,13 +480,19 @@ void ADroneBaseAI::ReturningToBase()
 {
 	UE_LOG(LogDroneRPG, Log, TEXT("Drone %s ReturningToBase"), *GetDrone()->GetDroneName());
 
-	ARespawnPoint* respawnPoint = GetDrone()->GetRespawnPoint();
-	FVector loc = respawnPoint->GetActorLocation();
-	EPathFollowingRequestResult::Type result = MoveToLocation(loc, respawnPoint->GetSize() / 2);
-
-	if (result == EPathFollowingRequestResult::Type::Failed)
+	if (GetDrone()->GetHealthComponent()->IsHealthy())
 	{
-		UE_LOG(LogDroneRPG, Log, TEXT("Drone %s ReturningToBase failed move"), *GetDrone()->GetDroneName());
+		SetCurrentState(EActionState::Start);
+	}
+	else if (GetDrone()->GetVelocity().IsNearlyZero()) 
+	{
+		ARespawnPoint* respawnPoint = GetDrone()->GetRespawnPoint();
+		FVector loc = respawnPoint->GetActorLocation();
+		EPathFollowingRequestResult::Type result = MoveToLocation(loc, respawnPoint->GetSize() / 2);
+		if (result == EPathFollowingRequestResult::Type::Failed)
+		{
+			UE_LOG(LogDroneRPG, Log, TEXT("Drone %s ReturningToBase failed move"), *GetDrone()->GetDroneName());
+		}
 	}
 }
 
