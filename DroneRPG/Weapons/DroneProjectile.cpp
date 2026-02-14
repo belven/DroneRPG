@@ -87,7 +87,7 @@ void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, U
 		// Did we hit a drone?
 		if (targetData.combatantComponent != NULL
 			// Are we on a different team?
-			&& targetData.combatantComponent->GetTeam() != shooter->GetTeam())
+			&& targetData.GetTeam() != shooter->GetTeam())
 		{
 			// Deal damage to enemy Drone
 			targetData.healthComponent->ReceiveDamage(GetDamage(), shooter);

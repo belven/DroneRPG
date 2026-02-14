@@ -26,17 +26,17 @@ struct FTargetData
 
 	bool isSet = false;
 
-	bool IsValid()
+	bool IsValid() const
 	{
 		return combatantComponent != NULL && healthComponent != NULL;
 	}
 
-	bool IsAlive()
+	bool IsAlive() const
 	{
 		return healthComponent != NULL ? healthComponent->IsAlive() : false;
 	}
 
-	int32 GetTeam()
+	int32 GetTeam() const
 	{
 		return combatantComponent != NULL ? combatantComponent->GetTeam() : -10;
 	}
@@ -47,7 +47,7 @@ struct FTargetData
 		return combatantComponent != NULL ? combatantComponent->GetOwner() : NULL;
 	}
 
-	FVector GetActorLocation()
+	FVector GetActorLocation() const
 	{
 		return combatantComponent != NULL ? combatantComponent->GetOwner()->GetActorLocation() : FVector::ZeroVector;
 	}

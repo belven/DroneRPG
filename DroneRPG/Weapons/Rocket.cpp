@@ -32,7 +32,7 @@ ARocket::ARocket()
 	}
 
 	sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RocketOverlap"));
-	sphereComponent->SetSphereRadius(2000);
+	sphereComponent->SetSphereRadius(1000);
 	sphereComponent->SetupAttachment(GetRootComponent());
 	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
 	sphereComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ARocket::BeginOverlap);
@@ -40,10 +40,10 @@ ARocket::ARocket()
 
 bool ARocket::CheckIfValidTarget(const FTargetData& targetData)
 {
-	return IsValid(targetData.healthComponent) && targetData.healthComponent->IsAlive() && targetData.combatantComponent->GetTeam() != team;
+	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != team;
 }
 
-bool ARocket::CheckActorForValidTarget(const FTargetData& targetData)
+bool ARocket::SetTargetIfValid(const FTargetData& targetData)
 {
 	bool result = false;
 	if (CheckIfValidTarget(targetData))
@@ -63,8 +63,7 @@ void ARocket::SetTeam(int32 inTeam)
 
 	for (auto overlap : overlaps)
 	{
-		FTargetData data = mCreateTargetData(overlap);
-		if (CheckActorForValidTarget(data))
+		if (SetTargetIfValid(mCreateTargetData(overlap)))
 		{
 			break;
 		}
@@ -110,6 +109,6 @@ void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 {
 	if (team != -1 && !target.isSet)
 	{
-		CheckActorForValidTarget(mCreateTargetData(OtherActor));
+		SetTargetIfValid(mCreateTargetData(OtherActor));
 	}
 }

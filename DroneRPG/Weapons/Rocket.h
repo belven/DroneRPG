@@ -14,7 +14,7 @@ public:
 	ARocket();
 
 	bool CheckIfValidTarget(const FTargetData& targetData);
-	bool CheckActorForValidTarget(const FTargetData& targetData);
+	bool SetTargetIfValid(const FTargetData& targetData);
 
 	static const float Default_Initial_Speed;
 	static const float Default_Initial_Lifespan;
