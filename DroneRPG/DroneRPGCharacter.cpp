@@ -158,7 +158,7 @@ void ADroneRPGCharacter::Respawn()
 	ARespawnPoint* respawn = GetRespawnPoint();
 
 	// Did we find a respawn point?
-	if (respawn != NULL) 
+	if (IsValid(respawn)) 
 	{
 		// Move us to the respawn point 
 		FNavLocation loc;

@@ -79,12 +79,12 @@ void ADroneProjectile::SetTarget(FTargetData targetData)
 void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Only add impulse and destroy projectile if we hit a physics
-	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter->GetOwner() && OtherActor->GetClass() != StaticClass())
+	if (IsValid(OtherActor) && OtherActor != this && OtherActor != shooter->GetOwner() && OtherActor->GetClass() != StaticClass())
 	{
 		FTargetData targetData = mCreateTargetData(OtherActor);
 
 		// Did we hit a drone?
-		if (targetData.combatantComponent != NULL
+		if (targetData.IsValid()
 			// Are we on a different team?
 			&& targetData.GetTeam() != shooter->GetTeam())
 		{

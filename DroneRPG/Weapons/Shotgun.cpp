@@ -43,7 +43,7 @@ void UShotgun::FireShot(FVector FireDirection)
 				mSetTimerWorld(GetOwner()->GetWorld(), TimerHandle_ShotTimerExpired, &UShotgun::ShotTimerExpired, fireRate);
 			}
 
-			if (FireSound != nullptr)
+			if (IsValid(FireSound))
 			{
 				UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetOwner()->GetOwner()->GetActorLocation());
 			}

@@ -93,7 +93,7 @@ void ARocket::SetShooter(UCombatantComponent* val)
 void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Only add impulse and destroy projectile if we hit a physics
-	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter->GetOwner() && !mIsA(OtherActor, ADroneProjectile))
+	if (IsValid(OtherActor) && OtherActor != this && OtherActor != shooter->GetOwner() && !mIsA(OtherActor, ADroneProjectile))
 	{
 		DealDamage();
 		Destroy();

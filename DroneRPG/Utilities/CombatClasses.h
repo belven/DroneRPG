@@ -69,7 +69,7 @@ public:
 
 inline FTargetData UCombatClasses::CreateTargetData(AActor* actor)
 {
-	if (actor != NULL)
+	if (IsValid(actor))
 	{
 		return FTargetData(mGetCombatantComponent(actor), mGetHealthComponent(actor));
 	}

@@ -168,7 +168,7 @@ void UHealthComponent::BeginPlay()
 
 	shieldMesh = LoadObject<UStaticMesh>(this, TEXT("StaticMesh'/Game/TopDownCPP/Models/Shield.Shield'"));
 
-	if (shieldMesh != NULL) 
+	if (IsValid(shieldMesh)) 
 	{
 		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
 		// Otherwise we access the base mesh, that all drones use, and change it globally

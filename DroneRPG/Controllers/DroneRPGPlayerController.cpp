@@ -80,7 +80,7 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (GetDrone() != NULL && GetDrone()->GetHealthComponent()->IsAlive())
+	if (IsValid(GetDrone()) && GetDrone()->GetHealthComponent()->IsAlive())
 	{
 		CalculateMovement(DeltaTime);
 
@@ -191,7 +191,7 @@ void ADroneRPGPlayerController::ChangeView()
 		{
 			float combatScore = combatant->GetCombatScore();
 
-			if (combatantFound == NULL)
+			if (!IsValid(combatantFound))
 			{
 				combatantFound = combatant;
 			}

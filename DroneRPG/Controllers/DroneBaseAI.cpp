@@ -209,13 +209,13 @@ void ADroneBaseAI::FindObjective()
 	}
 
 	// If the objective is null and we found any objectives, then find one to defend
-	if (GetTargetObjective() == NULL && objectives.Num() > 0)
+	if (!IsValid(GetTargetObjective()) && objectives.Num() > 0)
 	{
 		SetTargetObjective(UFunctionLibrary::GetRandomObject<AObjective*>(objectives));
 		MoveToObjective();
 	}
 	// If we have an objective, then it wasn't claimed by this team, so head towards it
-	else if (GetTargetObjective() != NULL)
+	else if (IsValid(GetTargetObjective()))
 	{
 		MoveToObjective();
 	}
@@ -228,7 +228,7 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker)
 	ADroneRPGCharacter* droneAttacker = Cast<ADroneRPGCharacter>(attacker);
 
 	// We have no target
-	if (GetTarget() == NULL)
+	if (!IsValid(GetTarget()))
 	{
 		SetTarget(mCreateTargetData(droneAttacker));
 	}
@@ -581,7 +581,7 @@ void ADroneBaseAI::CapturingObjective()
 		MoveToObjective();
 	}
 	// Have we claimed the current objective?
-	else if (currentObjective != NULL && currentObjective->HasCompleteControl(GetDrone()->GetTeam()))
+	else if (IsValid(currentObjective) && currentObjective->HasCompleteControl(GetDrone()->GetTeam()))
 	{
 		SetCurrentState(EActionState::MovingToObjective);
 	}

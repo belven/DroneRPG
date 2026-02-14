@@ -32,7 +32,6 @@
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 
-
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject
 {
@@ -79,7 +78,8 @@ TArray <T*> UFunctionLibrary::GetActorsInRadius(UWorld* world, float radius, FVe
 }
 
 template <class T>
-T* UFunctionLibrary::GetClosestActorInArray(TArray<T*> actorArray, FVector loc) {
+T* UFunctionLibrary::GetClosestActorInArray(TArray<T*> actorArray, FVector loc)
+{
 	T* closest = NULL;
 	float lastDist = 0;
 
@@ -87,11 +87,13 @@ T* UFunctionLibrary::GetClosestActorInArray(TArray<T*> actorArray, FVector loc) 
 	{
 		float dist = mDist(actor->GetActorLocation(), loc);
 
-		if (closest == NULL) {
+		if (!IsValid(closest)) 
+		{
 			closest = actor;
 			lastDist = dist;
 		}
-		else if (dist < lastDist) {
+		else if (dist < lastDist) 
+		{
 			closest = actor;
 			lastDist = dist;
 		}

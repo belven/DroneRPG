@@ -11,7 +11,7 @@ ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
 
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDownCPP/Blueprints/DroneCharacter"));
-	if (PlayerPawnBPClass.Class != nullptr)
+	if (PlayerPawnBPClass.Succeeded())
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}

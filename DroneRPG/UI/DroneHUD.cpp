@@ -105,7 +105,7 @@ void ADroneHUD::DrawScore()
 
 void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 {
-	if (GetOwningPlayerController() != NULL)
+	if (IsValid(GetOwningPlayerController()))
 	{
 		constexpr int32 offset = 30;
 		FDrawLocation drawLocation = GetDrawLocation(objective->GetActorLocation(), offset);
@@ -134,7 +134,7 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 
 void ADroneHUD::DrawCombatantIndicators(ADroneRPGCharacter* drone)
 {
-	if (GetOwningPlayerController() != NULL)
+	if (IsValid(GetOwningPlayerController()))
 	{
 		constexpr int32 offset = 30;
 		FDrawLocation drawLocation = GetDrawLocation(drone->GetActorLocation(), offset);
