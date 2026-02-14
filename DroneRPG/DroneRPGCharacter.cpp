@@ -17,6 +17,8 @@
 #include "Weapons/Weapon.h"
 #include <Kismet/GameplayStatics.h>
 
+#include "Utilities/WeaponCreator.h"
+
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule

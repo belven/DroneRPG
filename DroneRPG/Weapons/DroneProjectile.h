@@ -61,7 +61,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	UCombatantComponent* GetShooter();
-	void SetShooter(UCombatantComponent* val);
+	virtual	void SetShooter(UCombatantComponent* val);
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")
 	float GetDamage() const { return damage; }

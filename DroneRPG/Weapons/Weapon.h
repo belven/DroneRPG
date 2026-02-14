@@ -4,8 +4,6 @@
 #include "Weapon.generated.h"
 
 #define mSpawnProjectile owner->GetWorld()->SpawnActor<ADroneProjectile>(projectileClass, gunLocation, FireRotation)
-#define mGetWeapon UWeapon::GetWeapon
-#define mGetDefaultWeapon UWeapon::GetDefaultWeapon
 
 class UCombatantComponent;
 class ADroneRPGCharacter;
@@ -28,16 +26,16 @@ public:
 	EWeaponType GetWeaponType() const { return weaponType; }
 	void SetWeaponType(EWeaponType val) { weaponType = val; }
 
+	float GetProjectileSpeed() const { return projectileSpeed; }
+	void SetProjectileSpeed(float inProjectileSpeed) { projectileSpeed = inProjectileSpeed; }
+
 	virtual void FireShot(FVector FireDirection);
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation);
-
-	static UWeapon* GetDefaultWeapon(EWeaponType type, UCombatantComponent* inOwner);
-	static UWeapon* GetWeapon(EWeaponType type, float inFireRate, float inDamage, UCombatantComponent* inOwner);
 protected:
 	float fireRate;
 	float damage;
 	float lifespan;
-	float speed;
+	float projectileSpeed;
 	bool canFire;
 	FVector GunOffset;
 

@@ -1,16 +1,13 @@
 #pragma once
 #include "RocketLauncher.h"
-
 #include <DroneRPG/Components/CombatantComponent.h>
-
 #include "DroneProjectile.h"
 #include "Rocket.h"
-#include "DroneRPG/DroneRPGCharacter.h"
 
 URocketLauncher::URocketLauncher()
 {
 	weaponType = EWeaponType::Rocket;
-	speed = ARocket::Default_Initial_Speed;
+	projectileSpeed = ARocket::Default_Initial_Speed;
 	lifespan = ARocket::Default_Initial_Lifespan;
 
 	static ConstructorHelpers::FClassFinder<ADroneProjectile> rocketProjectile(TEXT("/Game/TopDownCPP/Blueprints/Projectiles/Rocket"));
@@ -32,7 +29,5 @@ URocketLauncher* URocketLauncher::CreateRocketLauncher(float inFireRate, float i
 
 ADroneProjectile* URocketLauncher::SpawnProjectile(FVector gunLocation, FRotator FireRotation)
 {
-	ARocket* proj = Cast<ARocket>(Super::SpawnProjectile(gunLocation, FireRotation));
-	proj->team = GetOwner()->GetTeam();
-	return proj;
+	return Super::SpawnProjectile(gunLocation, FireRotation);
 }

@@ -153,7 +153,7 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		{
 			FTargetData data = mCreateTargetData(Actor);
 
-			if (IsTargetValid(data)) 
+			if (IsTargetValid(data))
 			{
 				SetTarget(mCreateTargetData(data));
 			}
@@ -304,10 +304,10 @@ void ADroneBaseAI::RotateToFace()
 	// If we have a target, turn to face it
 	if (IsTargetValid())
 	{
-		targetLocation = GetPredictedLocation(target);
+		targetLocation = GetPredictedLocation(GetTarget());
 	}
 	// Otherwise, if we have an objective to head to, face that
-	else if (targetObjective != NULL)
+	else if (IsValid(GetTargetObjective()))
 	{
 		targetLocation = mObjectiveLocation;
 	}
@@ -378,7 +378,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 				EvadingDamage();
 			}
 
-			ShootTargetIfValid();
+			AttackTarget(GetTarget());
 		}
 
 		if (lastLocation.IsZero())
@@ -407,18 +407,10 @@ void ADroneBaseAI::OnPossess(APawn* InPawn)
 
 	sightConfig->SightRadius = GetDrone()->GetWeapon()->GetRange() * .8;
 	sightConfig->LoseSightRadius = GetDrone()->GetWeapon()->GetRange();
-	//sightConfig->SightRadius = 4000;
-	//sightConfig->LoseSightRadius = 4000;
 }
 
 void ADroneBaseAI::PerformActions()
 {
-	// Determine Action
-	// Move to uncontrolled objective, hook into objective state, in case it gets taken by allies prior to arrival
-	// IF attacked / hostile seen before reaching objective, engage in standard combat
-	// Once objective reached, Stay and defend objective
-	// Once objective captured, seek out new objective
-
 	// Do state machine things!
 	switch (GetCurrentState())
 	{
@@ -448,23 +440,14 @@ void ADroneBaseAI::PerformActions()
 
 void ADroneBaseAI::MoveToObjective()
 {
-	float distance;
-
-	AKeyActor* keyActor = Cast<AKeyActor>(targetObjective);
-
-	if (keyActor != NULL)
+	if (IsValid(GetTargetObjective()))
 	{
-		distance = keyActor->GetSize() * 0.7f;
+		float distance = GetTargetObjective()->GetSize() * 0.7f;
+		FNavLocation loc;
+		mRandomReachablePointInRadius(mObjectiveLocation, distance, loc);
+		MoveToLocation(loc);
+		SetCurrentState(EActionState::MovingToObjective);
 	}
-	else
-	{
-		distance = 600;
-	}
-
-	FNavLocation loc;
-	mRandomReachablePointInRadius(targetObjective->GetActorLocation(), distance, loc);
-	MoveToLocation(loc);
-	SetCurrentState(EActionState::MovingToObjective);
 }
 
 void ADroneBaseAI::DefendingObjective()
@@ -484,7 +467,7 @@ void ADroneBaseAI::ReturningToBase()
 	{
 		SetCurrentState(EActionState::Start);
 	}
-	else if (GetDrone()->GetVelocity().IsNearlyZero()) 
+	else if (GetDrone()->GetVelocity().IsNearlyZero())
 	{
 		ARespawnPoint* respawnPoint = GetDrone()->GetRespawnPoint();
 		FVector loc = respawnPoint->GetActorLocation();
@@ -519,6 +502,7 @@ void ADroneBaseAI::EvadingDamage()
 
 		double dist = mDist(GetTarget().GetActorLocation(), loc);
 
+		// TODO Change to using EQS
 		while (dist <= closeDistance && dist > closeDistance * 0.8 && !CanSee(GetTarget(), loc) && count < 20)
 		{
 			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
@@ -534,7 +518,8 @@ void ADroneBaseAI::AttackingTarget()
 	// Check the target is still valid
 	if (!IsTargetValid())
 	{
-		if (IsValid(targetObjective)) {
+		if (IsValid(GetTargetObjective())) 
+		{
 			SetCurrentState(EActionState::MovingToObjective);
 		}
 		else
@@ -549,27 +534,20 @@ FHitResult ADroneBaseAI::LineTraceToLocation(const FVector& startLoc, const FVec
 	FHitResult hit;
 	FCollisionQueryParams params;
 	params.AddIgnoredActor(GetCharacter());
-
 	GetWorld()->LineTraceSingleByChannel(hit, startLoc, endLocation, ECC_Pawn, params);
-
 	return hit;
 }
 
 bool ADroneBaseAI::CanSee(AActor* other, const FVector& startLoc)
 {
 	FHitResult hit = LineTraceToLocation(startLoc, other->GetActorLocation());
-
 	// Do we have line of sight to our target?
-	if (hit.GetActor() == other)
-	{
-		return true;
-	}
-	return false;
+	return hit.GetActor() == other;
 }
 
 FVector ADroneBaseAI::GetPredictedLocation(AActor* actor)
 {
-	float time = mDist(mDroneLocation, actor->GetActorLocation()) / ADroneProjectile::Default_Initial_Speed;
+	float time = mDist(mDroneLocation, actor->GetActorLocation()) / GetDrone()->GetWeapon()->GetProjectileSpeed();
 	//TODO Add in inaccuracy to AI here. Code already done
 	//time = FMath::RandRange(time * 0.9f, time * 1.1f);
 	return actor->GetActorLocation() + (actor->GetVelocity() * time);

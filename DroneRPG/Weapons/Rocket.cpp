@@ -11,7 +11,6 @@ const float ARocket::Default_Initial_Lifespan = 4.5f;
 
 ARocket::ARocket()
 {
-	team = -1;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = 3500.0f;
 	ProjectileMovement->HomingAccelerationMagnitude = 15000;
@@ -40,7 +39,7 @@ ARocket::ARocket()
 
 bool ARocket::CheckIfValidTarget(const FTargetData& targetData)
 {
-	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != team;
+	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != GetShooter()->GetTeam();
 }
 
 bool ARocket::SetTargetIfValid(const FTargetData& targetData)
@@ -52,22 +51,6 @@ bool ARocket::SetTargetIfValid(const FTargetData& targetData)
 		result = true;
 	}
 	return result;
-}
-
-void ARocket::SetTeam(int32 inTeam)
-{
-	team = inTeam;
-
-	TArray<AActor*> overlaps;
-	sphereComponent->GetOverlappingActors(overlaps);
-
-	for (auto overlap : overlaps)
-	{
-		if (SetTargetIfValid(mCreateTargetData(overlap)))
-		{
-			break;
-		}
-	}
 }
 
 void ARocket::SetTarget(FTargetData targetData)
@@ -91,6 +74,22 @@ void ARocket::DealDamage()
 	}
 }
 
+void ARocket::SetShooter(UCombatantComponent* val)
+{
+	Super::SetShooter(val);
+
+	TArray<AActor*> overlaps;
+	sphereComponent->GetOverlappingActors(overlaps);
+
+	for (auto overlap : overlaps)
+	{
+		if (SetTargetIfValid(mCreateTargetData(overlap)))
+		{
+			break;
+		}
+	}
+}
+
 void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Only add impulse and destroy projectile if we hit a physics
@@ -107,7 +106,7 @@ void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitive
 
 void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (team != -1 && !target.isSet)
+	if (IsValid(GetShooter()) && GetShooter()->GetTeam() != -1 && !target.isSet)
 	{
 		SetTargetIfValid(mCreateTargetData(OtherActor));
 	}

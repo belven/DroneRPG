@@ -8,6 +8,7 @@
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
+#include "DroneRPG/Utilities/WeaponCreator.h"
 #include "DroneRPG/Weapons/Weapon.h"
 #include "Kismet/GameplayStatics.h"
 

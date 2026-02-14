@@ -2,7 +2,6 @@
 #include <DroneRPG/Components/CombatantComponent.h>
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
-#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 
 ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
