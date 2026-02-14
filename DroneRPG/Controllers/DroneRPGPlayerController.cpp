@@ -65,6 +65,16 @@ ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() const
 	return droneCharacter;
 }
 
+void ADroneRPGPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (IsValid(GetGameMode()))
+	{
+		ChangeView();
+	}
+}
+
 void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -175,15 +185,19 @@ void ADroneRPGPlayerController::ChangeView()
 
 	for (auto combatant : GetGameMode()->GetCombatants())
 	{
-		float combatScore = combatant->GetCombatScore();
 
-		if (combatantFound == NULL) 
+		if (combatant != GetDrone()->GetCombatantComponent()) 
 		{
-			combatantFound = combatant;
-		}
-		else if (combatScore > combatantFound->GetCombatScore())
-		{
-			combatantFound = combatant;
+			float combatScore = combatant->GetCombatScore();
+
+			if (combatantFound == NULL)
+			{
+				combatantFound = combatant;
+			}
+			else if (combatScore > combatantFound->GetCombatScore())
+			{
+				combatantFound = combatant;
+			}
 		}
 	}
 

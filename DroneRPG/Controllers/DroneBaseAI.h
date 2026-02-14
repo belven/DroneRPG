@@ -24,15 +24,17 @@ public:
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 	UFUNCTION()
-		void ObjectiveTaken(AObjective* objective);
+	void ObjectiveTaken(AObjective* objective);
 
 	UFUNCTION()
-		void DroneAttacked(AActor* attacker);
+	void DroneAttacked(AActor* attacker);
 
-	bool IsTargetValid();
+	bool IsTargetValid() { return  IsTargetValid(GetTarget()); };
+
+	bool IsTargetValid(FTargetData& data);
 
 	UFUNCTION()
-		void CheckLastLocation();
+	void CheckLastLocation();
 
 	EActionState GetCurrentState() const { return currentState; }
 	void SetCurrentState(EActionState val);
@@ -52,6 +54,8 @@ public:
 		return target;
 	}
 
+	UFUNCTION()
+	void OnUnitDied(UCombatantComponent* inKiller);
 	void SetTarget(const FTargetData& inTarget);
 
 	bool CompareState(EActionState state);

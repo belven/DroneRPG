@@ -17,7 +17,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Drone Controller")
 	ADroneRPGCharacter* GetDrone() const;
+
 protected:
+	virtual void BeginPlay() override;
+
 	/* The speed our ship moves around the level */
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float MoveSpeed;
