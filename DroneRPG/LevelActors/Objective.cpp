@@ -9,6 +9,7 @@
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 
 AObjective::AObjective()
 {
@@ -48,7 +49,7 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 	UCombatantComponent* combatant = mGetCombatantComponent(OtherActor);
 
 	// Check if we have a drone and we have it in the list
-	if (IsValid(combatant)) 
+	if (IsValid(combatant))
 	{
 		// Add it to the list and re-calculate ownership
 		Add(combatant);
@@ -57,7 +58,7 @@ void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* 
 
 void AObjective::UnitDied(UCombatantComponent* unit)
 {
-		Remove(unit);	
+	Remove(unit);
 }
 
 void AObjective::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

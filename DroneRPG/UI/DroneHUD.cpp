@@ -5,6 +5,7 @@
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/LevelActors/Objective.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 
 UCombatantComponent* ADroneHUD::GetCombatantComponent()
 {

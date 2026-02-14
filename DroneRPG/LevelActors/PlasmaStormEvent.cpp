@@ -10,6 +10,7 @@
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include <DroneRPG/Components/CombatantComponent.h>
 #include "DroneRPG/Components/HealthComponent.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 
 #define mSpawnSystemAttached(system, name) UNiagaraFunctionLibrary::SpawnSystemAttached(system, meshComponent, name, FVector(0,0, 1000), FRotator(1), EAttachLocation::KeepRelativeOffset, false)
 

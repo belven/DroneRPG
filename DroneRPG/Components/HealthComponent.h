@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "DroneRPG/Weapons/DroneProjectile.h"
 #include "HealthComponent.generated.h"
 
+class UCombatantComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
 

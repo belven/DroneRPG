@@ -63,7 +63,7 @@ void ARocket::SetTeam(int32 inTeam)
 
 	for (auto overlap : overlaps)
 	{
-		FTargetData data = CreateTargetData(overlap);
+		FTargetData data = mCreateTargetData(overlap);
 		if (CheckActorForValidTarget(data))
 		{
 			break;
@@ -84,7 +84,7 @@ void ARocket::DealDamage()
 
 	for (auto overlap : overlaps)
 	{
-		FTargetData targetData = CreateTargetData(overlap);
+		FTargetData targetData = mCreateTargetData(overlap);
 		if (CheckIfValidTarget(targetData))
 		{
 			targetData.healthComponent->ReceiveDamage(GetDamage(), GetShooter());
@@ -110,6 +110,6 @@ void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 {
 	if (team != -1 && !target.isSet)
 	{
-		CheckActorForValidTarget(CreateTargetData(OtherActor));
+		CheckActorForValidTarget(mCreateTargetData(OtherActor));
 	}
 }

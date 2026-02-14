@@ -1,13 +1,11 @@
 #include "DroneProjectile.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "DroneRPG/Components/HealthComponent.h"
-#include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include <DroneRPG/Components/CombatantComponent.h>
-
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -78,17 +76,13 @@ void ADroneProjectile::SetTarget(FTargetData targetData)
 	target = targetData;
 }
 
-FTargetData ADroneProjectile::CreateTargetData(AActor* actor)
-{
-	return FTargetData(mGetCombatantComponent(actor), mGetHealthComponent(actor));
-}
 
 void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// Only add impulse and destroy projectile if we hit a physics
 	if (OtherActor != NULL && OtherActor != this && OtherActor != shooter->GetOwner() && OtherActor->GetClass() != StaticClass())
 	{
-		FTargetData targetData = CreateTargetData(OtherActor);
+		FTargetData targetData = mCreateTargetData(OtherActor);
 
 		// Did we hit a drone?
 		if (targetData.combatantComponent != NULL

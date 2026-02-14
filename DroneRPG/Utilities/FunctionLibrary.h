@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include <Engine/World.h>
 #include <EngineUtils.h>
+
 #include "FunctionLibrary.generated.h"
 
 #define MIN(a,b) (a < b) ? (a) : (b)
@@ -31,9 +32,6 @@
 #define mSetTimer(handle, method, delay) GetWorld()->GetTimerManager().SetTimer(handle, this, method, delay)
 #define mSetTimerWorld(world, handle, method, delay) world->GetTimerManager().SetTimer(handle, this, method, delay)
 
-#define mGetComponent(actor, clazz) Cast<clazz>(actor->GetComponentByClass(clazz::StaticClass()))
-#define mGetCombatantComponent(actor) mGetComponent(actor, UCombatantComponent)
-#define mGetHealthComponent(actor) mGetComponent(actor, UHealthComponent)
 
 UCLASS()
 class DRONERPG_API UFunctionLibrary : public UObject

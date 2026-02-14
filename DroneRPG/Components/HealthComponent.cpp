@@ -5,7 +5,6 @@
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "Components/InstancedStaticMeshComponent.h"
-#include "DroneRPG/Controllers/DroneBaseAI.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "Materials/MaterialInstanceConstant.h"
 

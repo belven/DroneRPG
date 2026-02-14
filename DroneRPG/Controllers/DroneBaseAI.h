@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "DroneBaseAI.generated.h"
@@ -20,6 +21,7 @@ public:
 	void PerformActions();
 	void MoveToObjective();
 	virtual void BeginPlay() override;
+	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 	UFUNCTION()
 		void ObjectiveTaken(AObjective* objective);
@@ -45,6 +47,13 @@ public:
 	void SetCurrentGameMode(EGameModeType val);
 	FString GetStateString(EActionState state);
 
+	FTargetData& GetTarget()
+	{
+		return target;
+	}
+
+	void SetTarget(const FTargetData& inTarget);
+
 	bool CompareState(EActionState state);
 
 	UFUNCTION()
@@ -67,7 +76,7 @@ private:
 	AActor* targetObjective;
 
 	UPROPERTY()
-	AActor* target;
+	FTargetData target;
 
 	EActionState currentState;
 	EActionState previousState;
@@ -78,11 +87,10 @@ private:
 	void FireShot(const FVector& FireDirection);
 
 	void FindTarget();
-	void CalculateObjective();
+	void FindSuitableObjective();
 	void RotateToFace();
 	void GetNextVisibleTarget();
 	void FindObjective();
-	ADroneRPGCharacter* GetDroneTarget();
 	void AttackTarget(AActor* targetToAttack);
 
 	void DefendingObjective();

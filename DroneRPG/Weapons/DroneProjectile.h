@@ -1,4 +1,5 @@
 #pragma once
+#include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneProjectile.generated.h"
 
 class UHealthComponent;
@@ -7,30 +8,6 @@ class UProjectileMovementComponent;
 class UStaticMeshComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
-
-USTRUCT(BlueprintType)
-struct FTargetData
-{
-	GENERATED_USTRUCT_BODY()
-
-	FTargetData() : combatantComponent(nullptr), healthComponent(nullptr)
-	{
-	}
-
-	FTargetData(UCombatantComponent* inCombatantComponent, UHealthComponent* inHealthComponent)
-		: isSet(true),
-		combatantComponent(inCombatantComponent), healthComponent(inHealthComponent)
-	{
-	}
-
-	bool isSet = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	UCombatantComponent* combatantComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	UHealthComponent* healthComponent;
-};
 
 UCLASS()
 class DRONERPG_API ADroneProjectile : public AActor
@@ -60,7 +37,6 @@ protected:
 	void IgnoreActor(AActor* actor);
 
 	virtual void SetTarget(FTargetData targetData);
-	FTargetData CreateTargetData(AActor* actor);
 
 	UPROPERTY()
 	USoundBase* FireSound;

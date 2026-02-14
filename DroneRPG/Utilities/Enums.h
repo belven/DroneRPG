@@ -2,7 +2,6 @@
 #include "CoreMinimal.h"
 #include "Enums.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct FTeamScore
 {
@@ -51,7 +50,7 @@ enum class  EWeaponType : uint8 {
 
 UENUM(BlueprintType)
 enum class  EActionState : uint8 {
-	SearchingForObjective,
+	MovingToObjective,
 	AttackingTarget,
 	CapturingObjective,
 	DefendingObjective,
