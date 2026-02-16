@@ -23,7 +23,7 @@ void UCombatantComponent::UnitKilled(UCombatantComponent* unitKilled)
 void UCombatantComponent::SetGameMode(ADroneRPGGameMode* inGameMode)
 {
 	gameMode = inGameMode;
-	gameMode->GetCombatants().AddUnique(this);
+	GetGameMode()->AddCombatant(this);
 }
 
 void UCombatantComponent::AddCombatScore(float score)

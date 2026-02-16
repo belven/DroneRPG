@@ -29,26 +29,33 @@ AAsteroidField::AAsteroidField() : objectives(0), teams(0)
 	maxScale = 2.0f;
 
 	asteroids = 30;
+	zOffset = 200;
 }
 
-void AAsteroidField::RemoveOverlappingComponents(AActor* other, float size) {
+void AAsteroidField::RemoveOverlappingComponents(AActor* other, float size)
+{
 	TArray<UInstancedStaticMeshComponent*> comps;
 	GetComponents<UInstancedStaticMeshComponent>(comps);
 
-	for (UInstancedStaticMeshComponent* comp : comps) {
-		for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) {
+	for (UInstancedStaticMeshComponent* comp : comps) 
+	{
+		for (int32 i = 0; i < comp->GetInstanceCount() - 1; i++) 
+		{
 			FTransform trans;
 			float dist = MAX(minDist, size);
 
 			comp->GetInstanceTransform(i, trans);
-			if (IsAsteroidTooClose(trans, other->GetActorLocation(), dist)) {
+
+			if (IsAsteroidTooClose(trans, other->GetActorLocation(), dist)) 
+			{
 				comp->RemoveInstance(i);
 			}
 		}
 	}
 }
 
-void AAsteroidField::ClearOutOverlap(AActor* other, float size) {
+void AAsteroidField::ClearOutOverlap(AActor* other, float size)
+{
 	RemoveOverlappingComponents(other, size);
 }
 
@@ -56,7 +63,8 @@ void AAsteroidField::PushVectors(TMap<int32, FNode>& locations, const FVector& o
 {
 	for (auto& Elem : locations)
 	{
-		if (Elem.Value.type == ENodeType::Asteroid || Elem.Value.type == ENodeType::Objective) {
+		if (Elem.Value.type == ENodeType::Asteroid || Elem.Value.type == ENodeType::Objective) 
+		{
 			FVector& Location = Elem.Value.location;
 
 			FVector Direction = Location - originPoint;
@@ -84,13 +92,17 @@ void AAsteroidField::ClearUpAroundKeyActors()
 
 void AAsteroidField::SpaceTooCloseVectors(TMap<int32, FNode>& locations)
 {
-	for (auto& locationA : locations) {
-		for (auto& locationB : locations) {
+	for (auto& locationA : locations) 
+	{
+		for (auto& locationB : locations) 
+		{
 			if (locationA.Key == locationB.Key) continue;
 
 			ENodeType locationAType = locationA.Value.type;
+
 			if ((locationAType == ENodeType::Asteroid || locationAType == ENodeType::Objective)
-				&& locationB.Value.type != ENodeType::SpawnPoint && locationAType != ENodeType::SpawnPoint) {
+				&& locationB.Value.type != ENodeType::SpawnPoint && locationAType != ENodeType::SpawnPoint) 
+			{
 				FVector Delta = locationA.Value.location - locationB.Value.location;
 				float Dist = Delta.Size();
 
@@ -107,7 +119,6 @@ void AAsteroidField::CreateSpawnPoint(TArray<ARespawnPoint*>& respawnPoints, int
 {
 	ARespawnPoint* respawn = GetWorld()->SpawnActor<ARespawnPoint>(ARespawnPoint::StaticClass(), newLocation, newLocation.Rotation());
 	respawn->SetTeam(team);
-	respawn->SetupParticles();
 	respawn->SetTeamSize(5);
 	respawnPoints.Add(respawn);
 }
@@ -138,7 +149,7 @@ void AAsteroidField::BeginPlay()
 		const float angleDeg = i * angleStep;
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
-		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + 500);
+		const FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + zOffset);
 
 		nodes.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
 	}
@@ -149,7 +160,7 @@ void AAsteroidField::BeginPlay()
 		const float angleDeg = i * angleStep * FMath::RandRange(0.8, 1.2);
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
-		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + 500);
+		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + zOffset);
 
 		for (auto node : nodes)
 		{
@@ -171,7 +182,7 @@ void AAsteroidField::BeginPlay()
 	{
 		for (int y = -radius1; y < radius1; y += minDist)
 		{
-			FVector location = FVector(x, y, centre.Z + 500);
+			FVector location = FVector(x, y, centre.Z + zOffset);
 			bool tooClose = false;
 
 			for (auto node : nodes)
@@ -268,7 +279,7 @@ FVector AAsteroidField::GetAsteroidLocation() {
 	// Get a random point
 	mRandomReachablePointInRadius(GetActorLocation(), radius, loc);
 	loc.Location.Z = GetActorLocation().Z;
-	loc.Location.Z += 600;
+	loc.Location.Z += zOffset;
 
 	return loc;
 }

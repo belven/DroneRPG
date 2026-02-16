@@ -50,11 +50,8 @@ const FName ADroneRPGPlayerController::MoveRightBinding("MoveRight");
 const FName ADroneRPGPlayerController::FireForwardBinding("FireForward");
 const FName ADroneRPGPlayerController::FireRightBinding("FireRight");
 
-ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), isFiring(false)
+ADroneRPGPlayerController::ADroneRPGPlayerController() : droneIndex(0), droneCharacter(nullptr), isFiring(false), gameMode(nullptr)
 {
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Other/Controllers"));
-#endif
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
 	MoveSpeed = 800.0f;
@@ -68,6 +65,9 @@ ADroneRPGCharacter* ADroneRPGPlayerController::GetDrone() const
 
 void ADroneRPGPlayerController::BeginPlay()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Controllers"));
+#endif
 	Super::BeginPlay();
 
 	if (IsValid(GetGameMode()))

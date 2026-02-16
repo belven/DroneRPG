@@ -2,7 +2,7 @@
 #include <EnvironmentQuery/Items/EnvQueryItemType_Point.h>
 #include <DroneRPG/Controllers/DroneBaseAI.h>
 
-UDroneQueryContext* UDroneQueryContext::CreateDroneQueryContext(FVector inLocation)
+UDroneQueryContext* UDroneQueryContext::CreateDroneQueryContext(const FVector& inLocation)
 {
 	UDroneQueryContext* context = NewObject<UDroneQueryContext>();
 	context->location = inLocation;

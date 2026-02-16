@@ -173,14 +173,14 @@ void UHealthComponent::BeginPlay()
 		// Create our shields, we used an instanced static mesh so the colours can change separately from other drones
 		// Otherwise we access the base mesh, that all drones use, and change it globally
 		shieldMeshComp = NewObject<UInstancedStaticMeshComponent>(this);
-		shieldMeshComp->SetWorldScale3D(FVector(1));
+		//shieldMeshComp->SetWorldScale3D(FVector(1));
 		shieldMeshComp->SetStaticMesh(shieldMesh);
 		shieldMeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		shieldMeshComp->SetupAttachment(GetOwner()->GetRootComponent());
 		shieldMeshComp->RegisterComponent();
 
 		FTransform trans = GetOwner()->GetActorTransform();
-		trans.AddToTranslation(FVector(0, 0, 30));
+		trans.AddToTranslation(FVector(0, 0, 0));
 		meshIndex = shieldMeshComp->AddInstance(trans, true);
 
 		// Set default shield values

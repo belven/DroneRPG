@@ -1,6 +1,5 @@
 #include "RespawnPoint.h"
 #include "NavigationSystem.h"
-#include "Components/BoxComponent.h"
 #include "NiagaraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
@@ -20,8 +19,8 @@ ARespawnPoint::ARespawnPoint() : teamSize(6)
 
 	respawnArea = CreateDefaultSubobject<USphereComponent>(TEXT("RespawnArea"));
 	respawnArea->SetSphereRadius(GetSize());
-	respawnArea->SetupAttachment(GetRootComponent());
 	UFunctionLibrary::SetupOverlap(respawnArea);
+	RootComponent = respawnArea;
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
@@ -66,7 +65,6 @@ void ARespawnPoint::SetupParticles()
 	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
 	captureParticle->SetFloatParameter(TEXT("Size"), 200);
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
-	captureParticle->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
 }
 
 void ARespawnPoint::BeginPlay()
@@ -76,8 +74,8 @@ void ARespawnPoint::BeginPlay()
 #endif
 
 	Super::BeginPlay();
+	SetupParticles();
 	respawnArea->OnComponentBeginOverlap.AddDynamic(this, &ARespawnPoint::BeginOverlap);
-	respawnArea->OnComponentEndOverlap.AddDynamic(this, &ARespawnPoint::EndOverlap);
 }
 
 void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
@@ -87,28 +85,12 @@ void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (mIsA(OtherActor, ADroneRPGCharacter)) {
-		ADroneRPGCharacter* drone = Cast<ADroneRPGCharacter>(OtherActor);
-		if (drone->GetTeam() == GetTeam() && !drone->GetHealthComponent()->IsHealthy()) {
-			drone->GetHealthComponent()->FullHeal();
+	FTargetData data = UCombatClasses::CreateTargetData(OtherActor);
+	if (data.isSet)
+	{
+		if (data.GetTeam() == GetTeam() && !data.healthComponent->IsHealthy())
+		{
+			data.healthComponent->FullHeal();
 		}
 	}
-}
-
-void ARespawnPoint::EndOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	int32 OtherBodyIndex)
-{
-
-}
-
-void ARespawnPoint::RespawnCharacter(ADroneRPGCharacter* character) {
-
-}
-
-void ARespawnPoint::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }

@@ -1,6 +1,8 @@
 
 #include "ObjectiveLocationQueryTest.h"
 #include "AIController.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
@@ -23,6 +25,49 @@ UObjectiveLocationQueryTest::UObjectiveLocationQueryTest(const FObjectInitialize
 	ScoringEquation = EEnvTestScoreEquation::Constant;
 }
 
+bool UObjectiveLocationQueryTest::CanNavigateToPoint(ACharacter* character, const FVector& actorLocation, const FVector& ItemLocation) const
+{
+	bool canNavigate = false;
+	UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
+	if (NavSys)
+	{
+		UNavigationPath* Path = NavSys->FindPathToLocationSynchronously(GetWorld(), actorLocation, ItemLocation, character);
+
+		// We have a path to the target
+		if (Path && Path->IsValid() && !Path->IsPartial())
+		{
+			canNavigate = true;
+		}
+	}
+	return  canNavigate;
+}
+
+bool UObjectiveLocationQueryTest::CanSeePoint(const FVector& contextLocation, const FVector& ItemLocation) const
+{
+	TArray<AActor*> ignore;
+	bool canSee = true;
+	TArray<FHitResult> hits;
+
+	// Create a sphere trace, slightly larger than the characters capsule, so we make sure there's enough room to shoot
+	mSphereTraceMultiEQS(ItemLocation, contextLocation, 100, hits);
+
+
+	for (FHitResult hit : hits)
+	{
+		// Did we hit something?
+		if (hit.bBlockingHit)
+		{
+			// If we hit something that's not are target FIRST, then there's something else in the way, and we should invalidate that location
+			if (hit.GetActor()->GetComponentsCollisionResponseToChannel(ECC_Pawn) == ECR_Block && !hit.GetActor()->StaticClass()->IsChildOf(ADroneRPGCharacter::StaticClass()))
+			{
+				canSee = false;
+				break;
+			}
+		}
+	}
+	return canSee;
+}
+
 void UObjectiveLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) const
 {
 	//Super::RunTest(QueryInstance);
@@ -43,38 +88,24 @@ void UObjectiveLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) cons
 	}
 
 	FVector closetLocation = FVector::ZeroVector;
-	TArray<AActor*> ignore;
+	FVector contextLocation = ContextLocations[0];
+
+	ACharacter* character = QueryOwner->GetCharacter();
+	FVector actorLocation = character->GetActorLocation();
 
 	for (FEnvQueryInstance::ItemIterator It(this, QueryInstance); It; ++It)
 	{
 		// Get the current item as a FVector
-		FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex());
+		FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex());		
 
-		TArray<FHitResult> hits;
-
-		// Add some height to Sphere trace, otherwise it will collide with objects on the ground
-		//ItemLocation.Z += scaledCapsuleHalfHeight;
-		// Create a sphere trace, slightly larger than the characters capsule, so we make sure there's enough room to shoot
-		mSphereTraceMultiEQS(ItemLocation, ContextLocations[0], 50, hits);
-
-		bool canSee = true;
-
-		for (FHitResult hit : hits)
-		{
-			// Did we hit something?
-			if (hit.bBlockingHit)
-			{
-				// If we hit something that's not are target FIRST, then there's something else in the way, and we should invalidate that location
-				if (hit.GetActor()->GetComponentsCollisionResponseToChannel(ECC_Pawn) == ECR_Block && !hit.GetActor()->StaticClass()->IsChildOf(ADroneRPGCharacter::StaticClass()))
-				{
-					canSee = false;
-					break;
-				}
-			}
-		}
-
+		//if (!CanNavigateToPoint(character, actorLocation, ItemLocation)) 
+		//{
+		//	It.ForceItemState(EEnvItemStatus::Failed);
+		//	continue;
+		//}
+				
 		// Do we have clear Line of sight to the location?
-		if (canSee)
+		if (CanSeePoint(contextLocation, ItemLocation))
 		{
 			//closetLocation = UFunctionLibrary::GetClosestLocation(ItemLocation, closetLocation, QueryOwner->GetOwner()->GetActorLocation());
 			// Set the location as passed
@@ -86,8 +117,6 @@ void UObjectiveLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) cons
 			It.ForceItemState(EEnvItemStatus::Failed);
 		}
 	}
-	//QueryOwner. UNavigationSystemV1::Ispo GetNavigationSystem(GetWorld()->GetNavigationSystem().isp
-
 }
 
 FText UObjectiveLocationQueryTest::GetDescriptionTitle() const

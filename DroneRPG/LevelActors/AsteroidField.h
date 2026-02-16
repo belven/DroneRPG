@@ -81,4 +81,5 @@ private:
 	TArray<UStaticMesh*> meshes;
 	UPROPERTY()
 	TMap<UStaticMesh*, UInstancedStaticMeshComponent*> meshInstances;
+	int zOffset;
 };

@@ -21,11 +21,22 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule
 	const float capWidth = 120.0f;
-	const float capHeight = 400.0f;
+	const float capHeight = 50.0f;
 
 	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> DroneMesh(TEXT("StaticMesh'/Game/TopDownCPP/Models/Drone.Drone'"));
+
+	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMesh"));
+
+	if (DroneMesh.Succeeded())
+	{
+		meshComponent->SetStaticMesh(DroneMesh.Object);
+		meshComponent->SetupAttachment(RootComponent);
+		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -37,7 +48,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -57,17 +68,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
 	CursorToWorld->SetupAttachment(RootComponent);
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> DroneMesh(TEXT("StaticMesh'/Game/TopDownCPP/Models/Drone.Drone'"));
-
-	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMesh"));
-	if (DroneMesh.Succeeded())
-	{
-		meshComponent->SetStaticMesh(DroneMesh.Object);
-		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		meshComponent->SetRelativeLocation(FVector(40, -25, 100));
-		meshComponent->SetupAttachment(RootComponent);
-	}
 
 	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/TopDownCPP/Blueprints/M_Cursor_Decal.M_Cursor_Decal'"));
 	if (DecalMaterialAsset.Succeeded())
@@ -107,10 +107,7 @@ void ADroneRPGCharacter::BeginPlay()
 	SetFolderPath(TEXT("Characters"));
 #endif
 
-	if (!GetGameMode()->GetCombatants().Contains(GetCombatantComponent()))
-	{
-		GetGameMode()->GetCombatants().Add(GetCombatantComponent());
-	}
+	//	GetGameMode()->AddCombatant(GetCombatantComponent());
 }
 
 void ADroneRPGCharacter::SetUpDrone()
@@ -154,7 +151,7 @@ void ADroneRPGCharacter::Respawn()
 	ARespawnPoint* respawn = GetRespawnPoint();
 
 	// Did we find a respawn point?
-	if (IsValid(respawn)) 
+	if (IsValid(respawn))
 	{
 		// Move us to the respawn point 
 		FNavLocation loc;
@@ -176,15 +173,15 @@ void ADroneRPGCharacter::UnitHit(float damage, UCombatantComponent* attacker)
 
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 {
-	if (!IsValid(respawnPoint)) 
+	if (!IsValid(respawnPoint))
 	{
 		// Get all the respawn points
 		TArray<ARespawnPoint*> respawnPoints = mGetActorsInWorld<ARespawnPoint>(GetWorld());
 
-		for (ARespawnPoint* respawnPointFound : respawnPoints) 
+		for (ARespawnPoint* respawnPointFound : respawnPoints)
 		{
 			// Check if the respawn point belongs to our team 
-			if (respawnPointFound->GetTeam() == GetTeam()) 
+			if (respawnPointFound->GetTeam() == GetTeam())
 			{
 				respawnPoint = respawnPointFound;
 			}
@@ -203,18 +200,18 @@ void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
 
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
 
-		// Tell the killer they've killed us
-		killer->UnitKilled(GetCombatantComponent());	
+	// Tell the killer they've killed us
+	killer->UnitKilled(GetCombatantComponent());
 
 	// Tell the gamemode we've died, to update score etc.
 	GetGameMode()->EntityKilled(GetCombatantComponent(), killer);
 }
 
 FString ADroneRPGCharacter::GetDroneName()
-{	
-	if (droneName.IsEmpty() && GetGameMode()->GetCombatants().Contains(GetCombatantComponent())) 
+{
+	if (droneName.IsEmpty() && GetGameMode()->GetCombatants().Contains(GetCombatantComponent()))
 	{
-		droneName = "Drone " +  FString::FromInt(GetGameMode()->GetCombatants().IndexOfByKey(GetCombatantComponent()));
+		droneName = "Drone " + FString::FromInt(GetGameMode()->GetCombatants().IndexOfByKey(GetCombatantComponent()));
 	}
 	return droneName;
 }

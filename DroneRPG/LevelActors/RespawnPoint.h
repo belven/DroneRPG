@@ -6,8 +6,6 @@
 class USphereComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
-class ADroneRPGCharacter;
-class UBoxComponent;
 
 UCLASS()
 class DRONERPG_API ARespawnPoint : public AKeyActor
@@ -17,48 +15,28 @@ class DRONERPG_API ARespawnPoint : public AKeyActor
 public:
 	ARespawnPoint();
 	void SpawnTeam();
-	void SetupParticles();
 
-protected:
 	virtual void BeginPlay() override;
 
-	void RespawnCharacter(ADroneRPGCharacter* character);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-		int32 team;
-
-		int32 teamSize;
-
-public:
-	int32 GetTeamSize() const
-	{
-		return teamSize;
-	}
-
-	void SetTeamSize(int32 inTeamSize)
-	{
-		teamSize = inTeamSize;
-	}
-
-protected:
-	UPROPERTY()
-	USphereComponent* respawnArea;
-public:
-
 	UFUNCTION()
-		void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION()
-		void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	virtual void Tick(float DeltaTime) override;
-
+	int32 GetTeamSize() const { return teamSize; }
+	void SetTeamSize(int32 inTeamSize) { teamSize = inTeamSize; }
 	int32 GetTeam() const { return team; }
 	void SetTeam(int32 val) { team = val; }
+private:
+	void SetupParticles();
+	int32 team;
+
+	int32 teamSize;
 
 	UPROPERTY()
 	UNiagaraSystem* auraSystem;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Effects)
+	UPROPERTY()
 	UNiagaraComponent* captureParticle;
+
+	UPROPERTY()
+	USphereComponent* respawnArea;
 };

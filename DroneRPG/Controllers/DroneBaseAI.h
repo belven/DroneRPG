@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "DetourCrowdAIController.h"
 #include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
@@ -12,11 +13,13 @@ class ADroneRPGCharacter;
 class AObjective;
 
 UCLASS()
-class DRONERPG_API ADroneBaseAI : public AAIController
+class DRONERPG_API ADroneBaseAI : public ADetourCrowdAIController
 {
 	GENERATED_BODY()
 public:
+	// ReSharper disable once CppNonExplicitConvertingConstructor
 	ADroneBaseAI(const FObjectInitializer& ObjectInitializer);
+
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
 	void MovingToObjective();
@@ -32,7 +35,7 @@ public:
 	UFUNCTION()
 	void DroneAttacked(AActor* attacker);
 
-	bool IsTargetValid() { return  IsTargetValid(GetTarget()); };
+	bool IsTargetValid() { return IsTargetValid(GetTarget()); };
 
 	bool IsTargetValid(FTargetData& data);
 
@@ -52,22 +55,23 @@ public:
 	void SetCurrentGameMode(EGameModeType val);
 	FString GetStateString(EActionState state);
 
-	FTargetData& GetTarget()
-	{
-		return target;
-	}
+	FTargetData& GetTarget() { return target; }
 
 	UFUNCTION()
 	void OnUnitDied(UCombatantComponent* inKiller);
 	void SetTarget(const FTargetData& inTarget);
 
 	bool CompareState(EActionState state);
+	void ActorSeen(AActor* Actor);
+	void LostSightOfActor(AActor* Actor, const FVector& lastSeenLocation);
 
 	UFUNCTION()
 	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	void FailedToMoveToLocation(const FVector& location);
 
 	void FindLocationEmptyLocationRequestFinished(TSharedPtr<FEnvQueryResult> Result);
 	FVector queryLocation;
+	ADroneRPGGameMode* GetGameMode();
 private:
 	FTimerHandle TimerHandle_CheckLastLocation;
 
@@ -77,15 +81,20 @@ private:
 	FVector lastLocation;
 	int32 capsuleSize;
 
-	UPROPERTY()
-	UEnvQuery* FindLocationEmptyLocationQuery;
+	bool isFiring;
+	bool canCheckForEnemies;
+	EActionState currentState;
+	EActionState previousState;
+	EGameModeType currentGameMode;
+
+	/*UPROPERTY()
+	UEnvQuery* FindLocationEmptyLocationQuery;*/
 
 	UPROPERTY()
 	FEnvQueryRequest FindLocationEmptyLocationRequest;
 
-
-	bool isFiring;
-	bool canCheckForEnemies;
+	UPROPERTY()
+	ADroneRPGGameMode* gameMode;
 
 	UPROPERTY()
 	UAISenseConfig_Sight* sightConfig;
@@ -96,9 +105,8 @@ private:
 	UPROPERTY()
 	FTargetData target;
 
-	EActionState currentState;
-	EActionState previousState;
-	EGameModeType currentGameMode;
+	UPROPERTY()
+	ADroneRPGCharacter* droneCharacter;
 
 	ADroneRPGCharacter* GetDrone();
 	AActor* FindEnemyTarget(float distance = 0);
@@ -106,10 +114,10 @@ private:
 
 	void FindTarget();
 	void FindSuitableObjective();
-	void RotateToFace();
+	void RotateToFace(float DeltaSeconds);
 	bool GetNextVisibleTarget();
 	void FindObjective();
-	void AttackTarget(AActor* targetToAttack);
+	void AttackTarget();
 
 	void DefendingObjective();
 	void ReturningToBase();
