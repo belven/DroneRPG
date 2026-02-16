@@ -1,6 +1,7 @@
 #pragma once
 #include "DroneBaseAI.h"
 #include <Kismet/KismetMathLibrary.h>
+
 #include "NavigationSystem.h"
 #include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/DroneRPGCharacter.h"
@@ -11,6 +12,8 @@
 #include "DroneRPG/LevelActors/RespawnPoint.h"
 #include "DroneRPG/Weapons/DroneProjectile.h"
 #include "DroneRPG/Weapons/Weapon.h"
+#include "EnvironmentQuery/EnvQuery.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Navigation/PathFollowingComponent.h"
@@ -21,9 +24,6 @@
 
 ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), targetObjective(nullptr), target(FTargetData()), currentState(EActionState::Start), previousState(EActionState::Start)
 {
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Other/Controllers"));
-#endif
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	PrimaryActorTick.TickInterval = 0.3;
 	minCaptureDistance = 650;
@@ -47,6 +47,20 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	PerceptionComponent->SetDominantSense(sightConfig->GetSenseImplementation());
 	PerceptionComponent->ConfigureSense(*sightConfig);
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ADroneBaseAI::TargetPerceptionUpdated);
+
+
+	static ConstructorHelpers::FObjectFinder<UEnvQuery> PlayerLocationQueryObj(TEXT("/ Script / AIModule.EnvQuery'/Game/TopDownCPP/EQS/GetEmptyPointsQuery.GetEmptyPointsQuery'"));
+	if (PlayerLocationQueryObj.Succeeded())
+	{
+		FindLocationEmptyLocationQuery = PlayerLocationQueryObj.Object;
+
+		// Set up our EQS query 
+		FindLocationEmptyLocationRequest = FEnvQueryRequest(FindLocationEmptyLocationQuery, this);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to find EQS EnvQuery asset."));
+	}
 }
 
 void ADroneBaseAI::CheckLastLocation()
@@ -54,6 +68,7 @@ void ADroneBaseAI::CheckLastLocation()
 	if (lastLocation == mDroneLocation && !CompareState(EActionState::DefendingObjective) && !CompareState(EActionState::CapturingObjective))
 	{
 		GetDrone()->Respawn();
+		SetCurrentState(EActionState::Start);
 	}
 	lastLocation = FVector::ZeroVector;
 }
@@ -94,7 +109,7 @@ FString ADroneBaseAI::GetStateString(EActionState state)
 	switch (state)
 	{
 	case EActionState::MovingToObjective:
-		return "SearchingForObjective";
+		return "MovingToObjective";
 	case EActionState::AttackingTarget:
 		return "AttackingTarget";
 	case EActionState::CapturingObjective:
@@ -115,7 +130,7 @@ void ADroneBaseAI::OnUnitDied(UCombatantComponent* inKiller)
 
 	if (CompareState(EActionState::AttackingTarget))
 	{
-		SetCurrentState(EActionState::Start);
+		FindSuitableObjective();
 	}
 }
 
@@ -133,9 +148,14 @@ void ADroneBaseAI::SetTarget(const FTargetData& inTarget)
 		target.healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneBaseAI::OnUnitDied);
 	}
 
-	if (CompareState(EActionState::MovingToObjective))
+	if (target.isSet && CompareState(EActionState::MovingToObjective))
 	{
 		SetCurrentState(EActionState::AttackingTarget);
+		StopMovement();
+	}
+	else if (CompareState(EActionState::AttackingTarget) && !target.isSet)
+	{
+		FindSuitableObjective();
 	}
 }
 
@@ -149,7 +169,7 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		if (!GetTarget().IsValid() || !GetTarget().IsAlive())
+		if (!GetTarget().isSet || !GetTarget().IsAlive())
 		{
 			FTargetData data = mCreateTargetData(Actor);
 
@@ -161,9 +181,35 @@ void ADroneBaseAI::TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 	}
 	else	if (GetTarget() == Actor)
 	{
-		SetTarget(FTargetData());
-		// TODO based on state, follow or stay still
-		//MoveToLocation(Stimulus.StimulusLocation);
+		if (CompareState(EActionState::AttackingTarget))
+		{
+			MoveToLocation(Stimulus.StimulusLocation);
+		}
+		else if (!GetNextVisibleTarget())
+		{
+			SetTarget(FTargetData());
+		}
+	}
+}
+
+void ADroneBaseAI::FindLocationEmptyLocationRequestFinished(TSharedPtr<FEnvQueryResult> Result)
+{
+	// && IsNotMoving()
+	if (Result->IsSuccessful())
+	{
+		FVector location = Result->GetItemAsLocation(0);
+		location.Z = mDroneLocation.Z;
+		EPathFollowingRequestResult::Type result = MoveToLocation(location, capsuleSize);
+
+		if (result == EPathFollowingRequestResult::Type::Failed)
+		{
+			FNavLocation loc;
+			mRandomReachablePointInRadius(location, capsuleSize, loc);
+
+			MoveToLocation(loc, capsuleSize);
+			DrawDebugSphere(GetWorld(), location, 100, 10, FColor::Red, false, 10);
+			UE_LOG(LogDroneRPG, Log, TEXT("Drone %s failed move to %s"), *GetDrone()->GetDroneName(), *location.ToString());
+		}
 	}
 }
 
@@ -198,67 +244,76 @@ void ADroneBaseAI::FindObjective()
 
 	mShuffleArray<AObjective*>(objectives);
 
+	AObjective* closest = NULL;
+
 	for (AObjective* objective : objectives)
 	{
 		// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
 		if (!objective->HasCompleteControl(GetDrone()->GetTeam()))
 		{
-			SetTargetObjective(objective);
-			break;
+			if (!IsValid(closest))
+			{
+				closest = objective;
+			}
+			else if (FVector::Dist(closest->GetActorLocation(), mDroneLocation) > FVector::Dist(objective->GetActorLocation(), mDroneLocation))
+			{
+				closest = objective;
+			}
 		}
 	}
 
+	// If we have an objective, then it wasn't claimed by this team, so head towards it
+	if (IsValid(closest))
+	{
+		SetTargetObjective(closest);
+		MoveToObjective();
+	}
 	// If the objective is null and we found any objectives, then find one to defend
-	if (!IsValid(GetTargetObjective()) && objectives.Num() > 0)
+	else if (objectives.Num() > 0)
 	{
 		SetTargetObjective(UFunctionLibrary::GetRandomObject<AObjective*>(objectives));
 		MoveToObjective();
 	}
-	// If we have an objective, then it wasn't claimed by this team, so head towards it
-	else if (IsValid(GetTargetObjective()))
-	{
-		MoveToObjective();
-	}
 }
-
 
 void ADroneBaseAI::DroneAttacked(AActor* attacker)
 {
-	// If we don't have a target OR we have one but it's different to the one we have, then target it
-	ADroneRPGCharacter* droneAttacker = Cast<ADroneRPGCharacter>(attacker);
-
-	// We have no target
-	if (!IsValid(GetTarget()))
+	if (!CompareState(EActionState::ReturningToBase) && !GetDrone()->GetHealthComponent()->IsHealthy())
 	{
-		SetTarget(mCreateTargetData(droneAttacker));
+		SetCurrentState(EActionState::ReturningToBase);
+		ReturningToBase();
 	}
-	else if (GetTarget() != droneAttacker)
+	// We have no target
+	else if (!IsValid(GetTarget()))
 	{
-		// Something else has attacked us and our current target is out of line of sight or dead
-		if (!GetTarget().IsAlive())
-		{
-			SetTarget(mCreateTargetData(droneAttacker));
-		}
+		SetTarget(mCreateTargetData(attacker));
 	}
 }
 
 void ADroneBaseAI::BeginPlay()
 {
 	Super::BeginPlay();
+
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Controllers"));
+#endif
 }
 
 void ADroneBaseAI::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
 	Super::OnMoveCompleted(RequestID, Result);
 
-	if (!Result.IsSuccess() && (Result.Code == EPathFollowingResult::Invalid || Result.Code == EPathFollowingResult::Blocked))
+	if (Result.IsSuccess() && CompareState(EActionState::MovingToObjective) && IsValid(GetTargetObjective()))
 	{
-		SetCurrentState(EActionState::Start);
-		SetTargetObjective(NULL);
-	}
-	else if (IsValid(GetTargetObjective()) && CompareState(EActionState::MovingToObjective))
-	{
-		SetCurrentState(EActionState::CapturingObjective);
+		// TODO Check we have made it to our objective
+		if (!GetTargetObjective()->HasCompleteControl(GetDrone()->GetTeam()))
+		{
+			SetCurrentState(EActionState::CapturingObjective);
+		}
+		else
+		{
+			FindSuitableObjective();
+		}
 	}
 }
 
@@ -266,14 +321,14 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective) {
 	bool hasControl = objective->HasCompleteControl(GetDrone()->GetTeam());
 
 	// Check if the objective isn't owned by us, if it is we don't care!
-	if (!hasControl && !CompareState(EActionState::CapturingObjective) && !CompareState(EActionState::AttackingTarget))
+	if (!hasControl && (CompareState(EActionState::Start) || CompareState(EActionState::DefendingObjective)))
 	{
-		SetCurrentState(EActionState::CapturingObjective);
-		targetObjective = objective;
+		SetTargetObjective(objective);
+		MoveToObjective();
 	}
-	else if (hasControl && CompareState(EActionState::CapturingObjective) && targetObjective == objective)
+	else if (hasControl && (CompareState(EActionState::CapturingObjective)) && GetTargetObjective() == objective)
 	{
-		SetCurrentState(EActionState::Start);
+		FindSuitableObjective();
 	}
 }
 
@@ -299,7 +354,6 @@ void ADroneBaseAI::FindTarget()
 void ADroneBaseAI::RotateToFace()
 {
 	FVector targetLocation;
-	FRotator targetRotation;
 
 	// If we have a target, turn to face it
 	if (IsTargetValid())
@@ -316,26 +370,18 @@ void ADroneBaseAI::RotateToFace()
 	if (!targetLocation.IsNearlyZero())
 	{
 		// Calculate the angle to look at our target
-
 		lookAt = UKismetMathLibrary::FindLookAtRotation(mDroneLocation, targetLocation);
 		lookAt.Pitch = mDroneRotation.Pitch;
 		lookAt.Roll = mDroneRotation.Roll;
-		targetRotation = lookAt;
-	}
-	else
-	{
-		targetRotation = GetDrone()->GetVelocity().Rotation();
-		targetRotation.Pitch = mDroneRotation.Pitch;
-		targetRotation.Roll = mDroneRotation.Roll;
-	}
 
-	// Update the rotation
-	//GetCharacter()->SetActorRotation(FMath::Lerp(mDroneRotation, targetRotation, 0.50f));
-	GetCharacter()->SetActorRotation(targetRotation);
+		// Update the rotation
+		GetCharacter()->SetActorRotation(lookAt);
+	}
 }
 
-void ADroneBaseAI::GetNextVisibleTarget()
+bool ADroneBaseAI::GetNextVisibleTarget()
 {
+	bool result = false;
 	TArray<AActor*> actorsSeen;
 	PerceptionComponent->GetCurrentlyPerceivedActors(sightConfig->GetSenseImplementation(), actorsSeen);
 
@@ -346,9 +392,12 @@ void ADroneBaseAI::GetNextVisibleTarget()
 		if (IsTargetValid(data))
 		{
 			SetTarget(data);
+			result = true;
 			break;
 		}
 	}
+
+	return result;
 }
 
 void ADroneBaseAI::Tick(float DeltaSeconds)
@@ -358,18 +407,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	// We don't do anything if we're dead!
 	if (GetDrone()->GetHealthComponent()->IsAlive())
 	{
-		if (!CompareState(EActionState::ReturningToBase) && !GetDrone()->GetHealthComponent()->IsHealthy())
-		{
-			SetCurrentState(EActionState::ReturningToBase);
-			StopMovement();
-			ReturningToBase();
-		}
-
-		if (!IsTargetValid())
-		{
-			SetTarget(FTargetData());
-			GetNextVisibleTarget();
-		}
+		RotateToFace();
 
 		if (IsTargetValid())
 		{
@@ -388,10 +426,8 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 		}
 
 		PerformActions();
-
-		RotateToFace();
 	}
-	else if (!CompareState(EActionState::MovingToObjective))
+	else
 	{
 		// If this is hit, then we've likely died and need to reset our state!
 		SetCurrentState(EActionState::Start);
@@ -407,6 +443,17 @@ void ADroneBaseAI::OnPossess(APawn* InPawn)
 
 	sightConfig->SightRadius = GetDrone()->GetWeapon()->GetRange() * .8;
 	sightConfig->LoseSightRadius = GetDrone()->GetWeapon()->GetRange();
+
+	capsuleSize = InPawn->GetSimpleCollisionHalfHeight();
+}
+
+void ADroneBaseAI::MovingToObjective()
+{
+	if (IsNotMoving())
+	{
+		FindSuitableObjective();
+		//MoveToObjective();
+	}
 }
 
 void ADroneBaseAI::PerformActions()
@@ -418,6 +465,7 @@ void ADroneBaseAI::PerformActions()
 		FindSuitableObjective();
 		break;
 	case EActionState::MovingToObjective:
+		MovingToObjective();
 		break;
 	case EActionState::AttackingTarget:
 		AttackingTarget();
@@ -438,14 +486,20 @@ void ADroneBaseAI::PerformActions()
 	}
 }
 
+void ADroneBaseAI::RunMoveQuery(const FVector& location, double radius)
+{
+	queryLocation = location;
+	//queryLocation.Z = mDroneLocation.Z - capsuleSize;
+	//mRandomPointInNavigableRadius(queryLocation,)
+	FindLocationEmptyLocationRequest.SetFloatParam("Radius", radius * .95f);
+	FindLocationEmptyLocationRequest.Execute(EEnvQueryRunMode::RandomBest5Pct, this, &ADroneBaseAI::FindLocationEmptyLocationRequestFinished);
+}
+
 void ADroneBaseAI::MoveToObjective()
 {
 	if (IsValid(GetTargetObjective()))
 	{
-		float distance = GetTargetObjective()->GetSize() * 0.7f;
-		FNavLocation loc;
-		mRandomReachablePointInRadius(mObjectiveLocation, distance, loc);
-		MoveToLocation(loc);
+		RunMoveQuery(mObjectiveLocation, GetTargetObjective()->GetSize());
 		SetCurrentState(EActionState::MovingToObjective);
 	}
 }
@@ -461,21 +515,14 @@ void ADroneBaseAI::DefendingObjective()
 
 void ADroneBaseAI::ReturningToBase()
 {
-	UE_LOG(LogDroneRPG, Log, TEXT("Drone %s ReturningToBase"), *GetDrone()->GetDroneName());
-
 	if (GetDrone()->GetHealthComponent()->IsHealthy())
 	{
 		SetCurrentState(EActionState::Start);
 	}
-	else if (GetDrone()->GetVelocity().IsNearlyZero())
+	else if (IsNotMoving())
 	{
 		ARespawnPoint* respawnPoint = GetDrone()->GetRespawnPoint();
-		FVector loc = respawnPoint->GetActorLocation();
-		EPathFollowingRequestResult::Type result = MoveToLocation(loc, respawnPoint->GetSize() / 2);
-		if (result == EPathFollowingRequestResult::Type::Failed)
-		{
-			UE_LOG(LogDroneRPG, Log, TEXT("Drone %s ReturningToBase failed move"), *GetDrone()->GetDroneName());
-		}
+		RunMoveQuery(respawnPoint->GetActorLocation(), respawnPoint->GetSize());
 	}
 }
 
@@ -493,39 +540,48 @@ bool ADroneBaseAI::ShootTargetIfValid()
 
 void ADroneBaseAI::EvadingDamage()
 {
-	if (GetDrone()->GetVelocity().IsNearlyZero())
+	if (IsNotMoving())
 	{
-		int32 closeDistance = GetDrone()->GetWeapon()->GetRange();
-		int32 count = 0;
-		FNavLocation loc;
-		mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
-
-		double dist = mDist(GetTarget().GetActorLocation(), loc);
-
-		// TODO Change to using EQS
-		while (dist <= closeDistance && dist > closeDistance * 0.8 && !CanSee(GetTarget(), loc) && count < 20)
+		if (CompareState(EActionState::AttackingTarget) || CompareState(EActionState::MovingToObjective))
 		{
-			mRandomReachablePointInRadius(GetDrone()->GetActorLocation(), closeDistance, loc);
-			dist = mDist(GetTarget().GetActorLocation(), loc);
-			count++;
+			RunMoveQuery(GetTarget().GetActorLocation(), GetDrone()->GetWeapon()->GetRange());
 		}
-		MoveToLocation(loc);
+		else if (IsValid(GetTargetObjective()))
+		{
+			RunMoveQuery(GetTargetObjective()->GetActorLocation(), GetTargetObjective()->GetSize());
+		}
 	}
+}
+
+bool ADroneBaseAI::IsNotMoving()
+{
+	return GetDrone()->GetVelocity().IsNearlyZero();
+}
+
+bool ADroneBaseAI::IsTargetInWeaponRange()
+{
+	return FVector::Dist(GetTarget().GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange();
 }
 
 void ADroneBaseAI::AttackingTarget()
 {
-	// Check the target is still valid
-	if (!IsTargetValid())
+	//// Check the target is still valid
+	//if (!)
+	//{
+	//	if (IsValid(GetTargetObjective()))
+	//	{
+	//		SetCurrentState(EActionState::MovingToObjective);
+	//	}
+	//	else
+	//	{
+	//		SetCurrentState(EActionState::Start);
+	//	}
+	//}
+	//else
+		// Are we in range?
+	if (IsTargetValid() && IsNotMoving() && !IsTargetInWeaponRange())
 	{
-		if (IsValid(GetTargetObjective())) 
-		{
-			SetCurrentState(EActionState::MovingToObjective);
-		}
-		else
-		{
-			SetCurrentState(EActionState::Start);
-		}
+		MoveToActor(GetTarget());
 	}
 }
 
@@ -561,9 +617,9 @@ void ADroneBaseAI::AttackTarget(AActor* targetToAttack)
 
 bool ADroneBaseAI::IsTargetValid(FTargetData& data)
 {
-	if (data.IsValid() && data.IsAlive() && data.GetTeam() != GetDrone()->GetTeam()
+	if (data.IsValid() && data.IsAlive() && data.GetTeam() != GetDrone()->GetTeam())
 		// TODO figure out a better way to handle range checks. Ignoring for now as LOS is more important
-		&& FVector::Dist(data.GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange())
+		//&& FVector::Dist(data.GetActorLocation(), mDroneLocation) <= GetDrone()->GetWeapon()->GetRange())
 	{
 		return true;
 	}
@@ -573,18 +629,18 @@ bool ADroneBaseAI::IsTargetValid(FTargetData& data)
 
 void ADroneBaseAI::CapturingObjective()
 {
-	AObjective* currentObjective = Cast<AObjective>(targetObjective);
+	//AObjective* currentObjective = Cast<AObjective>(targetObjective);
 
-	// Have we gone too far from our objective? If so move closer
-	if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance)
-	{
-		MoveToObjective();
-	}
-	// Have we claimed the current objective?
-	else if (IsValid(currentObjective) && currentObjective->HasCompleteControl(GetDrone()->GetTeam()))
-	{
-		SetCurrentState(EActionState::MovingToObjective);
-	}
+	//// Have we gone too far from our objective? If so move closer
+	//if (mDist(mDroneLocation, mObjectiveLocation) >= minCaptureDistance)
+	//{
+	//	MoveToObjective();
+	//}
+	//// Have we claimed the current objective?
+	//else if (IsValid(currentObjective) && currentObjective->HasCompleteControl(GetDrone()->GetTeam()))
+	//{
+	//	SetCurrentState(EActionState::MovingToObjective);
+	//}
 }
 
 ADroneRPGCharacter* ADroneBaseAI::GetDrone()

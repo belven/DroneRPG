@@ -3,7 +3,7 @@
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 
-UCombatantComponent::UCombatantComponent(): team(0), type(), combatScore(0), gameMode(nullptr)
+UCombatantComponent::UCombatantComponent(): team(0), type(), combatScore(0), kills(0), deaths(0), gameMode(nullptr)
 {
 	PrimaryComponentTick.bCanEverTick = false;
 }
@@ -17,6 +17,7 @@ void UCombatantComponent::SetupCombatantComponent(FString inName, EDamagerType i
 void UCombatantComponent::UnitKilled(UCombatantComponent* unitKilled)
 {
 	OnUnitKilled.Broadcast(unitKilled);
+	IncrementKills();
 }
 
 void UCombatantComponent::SetGameMode(ADroneRPGGameMode* inGameMode)

@@ -3,6 +3,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include <GameFramework/HUD.h>
 #include "DroneRPG/Controllers/DroneRPGPlayerController.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
 {
@@ -25,29 +26,40 @@ ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
 
 void ADroneRPGGameMode::UnitHit(float inDamage, UCombatantComponent* attacker)
 {
-		float bonusScore = FMath::RoundHalfToEven(inDamage);
-		attacker->AddCombatScore(bonusScore);
-		AddTeamScore(attacker->GetTeam(), bonusScore);	
+	float bonusScore = FMath::RoundHalfToEven(inDamage);
+	attacker->AddCombatScore(bonusScore);
+	AddTeamScore(attacker->GetTeam(), bonusScore);
+}
+
+void ADroneRPGGameMode::CleanUp()
+{
+	for (auto It = GetCombatants().CreateIterator(); It; ++It)
+	{
+		if (!IsValid(*It))
+		{
+			It.RemoveCurrent();
+		}
+	}
 }
 
 void ADroneRPGGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	mSetTimerWorld(GetWorld(), TimerHandle_CleanUp, &ADroneRPGGameMode::CleanUp, 10);
 }
 
 void ADroneRPGGameMode::EntityKilled(UCombatantComponent* killedEntity, UCombatantComponent* killer)
 {
+	AddTeamScore(killer->GetTeam(), 50);
+	killer->AddCombatScore(50);
 
-		AddTeamScore(killer->GetTeam(), 50);
-		killer->AddCombatScore(50);
+	TArray< FStringFormatArg > args;
+	args.Add(FStringFormatArg(killedEntity->GetCombatantName()));
+	args.Add(FStringFormatArg(killer->GetCombatantName()));
 
-		TArray< FStringFormatArg > args;
-		args.Add(FStringFormatArg(killedEntity->GetCombatantName()));
-		args.Add(FStringFormatArg(killer->GetCombatantName()));
-
-		// Add text to the kill feed
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
-	
+	// Add text to the kill feed
+	GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
 }
 
 void ADroneRPGGameMode::AddTeamScore(int32 team, int32 bonusScore)
@@ -81,7 +93,7 @@ FColor ADroneRPGGameMode::GetTeamColour(int32 team)
 	{
 		colour = FColor::MakeRandomColor();
 
-		while (colours.Contains(colour)) 
+		while (colours.Contains(colour))
 		{
 			colour = FColor::MakeRandomColor();
 		}
@@ -123,4 +135,12 @@ FColor ADroneRPGGameMode::GetTeamColour(int32 team)
 TMap<int32, FColor>& ADroneRPGGameMode::GetTeamColours()
 {
 	return teamColours;
+}
+
+void ADroneRPGGameMode::AddCombatant(UCombatantComponent* combatant)
+{
+	if (IsValid(combatant))
+	{
+		combatants.AddUnique(combatant);
+	}
 }

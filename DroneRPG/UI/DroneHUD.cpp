@@ -1,7 +1,7 @@
 #include "DroneHUD.h"
 #include <Kismet/GameplayStatics.h>
-#include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Components/HealthComponent.h"
+#include "DroneRPG/Controllers/DroneBaseAI.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/LevelActors/Objective.h"
@@ -51,11 +51,12 @@ void ADroneHUD::DrawHUD()
 	DrawScore();
 
 	// Get all the enemy drones in the game and display indicators where appropriate
-	for (ADroneRPGCharacter* drone : GetGameMode()->GetDrones())
+	for (UCombatantComponent* combatant : GetGameMode()->GetCombatants())
 	{
-		if (drone->GetHealthComponent()->IsAlive())
+		UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+		if (IsValid(healthComponent) && healthComponent->IsAlive())
 		{
-			DrawCombatantIndicators(drone);
+			DrawCombatantIndicators(combatant);
 		}
 	}
 
@@ -132,30 +133,40 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 	}
 }
 
-void ADroneHUD::DrawCombatantIndicators(ADroneRPGCharacter* drone)
+void ADroneHUD::DrawCombatantIndicators(UCombatantComponent* combatant)
 {
 	if (IsValid(GetOwningPlayerController()))
 	{
 		constexpr int32 offset = 30;
-		FDrawLocation drawLocation = GetDrawLocation(drone->GetActorLocation(), offset);
+		FDrawLocation drawLocation = GetDrawLocation(combatant->GetOwner()->GetActorLocation(), offset);
 
 		// Only display a indicator if the drone is on screen
 		// If we've had to clamp a value, then the position is offscreen
 		if (!drawLocation.IsOffscreen())
 		{
 			TArray<FStringFormatArg> args;
-			args.Add(FStringFormatArg(drone->GetKills()));
-			args.Add(FStringFormatArg(drone->GetDeaths()));
 
 			FColor colour = FColor::Red;
 
-			if (IsValid(GetCombatantComponent()) && drone->GetTeam() == GetCombatantComponent()->GetTeam())
+			if (IsValid(GetCombatantComponent()) && combatant->GetTeam() == GetCombatantComponent()->GetTeam())
 			{
 				colour = FColor::Green;
 			}
 
-			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
+			ADroneBaseAI* ai = Cast<ADroneBaseAI>(combatant->GetOwner()->GetInstigatorController());
+			if (IsValid(ai))
+			{
+				args.Add(FStringFormatArg(combatant->GetCombatantName()));
+				args.Add(FStringFormatArg(ai->GetStateString(ai->GetCurrentState())));
+				DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
+			}
+			else
+			{
+				args.Add(FStringFormatArg(combatant->GetKills()));
+				args.Add(FStringFormatArg(combatant->GetDeaths()));
+				// Write some text below the drone that states it's current kills and deaths
+				DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
+			}
 		}
 	}
 }

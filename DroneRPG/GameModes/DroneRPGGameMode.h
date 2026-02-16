@@ -14,9 +14,9 @@ class ADroneRPGGameMode : public AGameModeBase
 
 public:
 	ADroneRPGGameMode();
-	TArray <ADroneRPGCharacter*>& GetDrones() { return  dronesInGame; }
 	void UnitHit(float inDamage, UCombatantComponent* attacker);
 
+	void CleanUp();
 	virtual void BeginPlay() override;
 	virtual void EntityKilled(UCombatantComponent* killedEntity, UCombatantComponent* killer);
 
@@ -39,15 +39,15 @@ public:
 	{
 		return combatants;
 	}
+
+	void AddCombatant(UCombatantComponent* combatant);
 protected:
 	EGameModeType gameMode;
 	TMap<int32, FTeamScore> teamScores;
 	TMap<int32, FColor> teamColours;
 	TArray<FColor> colours;
 	bool coloursSet;
-
-	UPROPERTY()
-	TArray <ADroneRPGCharacter*> dronesInGame;
+	FTimerHandle TimerHandle_CleanUp;
 
 	UPROPERTY()
 	TArray <UCombatantComponent*> combatants;

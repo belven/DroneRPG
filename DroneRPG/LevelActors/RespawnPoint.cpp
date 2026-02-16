@@ -1,8 +1,8 @@
 #include "RespawnPoint.h"
-
 #include "NavigationSystem.h"
 #include "Components/BoxComponent.h"
 #include "NiagaraComponent.h"
+#include "Components/SphereComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Components/HealthComponent.h"
@@ -13,18 +13,15 @@
 
 ARespawnPoint::ARespawnPoint() : teamSize(6)
 {
-#if WITH_EDITOR
-		SetFolderPath(TEXT("Respawn Points"));
-#endif
-
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
 
-	keyActorSize = 1000;
+	keyActorSize = 2000;
 
-	respawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("RespawnArea"));
-	respawnArea->SetBoxExtent(FVector(GetSize(), GetSize(), 400));
+	respawnArea = CreateDefaultSubobject<USphereComponent>(TEXT("RespawnArea"));
+	respawnArea->SetSphereRadius(GetSize());
 	respawnArea->SetupAttachment(GetRootComponent());
+	UFunctionLibrary::SetupOverlap(respawnArea);
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem_2"));
 
@@ -69,10 +66,15 @@ void ARespawnPoint::SetupParticles()
 	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
 	captureParticle->SetFloatParameter(TEXT("Size"), 200);
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
+	captureParticle->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
 }
 
 void ARespawnPoint::BeginPlay()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Respawn Points"));
+#endif
+
 	Super::BeginPlay();
 	respawnArea->OnComponentBeginOverlap.AddDynamic(this, &ARespawnPoint::BeginOverlap);
 	respawnArea->OnComponentEndOverlap.AddDynamic(this, &ARespawnPoint::EndOverlap);

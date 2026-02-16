@@ -45,6 +45,13 @@ public:
 	void AddCombatScore(float score);
 
 	float GetCombatScore() { return combatScore; }
+	int32 GetDeaths() const	{		return deaths;	}
+	void SetDeaths(int32 inDeaths)	{		deaths = inDeaths;	}
+	int32 GetKills() const	{		return kills;	}
+	void SetKills(int32 inKills)	{		kills = inKills;	}
+
+	void IncrementDeaths() { deaths++; }
+	void IncrementKills() { kills++; }
 
 	UFUNCTION()
 	void ResetCombatScore();
@@ -55,6 +62,8 @@ private:
 	FString name;
 	EDamagerType type;
 	float combatScore;
+	int32 kills;
+	int32 deaths;
 
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;

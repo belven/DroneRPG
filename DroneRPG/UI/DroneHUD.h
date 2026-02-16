@@ -35,7 +35,7 @@ public:
 	virtual void DrawHUD() override;
 	void DrawScore();
 	void DrawObjectiveIndicators(AObjective* objective);
-	void DrawCombatantIndicators(ADroneRPGCharacter* drone);
+	void DrawCombatantIndicators(UCombatantComponent* combatant);
 
 	ADroneRPGGameMode* GetGameMode();
 	UCombatantComponent* GetCombatantComponent();

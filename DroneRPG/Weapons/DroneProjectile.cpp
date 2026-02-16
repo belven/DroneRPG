@@ -17,9 +17,6 @@ const float ADroneProjectile::Default_Initial_Lifespan = 1.2f;
 // Sets default values
 ADroneProjectile::ADroneProjectile()
 {
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Other/Projectiles"));
-#endif
 	PrimaryActorTick.bCanEverTick = true;
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ProjectileMeshAsset(TEXT("StaticMesh'/Game/StarterContent/Shapes/Shape_NarrowCapsule.Shape_NarrowCapsule'"));
@@ -54,6 +51,9 @@ ADroneProjectile::ADroneProjectile()
 void ADroneProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Other/Projectiles"));
+#endif
 
 	TArray<ADroneProjectile*> projectiles = mGetActorsInWorld<ADroneProjectile>(GetWorld());
 

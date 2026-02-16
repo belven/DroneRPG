@@ -187,7 +187,7 @@ void ADroneRPGPlayerController::ChangeView()
 	for (auto combatant : GetGameMode()->GetCombatants())
 	{
 
-		if (combatant != GetDrone()->GetCombatantComponent()) 
+		if (IsValid(combatant) && combatant != GetDrone()->GetCombatantComponent())
 		{
 			float combatScore = combatant->GetCombatScore();
 
@@ -204,7 +204,8 @@ void ADroneRPGPlayerController::ChangeView()
 
 	if (IsValid(combatantFound))
 	{
-		SetViewTargetWithBlend(combatantFound->GetOwner(), 1.0f, VTBlend_EaseInOut, 1, false);
+		//SetViewTargetWithBlend(combatantFound->GetOwner(), 1.0f, VTBlend_EaseInOut, 1, true);
+		SetViewTarget(combatantFound->GetOwner());
 		mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::ChangeView, 3.0f);
 	}
 }

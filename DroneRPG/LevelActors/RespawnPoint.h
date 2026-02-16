@@ -3,6 +3,7 @@
 #include "KeyActor.h"
 #include "RespawnPoint.generated.h"
 
+class USphereComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 class ADroneRPGCharacter;
@@ -41,7 +42,7 @@ public:
 
 protected:
 	UPROPERTY()
-		UBoxComponent* respawnArea;
+	USphereComponent* respawnArea;
 public:
 
 	UFUNCTION()

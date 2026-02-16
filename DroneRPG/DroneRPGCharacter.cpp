@@ -14,9 +14,7 @@
 #include "NavigationSystem.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Utilities/FunctionLibrary.h"
-#include "Weapons/Weapon.h"
 #include <Kismet/GameplayStatics.h>
-
 #include "Utilities/WeaponCreator.h"
 
 ADroneRPGCharacter::ADroneRPGCharacter()
@@ -26,6 +24,8 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	const float capHeight = 400.0f;
 
 	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
+	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -37,7 +37,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -88,7 +88,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	healthComponent->OnUnitHit.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitHit);
 
 	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
-	combatantComponent->OnUnitKilled.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitKilled);
 }
 
 void ADroneRPGCharacter::BeginDestroy()
@@ -108,17 +107,14 @@ void ADroneRPGCharacter::BeginPlay()
 	SetFolderPath(TEXT("Characters"));
 #endif
 
-	if (!GetGameMode()->GetDrones().Contains(this))
+	if (!GetGameMode()->GetCombatants().Contains(GetCombatantComponent()))
 	{
-		GetGameMode()->GetDrones().Add(this);
+		GetGameMode()->GetCombatants().Add(GetCombatantComponent());
 	}
 }
 
 void ADroneRPGCharacter::SetUpDrone()
 {
-	kills = 0;
-	deaths = 0;
-
 	// Give each drone a random weapon
 	combatantComponent->SetupCombatantComponent(GetDroneName(), EDamagerType::Drone);
 	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
@@ -173,11 +169,6 @@ void ADroneRPGCharacter::Respawn()
 	}
 }
 
-void ADroneRPGCharacter::UnitKilled(UCombatantComponent* inUnitKilled)
-{
-	kills++;
-}
-
 void ADroneRPGCharacter::UnitHit(float damage, UCombatantComponent* attacker)
 {
 	GetGameMode()->UnitHit(damage, attacker);
@@ -205,7 +196,8 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 
 void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
 {
-	deaths++;
+	GetCombatantComponent()->IncrementDeaths();
+
 	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	meshComponent->SetHiddenInGame(true);
 
@@ -220,9 +212,9 @@ void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
 
 FString ADroneRPGCharacter::GetDroneName()
 {	
-	if (droneName.IsEmpty() && GetGameMode()->GetDrones().Contains(this)) 
+	if (droneName.IsEmpty() && GetGameMode()->GetCombatants().Contains(GetCombatantComponent())) 
 	{
-		droneName = "Drone " +  FString::FromInt(GetGameMode()->GetDrones().IndexOfByKey(this));
+		droneName = "Drone " +  FString::FromInt(GetGameMode()->GetCombatants().IndexOfByKey(GetCombatantComponent()));
 	}
 	return droneName;
 }

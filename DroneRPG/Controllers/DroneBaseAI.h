@@ -3,6 +3,7 @@
 #include "AIController.h"
 #include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "DroneBaseAI.generated.h"
 
@@ -18,7 +19,9 @@ public:
 	ADroneBaseAI(const FObjectInitializer& ObjectInitializer);
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void OnPossess(APawn* InPawn) override;
+	void MovingToObjective();
 	void PerformActions();
+	void RunMoveQuery(const FVector& location, double radius);
 	void MoveToObjective();
 	virtual void BeginPlay() override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
@@ -62,6 +65,9 @@ public:
 
 	UFUNCTION()
 	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	void FindLocationEmptyLocationRequestFinished(TSharedPtr<FEnvQueryResult> Result);
+	FVector queryLocation;
 private:
 	FTimerHandle TimerHandle_CheckLastLocation;
 
@@ -69,6 +75,14 @@ private:
 	float targetRange;
 	FRotator lookAt;
 	FVector lastLocation;
+	int32 capsuleSize;
+
+	UPROPERTY()
+	UEnvQuery* FindLocationEmptyLocationQuery;
+
+	UPROPERTY()
+	FEnvQueryRequest FindLocationEmptyLocationRequest;
+
 
 	bool isFiring;
 	bool canCheckForEnemies;
@@ -93,7 +107,7 @@ private:
 	void FindTarget();
 	void FindSuitableObjective();
 	void RotateToFace();
-	void GetNextVisibleTarget();
+	bool GetNextVisibleTarget();
 	void FindObjective();
 	void AttackTarget(AActor* targetToAttack);
 
@@ -101,6 +115,8 @@ private:
 	void ReturningToBase();
 	bool ShootTargetIfValid();
 	void EvadingDamage();
+	bool IsNotMoving();
+	bool IsTargetInWeaponRange();
 	void AttackingTarget();
 	FHitResult LineTraceToLocation(const FVector& startLoc, const FVector& endLocation);
 	bool CanSee(AActor* other, const FVector& startLoc);

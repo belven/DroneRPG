@@ -6,6 +6,8 @@
 #include <Components/StaticMeshComponent.h>
 #include <DroneRPG/Components/CombatantComponent.h>
 #include <Kismet/GameplayStatics.h>
+
+#include "Components/SphereComponent.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
@@ -13,9 +15,6 @@
 
 AObjective::AObjective()
 {
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Objectives"));
-#endif
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.TickInterval = 1;
 	objectiveName = "";
@@ -39,9 +38,11 @@ AObjective::AObjective()
 		auraSystem = auraParticleSystem.Object;
 	}
 
-	objectiveArea = CreateDefaultSubobject<UBoxComponent>(TEXT("ObjectiveArea"));
-	objectiveArea->SetBoxExtent(FVector(GetSize(), GetSize(), 400));
-	objectiveArea->SetupAttachment(GetRootComponent());
+	objectiveArea = CreateDefaultSubobject<USphereComponent>(TEXT("ObjectiveArea"));
+	RootComponent = objectiveArea;
+
+	objectiveArea->SetSphereRadius(GetSize() * 1.2);
+	UFunctionLibrary::SetupOverlap(objectiveArea);
 }
 
 void AObjective::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -92,6 +93,9 @@ void AObjective::CheckForOverlaps()
 
 void AObjective::BeginPlay()
 {
+#if WITH_EDITOR
+	SetFolderPath(TEXT("Objectives"));
+#endif
 	Super::BeginPlay();
 
 	// Bind to the box components begin and end overlap events

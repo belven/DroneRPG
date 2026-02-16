@@ -14,7 +14,7 @@
 
 #define  mAddOnScreenDebugMessage(text) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT(text)));
 
-#define mDroneLocation GetCharacter()->GetActorLocation()
+#define mDroneLocation GetNavAgentLocation()//GetCharacter()->GetActorLocation()
 #define mDroneRotation GetCharacter()->GetActorRotation()
 
 #define mClampValue UFunctionLibrary::ClampValue
@@ -49,7 +49,10 @@ public:
 	template <class T> static T GetRandomObject(TArray<T>& arrayIn);
 
 	static FString GetColourString(FColor color);
+	static FVector GetClosestLocation(const FVector& locationA, const FVector& locationB, const FVector& origin);
 	template<class T> static T GetRandomEnum(T end);
+
+	static void SetupOverlap(UShapeComponent* comp);
 };
 
 inline FColor UFunctionLibrary::InvertColorRGB(FColor original) {

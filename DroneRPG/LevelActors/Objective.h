@@ -4,6 +4,7 @@
 #include <NiagaraComponent.h>
 #include "Objective.generated.h"
 
+class USphereComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, AObjective*, objective);
 
 class UBoxComponent;
@@ -77,7 +78,7 @@ private:
 	ADroneRPGGameMode* gameMode;
 
 	UPROPERTY()
-		UBoxComponent* objectiveArea;
+	USphereComponent* objectiveArea;
 
 	UPROPERTY()
 		TArray<UCombatantComponent*> combatantsInArea;

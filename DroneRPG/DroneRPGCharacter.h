@@ -24,9 +24,6 @@ public:
 	void Respawn();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
-	void UnitKilled(UCombatantComponent* inUnitKilled);
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
 	void UnitHit(float damage, UCombatantComponent* attacker);
 
 	ADroneRPGCharacter();
@@ -46,13 +43,6 @@ public:
 	void SetUpDrone();
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
-	int32 GetKills() const { return kills; }
-	void SetKills(int32 val) { kills = val; }
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	int32 GetDeaths() const { return deaths; }
-	void SetDeaths(int32 val) { deaths = val; }
-
 	virtual void PossessedBy(AController* NewController) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
@@ -82,9 +72,6 @@ private:
 
 	UPROPERTY()
 	UCombatantComponent* combatantComponent;
-
-	int32 kills;
-	int32 deaths;
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;

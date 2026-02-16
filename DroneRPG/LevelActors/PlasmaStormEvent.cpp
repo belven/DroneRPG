@@ -1,7 +1,6 @@
 #include "PlasmaStormEvent.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Components/SphereComponent.h"
-#include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -122,19 +121,12 @@ void APlasmaStormEvent::Move()
 	// We're not a Player hunter, find a random location to move to, within a radius
 	if (!isPlayerHunter) 
 	{
-		int32 count = 0;
 		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
-
-		while (mDist(GetActorLocation(), targetLocation.Location) <= travelDistance * 0.7 && count <= 30)
-		{
-			count++;
-			mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
-		}
 	}
 	// Otherwise, find a random player and move to their location
-	else if (GetGameMode()->GetDrones().Num() > 0) 
+	else if (GetGameMode()->GetCombatants().Num() > 0) 
 	{
-		targetLocation.Location = mGetRandomObject(GetGameMode()->GetDrones())->GetActorLocation();
+		targetLocation.Location = mGetRandomObject(GetGameMode()->GetCombatants())->GetOwner()->GetActorLocation();
 	}
 
 	mSetTimer(TimerHandle_Move, &APlasmaStormEvent::Move, moveRate);
