@@ -11,7 +11,6 @@
 #include "GameModes/DroneRPGGameMode.h"
 #include "LevelActors/RespawnPoint.h"
 #include "Materials/Material.h"
-#include "NavigationSystem.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Utilities/FunctionLibrary.h"
 #include <Kismet/GameplayStatics.h>
@@ -20,8 +19,8 @@
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule
-	const float capWidth = 120.0f;
-	const float capHeight = 50.0f;
+	const float capWidth = 300;
+	const float capHeight = 120;
 
 	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
@@ -48,7 +47,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
 
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -154,14 +153,12 @@ void ADroneRPGCharacter::Respawn()
 	if (IsValid(respawn))
 	{
 		// Move us to the respawn point 
-		FNavLocation loc;
-		mRandomPointInNavigableRadius(respawn->GetActorLocation(), respawn->GetSize(), loc);
-		SetActorLocation(loc, false, NULL, ETeleportType::ResetPhysics);
+		SetActorLocation(respawn->GetSpawnLocation(), false, NULL, ETeleportType::ResetPhysics);
 
 		// Fully Heal the drone
 		healthComponent->FullHeal();
-
-		meshComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 		meshComponent->SetHiddenInGame(false);
 	}
 }
@@ -195,7 +192,8 @@ void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
 {
 	GetCombatantComponent()->IncrementDeaths();
 
-	meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 	meshComponent->SetHiddenInGame(true);
 
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);

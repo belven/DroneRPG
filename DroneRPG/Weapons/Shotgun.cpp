@@ -29,10 +29,11 @@ FRotator UShotgun::RandomDirection(FRotator fireRotation) {
 	return fireRotation;
 }
 
-void UShotgun::FireShot(FVector FireDirection)
+void UShotgun::FireShot()
 {
 	if (canFire)
 	{
+		FVector FireDirection = GetFireDirection();
 		if (FireDirection.SizeSquared() > 0.0f)
 		{
 			for (int i = 0; i < pellets; i++) {

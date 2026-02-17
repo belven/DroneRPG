@@ -91,31 +91,19 @@ void ADroneRPGPlayerController::PlayerTick(float DeltaTime)
 		lookAt.Roll = mActorRotation.Roll;
 
 		GetDrone()->SetActorRotation(lookAt);
-
-		// Try and fire a shot
-		FireShot(mActorRotation.Vector());
-	}
-}
-
-void ADroneRPGPlayerController::FireShot(const FVector& FireDirection)
-{
-	// If it's ok to fire again
-	if (isFiring)
-	{
-		FHitResult Hit;
-		GetHitResultUnderCursor(ECC_WorldStatic, false, Hit);
-		GetDrone()->GetWeapon()->FireShot(FireDirection);
 	}
 }
 
 void ADroneRPGPlayerController::UseTool()
 {
 	isFiring = true;
+	GetDrone()->GetWeapon()->SetActive(isFiring);
 }
 
 void ADroneRPGPlayerController::StopUsingTool()
 {
 	isFiring = false;
+	GetDrone()->GetWeapon()->SetActive(isFiring);
 }
 
 void ADroneRPGPlayerController::CalculateMovement(float DeltaSeconds) const

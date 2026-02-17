@@ -15,7 +15,7 @@ public:
 	static UShotgun* CreateShotgun(float inFireRate, float inDamage, UCombatantComponent* inOwner, int32 inPellets = 4);
 
 	FRotator RandomDirection(FRotator fireRotation);
-	virtual void FireShot(FVector FireDirection) override;
+	virtual void FireShot() override;
 private:
 	int32 pellets;
 	float spread;

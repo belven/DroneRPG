@@ -29,17 +29,23 @@ ARespawnPoint::ARespawnPoint() : teamSize(6)
 	}
 }
 
+FVector ARespawnPoint::GetSpawnLocation()
+{
+	FNavLocation loc;
+	mRandomPointInNavigableRadius(GetActorLocation(), GetSize(), loc);
+	UNavigationSystemV1::K2_ProjectPointToNavigation(GetWorld(), loc, loc.Location, nullptr, nullptr);
+	return loc.Location;
+}
+
+
 void ARespawnPoint::SpawnTeam()
 {
 	for (int i = 0; i < teamSize - 1; ++i)
 	{
-		FNavLocation loc;
-		mRandomPointInNavigableRadius(GetActorLocation(), GetSize(), loc);
-
 		FActorSpawnParameters params;
 		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-		ADroneRPGCharacter* npc = GetWorld()->SpawnActor<ADroneRPGCharacter>(ADroneRPGCharacter::StaticClass(), loc.Location, GetActorRotation(), params);
+		ADroneRPGCharacter* npc = GetWorld()->SpawnActor<ADroneRPGCharacter>(ADroneRPGCharacter::StaticClass(), GetSpawnLocation(), GetActorRotation(), params);
 
 		if (IsValid(npc))
 		{
@@ -53,18 +59,28 @@ void ARespawnPoint::SpawnTeam()
 	}
 }
 
+void ARespawnPoint::SetTeam(int32 val)
+{
+	team = val;
+
+	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+
+	if (IsValid(gameMode)) 
+	{
+		FColor teamColour = gameMode->GetTeamColour(GetTeam());
+		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
+	}
+}
+
 void ARespawnPoint::SetupParticles()
 {
 	// Create our particle system
 	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
-	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-	FColor teamColour = gameMode->GetTeamColour(GetTeam());
 
 	// Set up the systems defaults
 	captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
 	captureParticle->SetFloatParameter(TEXT("Size"), 200);
-	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
 }
 
 void ARespawnPoint::BeginPlay()

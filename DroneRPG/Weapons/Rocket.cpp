@@ -14,7 +14,6 @@ ARocket::ARocket()
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = 3500.0f;
 	ProjectileMovement->HomingAccelerationMagnitude = 15000;
-	ProjectileMovement->bIsHomingProjectile = true;
 	InitialLifeSpan = Default_Initial_Lifespan;
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> FireSoundAudio(TEXT("SoundCue'/Game/TopDownCPP/Sounds/Rocket_Booster_Cue.Rocket_Booster_Cue'"));
@@ -33,13 +32,9 @@ ARocket::ARocket()
 	sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RocketOverlap"));
 	sphereComponent->SetSphereRadius(1000);
 	sphereComponent->SetupAttachment(GetRootComponent());
-	sphereComponent->SetCollisionResponseToAllChannels(ECR_Overlap);
+	sphereComponent->SetCollisionProfileName("Projectile");
+	sphereComponent->SetGenerateOverlapEvents(true);
 	sphereComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ARocket::BeginOverlap);
-}
-
-bool ARocket::CheckIfValidTarget(const FTargetData& targetData)
-{
-	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != GetShooter()->GetTeam();
 }
 
 bool ARocket::SetTargetIfValid(const FTargetData& targetData)
@@ -57,6 +52,7 @@ void ARocket::SetTarget(FTargetData targetData)
 {
 	Super::SetTarget(targetData);
 	ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
+	ProjectileMovement->bIsHomingProjectile = true;
 }
 
 void ARocket::DealDamage()
@@ -78,30 +74,24 @@ void ARocket::SetShooter(UCombatantComponent* val)
 {
 	Super::SetShooter(val);
 
-	TArray<AActor*> overlaps;
-	sphereComponent->GetOverlappingActors(overlaps);
-
-	for (auto overlap : overlaps)
+	if (IsValid(GetShooter()) && GetShooter()->GetTeam() != -1 && !target.isSet)
 	{
-		if (SetTargetIfValid(mCreateTargetData(overlap)))
+		TArray<AActor*> overlaps;
+		sphereComponent->GetOverlappingActors(overlaps);
+
+		for (auto overlap : overlaps)
 		{
-			break;
+			if (SetTargetIfValid(mCreateTargetData(overlap)))
+			{
+				break;
+			}
 		}
 	}
 }
 
-void ARocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ARocket::HItValidTarget(const FTargetData& targetData)
 {
-	// Only add impulse and destroy projectile if we hit a physics
-	if (IsValid(OtherActor) && OtherActor != this && OtherActor != shooter->GetOwner() && !mIsA(OtherActor, ADroneProjectile))
-	{
-		DealDamage();
-		Destroy();
-	}
-	else
-	{
-		Destroy();
-	}
+	DealDamage();
 }
 
 void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

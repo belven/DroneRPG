@@ -53,10 +53,13 @@ void ADroneHUD::DrawHUD()
 	// Get all the enemy drones in the game and display indicators where appropriate
 	for (UCombatantComponent* combatant : GetGameMode()->GetCombatants())
 	{
-		UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
-		if (IsValid(healthComponent) && healthComponent->IsAlive())
+		if (IsValid(combatant)) 
 		{
-			DrawCombatantIndicators(combatant);
+			UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+			if (IsValid(healthComponent) && healthComponent->IsAlive())
+			{
+				DrawCombatantIndicators(combatant);
+			}
 		}
 	}
 

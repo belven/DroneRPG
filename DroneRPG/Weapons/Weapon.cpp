@@ -11,7 +11,8 @@ UWeapon::UWeapon() :
 	projectileSpeed(ADroneProjectile::Default_Initial_Speed),
 	weaponMeshComp(nullptr),
 	owner(nullptr),
-	FireSound(nullptr)
+	FireSound(nullptr),
+	isActive(false)
 {
 	fireRate = 0.3f;
 	damage = 15.0f;
@@ -39,12 +40,17 @@ T* UWeapon::CreateWeapon(float inFireRate, float inDamage, UCombatantComponent* 
 
 float UWeapon::GetRange()
 {
-	return  projectileSpeed * lifespan;
+	return  projectileSpeed * lifespan * .5;
 }
 
 void UWeapon::ShotTimerExpired()
 {
 	canFire = true;
+
+	if (isActive)
+	{
+		FireShot();
+	}
 }
 
 ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation) {
@@ -57,17 +63,35 @@ ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRot
 	return projectile;
 }
 
+void UWeapon::SetActive(bool inActiveState)
+{
+	if (!isActive && inActiveState)
+	{
+		FireShot();
+	}
 
-void UWeapon::FireShot(FVector FireDirection)
+	isActive = inActiveState;
+}
+
+UE::Math::TVector<double> UWeapon::GetFireDirection()
+{
+	return GetOwner()->GetOwner()->GetActorRotation().Vector();
+}
+
+void UWeapon::FireShot()
 {
 	if (canFire)
 	{
-		if (FireDirection.SizeSquared() > 0.0f)
-		{
-			const FRotator FireRotation = FireDirection.Rotation();
-			const FVector gunLocation = owner->GetOwner()->GetActorLocation() + FireRotation.RotateVector(GunOffset);
-			SpawnProjectile(gunLocation, FireRotation);
+		const FVector FireDirection = GetFireDirection().GetSafeNormal();
 
+		if (!FireDirection.IsNearlyZero())
+		{
+			const FRotator fireRotation = FireDirection.ToOrientationRotator();
+			const FTransform& ownerTransform = owner->GetOwner()->GetActorTransform();
+			const FVector gunLocation = ownerTransform.TransformPosition(GunOffset);
+
+			ADroneProjectile* projectile = SpawnProjectile(gunLocation, fireRotation);		
+			projectile->GetProjectileMovement()->Velocity = FireDirection * GetProjectileSpeed();
 			mSetTimerWorld(owner->GetWorld(), TimerHandle_ShotTimerExpired, &UWeapon::ShotTimerExpired, fireRate);
 
 			if (FireSound != nullptr)

@@ -29,8 +29,12 @@ public:
 	float GetProjectileSpeed() const { return projectileSpeed; }
 	void SetProjectileSpeed(float inProjectileSpeed) { projectileSpeed = inProjectileSpeed; }
 
-	virtual void FireShot(FVector FireDirection);
+	virtual void FireShot();
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation);
+
+	void SetActive(bool inActiveState);
+	UE::Math::TVector<double> GetFireDirection();
+
 protected:
 	float fireRate;
 	float damage;
@@ -38,6 +42,7 @@ protected:
 	float projectileSpeed;
 	bool canFire;
 	FVector GunOffset;
+	bool isActive;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* weaponMeshComp;

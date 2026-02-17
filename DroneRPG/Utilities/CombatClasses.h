@@ -49,7 +49,7 @@ struct FTargetData
 
 	FVector GetActorLocation() const
 	{
-		return combatantComponent != NULL ? combatantComponent->GetOwner()->GetActorLocation() : FVector::ZeroVector;
+		return combatantComponent != NULL ? combatantComponent->GetOwner()->GetActorLocation() : healthComponent != NULL ? healthComponent->GetOwner()->GetActorLocation() : FVector::ZeroVector;
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")

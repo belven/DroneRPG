@@ -4,6 +4,7 @@
 #include "DetourCrowdAIController.h"
 #include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
+#include "DroneRPG/Weapons/Weapon.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "DroneBaseAI.generated.h"
@@ -24,10 +25,10 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 	void MovingToObjective();
 	void PerformActions();
-	void RunMoveQuery(const FVector& location, double radius);
 	void MoveToObjective();
 	virtual void BeginPlay() override;
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
+	void SetFiringState(bool firingState);
 
 	UFUNCTION()
 	void ObjectiveTaken(AObjective* objective);
@@ -76,10 +77,11 @@ private:
 	FTimerHandle TimerHandle_CheckLastLocation;
 
 	float minCaptureDistance;
+	bool isRequestingMovement;
 	float targetRange;
 	FRotator lookAt;
 	FVector lastLocation;
-	int32 capsuleSize;
+	int32 acceptanceRadius;
 
 	bool isFiring;
 	bool canCheckForEnemies;
@@ -87,11 +89,11 @@ private:
 	EActionState previousState;
 	EGameModeType currentGameMode;
 
-	/*UPROPERTY()
-	UEnvQuery* FindLocationEmptyLocationQuery;*/
-
 	UPROPERTY()
 	FEnvQueryRequest FindLocationEmptyLocationRequest;
+
+	UPROPERTY()
+	FEnvQueryRequest FindEvadeLocationRequest;
 
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;
@@ -110,18 +112,18 @@ private:
 
 	ADroneRPGCharacter* GetDrone();
 	AActor* FindEnemyTarget(float distance = 0);
-	void FireShot(const FVector& FireDirection);
 
 	void FindTarget();
 	void FindSuitableObjective();
 	void RotateToFace(float DeltaSeconds);
 	bool GetNextVisibleTarget();
 	void FindObjective();
-	void AttackTarget();
 
 	void DefendingObjective();
 	void ReturningToBase();
-	bool ShootTargetIfValid();
+	float GetWeaponRange();
+	void RunMoveQuery(FEnvQueryRequest& query, const FVector& inLocation, float inGetRange);
+	void RunMoveQuery(const FVector& location, double radius);
 	void EvadingDamage();
 	bool IsNotMoving();
 	bool IsTargetInWeaponRange();

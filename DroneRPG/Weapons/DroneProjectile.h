@@ -2,10 +2,10 @@
 #include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneProjectile.generated.h"
 
+class USphereComponent;
 class UHealthComponent;
 class UCombatantComponent;
 class UProjectileMovementComponent;
-class UStaticMeshComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 
@@ -21,11 +21,11 @@ protected:
 	UCombatantComponent* shooter;
 	float damage;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
-	UStaticMeshComponent* ProjectileMesh;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UProjectileMovementComponent* ProjectileMovement;
+
+	UFUNCTION()
+	virtual void OnBaseProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UPROPERTY()
 	UNiagaraSystem* trailSystem;
@@ -33,10 +33,13 @@ protected:
 	UPROPERTY()
 	UNiagaraComponent* trialParticle;
 
-	void SetUpCollision();
-	void IgnoreActor(AActor* actor);
+	UPROPERTY()
+	USphereComponent* CollisionComp;
 
 	virtual void SetTarget(FTargetData targetData);
+	virtual	void HItValidTarget(const FTargetData& targetData);
+	bool CheckIfValidTarget(const FTargetData& targetData);
+	void ActorDetected(AActor* OtherActor);
 
 	UPROPERTY()
 	USoundBase* FireSound;
@@ -53,10 +56,6 @@ public:
 	UPROPERTY()
 	FTargetData target;
 
-	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	FORCEINLINE UStaticMeshComponent* GetProjectileMesh() const { return ProjectileMesh; }
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 
 	UFUNCTION(BlueprintCallable, Category = "Projectile")

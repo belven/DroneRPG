@@ -1,11 +1,8 @@
 #include "DroneProjectile.h"
-#include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
-#include "DroneRPG/Components/HealthComponent.h"
-#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
-#include <DroneRPG/Components/CombatantComponent.h>
+#include "Components/SphereComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,7 +16,6 @@ ADroneProjectile::ADroneProjectile()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> ProjectileMeshAsset(TEXT("StaticMesh'/Game/StarterContent/Shapes/Shape_NarrowCapsule.Shape_NarrowCapsule'"));
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> trailParticleSystem(TEXT("NiagaraSystem'/Game/TopDownCPP/ParticleEffects/TrailParticleSystem_2.TrailParticleSystem_2'"));
 
 	if (trailParticleSystem.Succeeded())
@@ -27,25 +23,23 @@ ADroneProjectile::ADroneProjectile()
 		trailSystem = trailParticleSystem.Object;
 	}
 
-	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMesh0"));
-	ProjectileMesh->SetStaticMesh(ProjectileMeshAsset.Object);
-	ProjectileMesh->SetupAttachment(RootComponent);
-	ProjectileMesh->BodyInstance.SetCollisionProfileName("Projectile");
-	ProjectileMesh->OnComponentHit.AddDynamic(this, &ADroneProjectile::OnHit);
-	ProjectileMesh->CastShadow = false;
-
-	RootComponent = ProjectileMesh;
+	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	CollisionComp->InitSphereRadius(10.0f);
+	CollisionComp->SetCollisionProfileName("Projectile");
+	CollisionComp->SetGenerateOverlapEvents(true);
+	RootComponent = CollisionComp;
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement0"));
-	ProjectileMovement->UpdatedComponent = ProjectileMesh;
+	ProjectileMovement->UpdatedComponent = CollisionComp;
 	ProjectileMovement->InitialSpeed = Default_Initial_Speed;
 	ProjectileMovement->MaxSpeed = Default_Initial_Speed;
 	ProjectileMovement->bRotationFollowsVelocity = true;
 	ProjectileMovement->bShouldBounce = false;
 	ProjectileMovement->ProjectileGravityScale = 0.f; // No gravity
+	ProjectileMovement->bSweepCollision = true;
+	ProjectileMovement->Friction = 0;
 
 	InitialLifeSpan = Default_Initial_Lifespan;
-	RootComponent->SetHiddenInGame(true);
 }
 
 void ADroneProjectile::BeginPlay()
@@ -55,41 +49,39 @@ void ADroneProjectile::BeginPlay()
 	SetFolderPath(TEXT("Other/Projectiles"));
 #endif
 
-	TArray<ADroneProjectile*> projectiles = mGetActorsInWorld<ADroneProjectile>(GetWorld());
-
-	for (ADroneProjectile* projectile : projectiles)
-	{
-		IgnoreActor(projectile);
-		projectile->IgnoreActor(this);
-	}
-
 	trialParticle = mSpawnSystemAttached(trailSystem, TEXT("trialParticle"));
 }
 
-void ADroneProjectile::IgnoreActor(AActor* actor)
-{
-	ProjectileMesh->IgnoreActorWhenMoving(actor, true);
-}
 
 void ADroneProjectile::SetTarget(FTargetData targetData)
 {
 	target = targetData;
 }
 
-void ADroneProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ADroneProjectile::HItValidTarget(const FTargetData& targetData)
 {
+	targetData.healthComponent->ReceiveDamage(GetDamage(), shooter);
+}
+
+bool ADroneProjectile::CheckIfValidTarget(const FTargetData& targetData)
+{
+	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != GetShooter()->GetTeam();
+}
+
+void ADroneProjectile::ActorDetected(AActor* OtherActor)
+{
+	bool isProjectile = OtherActor->GetClass() == StaticClass();
+
 	// Only add impulse and destroy projectile if we hit a physics
-	if (IsValid(OtherActor) && OtherActor != this && OtherActor != shooter->GetOwner() && OtherActor->GetClass() != StaticClass())
+	if (!isProjectile)
 	{
 		FTargetData targetData = mCreateTargetData(OtherActor);
 
-		// Did we hit a drone?
-		if (targetData.IsValid()
-			// Are we on a different team?
-			&& targetData.GetTeam() != shooter->GetTeam())
+		// Did we hit a valid target?
+		if (CheckIfValidTarget(targetData))
 		{
 			// Deal damage to enemy Drone
-			targetData.healthComponent->ReceiveDamage(GetDamage(), shooter);
+			HItValidTarget(targetData);
 			Destroy();
 		}
 		else
@@ -104,19 +96,9 @@ UCombatantComponent* ADroneProjectile::GetShooter()
 	return shooter;
 }
 
-void ADroneProjectile::SetUpCollision()
+void ADroneProjectile::OnBaseProjectileOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	TArray<AActor*> actors = mGetActorsInWorld<AActor>(GetWorld());
-
-	for (AActor* actor : actors)
-	{
-		UCombatantComponent* combatant = mGetCombatantComponent(actor);
-
-		if (IsValid(combatant) && combatant->GetTeam() == shooter->GetTeam())
-		{
-			ProjectileMesh->IgnoreActorWhenMoving(combatant->GetOwner(), true);
-		}
-	}
+	ActorDetected(OtherActor);
 }
 
 void ADroneProjectile::SetShooter(UCombatantComponent* val)
@@ -125,5 +107,5 @@ void ADroneProjectile::SetShooter(UCombatantComponent* val)
 
 	ADroneRPGGameMode* gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
 	trialParticle->SetColorParameter(TEXT("Beam Colour"), FLinearColor(gameMode->GetTeamColour(val->GetTeam())));
-	SetUpCollision();
+	CollisionComp->OnComponentBeginOverlap.AddDynamic(this, &ADroneProjectile::OnBaseProjectileOverlap);
 }

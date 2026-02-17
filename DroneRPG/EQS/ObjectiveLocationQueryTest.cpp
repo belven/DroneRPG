@@ -4,7 +4,6 @@
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
-#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -42,32 +41,6 @@ bool UObjectiveLocationQueryTest::CanNavigateToPoint(ACharacter* character, cons
 	return  canNavigate;
 }
 
-bool UObjectiveLocationQueryTest::CanSeePoint(const FVector& contextLocation, const FVector& ItemLocation) const
-{
-	TArray<AActor*> ignore;
-	bool canSee = true;
-	TArray<FHitResult> hits;
-
-	// Create a sphere trace, slightly larger than the characters capsule, so we make sure there's enough room to shoot
-	mSphereTraceMultiEQS(ItemLocation, contextLocation, 100, hits);
-
-
-	for (FHitResult hit : hits)
-	{
-		// Did we hit something?
-		if (hit.bBlockingHit)
-		{
-			// If we hit something that's not are target FIRST, then there's something else in the way, and we should invalidate that location
-			if (hit.GetActor()->GetComponentsCollisionResponseToChannel(ECC_Pawn) == ECR_Block && !hit.GetActor()->StaticClass()->IsChildOf(ADroneRPGCharacter::StaticClass()))
-			{
-				canSee = false;
-				break;
-			}
-		}
-	}
-	return canSee;
-}
-
 void UObjectiveLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) const
 {
 	//Super::RunTest(QueryInstance);
@@ -93,28 +66,32 @@ void UObjectiveLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) cons
 	ACharacter* character = QueryOwner->GetCharacter();
 	FVector actorLocation = character->GetActorLocation();
 
-	for (FEnvQueryInstance::ItemIterator It(this, QueryInstance); It; ++It)
+	if (contextLocation != FVector::ZeroVector)
 	{
-		// Get the current item as a FVector
-		FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex());		
+		for (FEnvQueryInstance::ItemIterator It(this, QueryInstance); It; ++It)
+		{
+			// Get the current item as a FVector
+			FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex());
+			UNavigationSystemV1::K2_ProjectPointToNavigation(GetWorld(), ItemLocation, ItemLocation, nullptr, nullptr);
 
-		//if (!CanNavigateToPoint(character, actorLocation, ItemLocation)) 
-		//{
-		//	It.ForceItemState(EEnvItemStatus::Failed);
-		//	continue;
-		//}
-				
-		// Do we have clear Line of sight to the location?
-		if (CanSeePoint(contextLocation, ItemLocation))
-		{
-			//closetLocation = UFunctionLibrary::GetClosestLocation(ItemLocation, closetLocation, QueryOwner->GetOwner()->GetActorLocation());
-			// Set the location as passed
-			It.ForceItemState(EEnvItemStatus::Passed);
-		}
-		// We don't have line of Sight to the target
-		else
-		{
+			//if (!CanNavigateToPoint(character, actorLocation, ItemLocation)) 
+			//{
+			//	It.ForceItemState(EEnvItemStatus::Failed);
+			//	continue;
+			//}
+
+			// Do we have clear Line of sight to the location?
+			//if (CanSeePoint(contextLocation, ItemLocation))
+			//{
+			//	//closetLocation = UFunctionLibrary::GetClosestLocation(ItemLocation, closetLocation, QueryOwner->GetOwner()->GetActorLocation());
+			//	// Set the location as passed
+			//	It.ForceItemState(EEnvItemStatus::Passed);
+			//}
+			//// We don't have line of Sight to the target
+			//else
+			//{
 			It.ForceItemState(EEnvItemStatus::Failed);
+			//}
 		}
 	}
 }

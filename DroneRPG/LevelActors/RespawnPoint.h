@@ -14,6 +14,7 @@ class DRONERPG_API ARespawnPoint : public AKeyActor
 
 public:
 	ARespawnPoint();
+	FVector GetSpawnLocation();
 	void SpawnTeam();
 
 	virtual void BeginPlay() override;
@@ -24,7 +25,7 @@ public:
 	int32 GetTeamSize() const { return teamSize; }
 	void SetTeamSize(int32 inTeamSize) { teamSize = inTeamSize; }
 	int32 GetTeam() const { return team; }
-	void SetTeam(int32 val) { team = val; }
+	void SetTeam(int32 val);
 private:
 	void SetupParticles();
 	int32 team;

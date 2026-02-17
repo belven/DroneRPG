@@ -48,7 +48,6 @@ protected:
 	static const FName FireRightBinding;
 
 	virtual void PlayerTick(float DeltaTime) override;
-	void FireShot(const FVector& FireDirection);
 	void UseTool();
 	void StopUsingTool();
 	void CalculateMovement(float DeltaSeconds) const;
