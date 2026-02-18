@@ -1,4 +1,6 @@
 #include "EvadingLocationQueryTest.h"
+
+#include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -25,23 +27,34 @@ bool UEvadingLocationQueryTest::CanSeePoint(const FVector& contextLocation, cons
 	TArray<AActor*> ignore;
 	bool canSee = true;
 	TArray<FHitResult> hits;
+	FVector endLoction = ItemLocation;
 
 	// Create a sphere trace, slightly larger than the characters capsule, so we make sure there's enough room to shoot
-	UKismetSystemLibrary::SphereTraceMulti(GetWorld(), ItemLocation, contextLocation, 20, ETraceTypeQuery::TraceTypeQuery1, true, ignore, EDrawDebugTrace::None, hits, true);
+	UKismetSystemLibrary::SphereTraceMulti(GetWorld(), ItemLocation, contextLocation, 20, TraceTypeQuery1, true, ignore, EDrawDebugTrace::None, hits, true);
 
 	for (FHitResult hit : hits)
 	{
-		// Did we hit something?
-		if (hit.bBlockingHit && !hit.GetActor()->Tags.Contains("Floor"))
+		AActor* actor = hit.GetActor();
+
+		if (IsValid(actor)) 
 		{
-			// If we hit something that's not are target FIRST, then there's something else in the way, and we should invalidate that location
-			if (hit.GetActor()->GetComponentsCollisionResponseToChannel(ECC_Pawn) == ECR_Block && !hit.GetActor()->StaticClass()->IsChildOf(ADroneRPGCharacter::StaticClass()))
+			// Did we hit something?
+			if (hit.bBlockingHit && !actor->Tags.Contains("Floor"))
 			{
-				canSee = false;
-				break;
+				// If we hit something that's not are target FIRST, then there's something else in the way, and we should invalidate that location
+				if (actor->GetComponentsCollisionResponseToChannel(ECC_Pawn) == ECR_Block && !actor->StaticClass()->IsChildOf(ADroneRPGCharacter::StaticClass()))
+				{
+					canSee = false;
+					endLoction = hit.Location;
+					break;
+				}
 			}
 		}
 	}
+
+	FColor color = canSee? FColor::Yellow : FColor::Red;
+	//DrawDebugLine(GetWorld(), contextLocation, endLoction, color, false, 0.5);
+	//DrawDebugSphere(GetWorld(), endLoction, 300, 10, color, false, 0.5);
 	return canSee;
 }
 
@@ -59,16 +72,20 @@ void UEvadingLocationQueryTest::RunTest(FEnvQueryInstance& QueryInstance) const
 
 	if (contextLocation != FVector::ZeroVector) 
 	{
+		UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld());
 		for (FEnvQueryInstance::ItemIterator It(this, QueryInstance); It; ++It)
 		{
 			// Get the current item as a FVector
 			FVector ItemLocation = GetItemLocation(QueryInstance, It.GetIndex());
+			FNavLocation Projected;
+			NavSys->ProjectPointToNavigation(ItemLocation, Projected, FVector(1000, 1000, 1000), nullptr, nullptr);
+			ItemLocation = Projected.Location;
 
 			// Do we have clear Line of sight to the location?
 			if (CanSeePoint(contextLocation, ItemLocation))
 			{
 				// Set the location as passed
-				It.ForceItemState(EEnvItemStatus::Passed);
+				It.ForceItemState(EEnvItemStatus::Passed, 1);
 			}
 			// We don't have line of Sight to the target
 			else

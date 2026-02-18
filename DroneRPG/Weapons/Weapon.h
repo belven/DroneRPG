@@ -33,6 +33,7 @@ public:
 	virtual ADroneProjectile* SpawnProjectile(FVector gunLocation, FRotator FireRotation);
 
 	void SetActive(bool inActiveState);
+	bool IsActive() { return isActive; }
 	UE::Math::TVector<double> GetFireDirection();
 
 protected:

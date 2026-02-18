@@ -157,7 +157,9 @@ void ADroneHUD::DrawCombatantIndicators(UCombatantComponent* combatant)
 			}
 
 			ADroneBaseAI* ai = Cast<ADroneBaseAI>(combatant->GetOwner()->GetInstigatorController());
-			if (IsValid(ai))
+
+			bool showDebug = false;
+			if (IsValid(ai) && showDebug)
 			{
 				args.Add(FStringFormatArg(combatant->GetCombatantName()));
 				args.Add(FStringFormatArg(ai->GetStateString(ai->GetCurrentState())));

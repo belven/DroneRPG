@@ -120,12 +120,14 @@ void AAsteroidField::CreateSpawnPoint(TArray<ARespawnPoint*>& respawnPoints, int
 	ARespawnPoint* respawn = GetWorld()->SpawnActor<ARespawnPoint>(ARespawnPoint::StaticClass(), newLocation, newLocation.Rotation());
 	respawn->SetTeam(team);
 	respawn->SetTeamSize(5);
+	respawn->SetSize(minDist / 2);
 	respawnPoints.Add(respawn);
 }
 
 void AAsteroidField::CreateObjective(const FVector& centre)
 {
-	GetWorld()->SpawnActor<AObjective>(AObjective::StaticClass(), centre, centre.Rotation());
+	AObjective* objective =	GetWorld()->SpawnActor<AObjective>(AObjective::StaticClass(), centre, centre.Rotation());
+	objective->SetSize(minDist / 2);
 }
 
 void AAsteroidField::BeginPlay()
@@ -136,7 +138,7 @@ void AAsteroidField::BeginPlay()
 	TMap<int32, FNode> nodes;
 	TArray<ARespawnPoint*> respawnPoints;
 
-	const float distance = radius * .4;
+	float distance = radius * .5;
 
 	const FVector centre(0.f, 0.f, 0.f);
 
@@ -154,25 +156,27 @@ void AAsteroidField::BeginPlay()
 		nodes.Add(lastID++, FNode(newLocation, ENodeType::SpawnPoint));
 	}
 
+	distance -= minDist * 2.1;
+
 	for (int i = 0; i < objectives; ++i)
 	{
 		const float angleStep = 360.f / objectives;
-		const float angleDeg = i * angleStep * FMath::RandRange(0.8, 1.2);
+		const float angleDeg = i * angleStep * FMath::RandRange(0.95, 1.05);
 		const float angleRad = FMath::DegreesToRadians(angleDeg);
 
 		FVector newLocation(centre.X + FMath::Cos(angleRad) * distance, centre.Y + FMath::Sin(angleRad) * distance, centre.Z + zOffset);
 
-		for (auto node : nodes)
-		{
-			if (FVector::Dist(node.Value.location, newLocation) <= minDist)
-			{
-				//newLocation.X -= 50;
-				//newLocation.Y -= 50;
-				FVector Delta = newLocation - centre;
-		//		float Dist = Delta.Size();
-				newLocation -= Delta.GetSafeNormal() * minDist * 1.5;
-			}
-		}
+		//for (auto node : nodes)
+		//{
+		//	if (FVector::Dist(node.Value.location, newLocation) <= minDist)
+		//	{
+		//		//newLocation.X -= 50;
+		//		//newLocation.Y -= 50;
+		//		FVector Delta = newLocation - centre;
+		////		float Dist = Delta.Size();
+		//		newLocation -= Delta.GetSafeNormal() * minDist * 1.5;
+		//	}
+		//}
 
 		nodes.Add(lastID++, FNode(newLocation, ENodeType::Objective));
 	}

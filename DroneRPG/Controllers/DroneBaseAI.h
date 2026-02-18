@@ -59,7 +59,7 @@ public:
 	FTargetData& GetTarget() { return target; }
 
 	UFUNCTION()
-	void OnUnitDied(UCombatantComponent* inKiller);
+	void OnTargetUnitDied(UCombatantComponent* inKiller);
 	void SetTarget(const FTargetData& inTarget);
 
 	bool CompareState(EActionState state);
@@ -68,15 +68,20 @@ public:
 
 	UFUNCTION()
 	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	void DrawNavigationDebug(const FVector& location, FColor colour);
 	void FailedToMoveToLocation(const FVector& location);
 
-	void FindLocationEmptyLocationRequestFinished(TSharedPtr<FEnvQueryResult> Result);
+	void MoveRequestFinished(TSharedPtr<FEnvQueryResult> Result);
 	FVector queryLocation;
+	bool drawDebug;
 	ADroneRPGGameMode* GetGameMode();
+	virtual void StopMovement() override;
+
 private:
 	FTimerHandle TimerHandle_CheckLastLocation;
 
 	float minCaptureDistance;
+	bool isMoving;
 	bool isRequestingMovement;
 	float targetRange;
 	FRotator lookAt;
@@ -111,7 +116,7 @@ private:
 	ADroneRPGCharacter* droneCharacter;
 
 	ADroneRPGCharacter* GetDrone();
-	AActor* FindEnemyTarget(float distance = 0);
+	AActor* FindEnemyTarget();
 
 	void FindTarget();
 	void FindSuitableObjective();
@@ -122,11 +127,12 @@ private:
 	void DefendingObjective();
 	void ReturningToBase();
 	float GetWeaponRange();
-	void RunMoveQuery(FEnvQueryRequest& query, const FVector& inLocation, float inGetRange);
-	void RunMoveQuery(const FVector& location, double radius);
+	void RunMoveQuery(FEnvQueryRequest& query, const FVector& inLocation, float inGetRange, const FString& source);
+	void RunMoveQuery(const FVector& location, double radius, const FString& source);
 	void EvadingDamage();
 	bool IsNotMoving();
 	bool IsTargetInWeaponRange();
+	bool IsTargetInWeaponRange(const FTargetData& targetToCheck);
 	void AttackingTarget();
 	FHitResult LineTraceToLocation(const FVector& startLoc, const FVector& endLocation);
 	bool CanSee(AActor* other, const FVector& startLoc);

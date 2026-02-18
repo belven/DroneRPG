@@ -175,7 +175,7 @@ void ADroneRPGPlayerController::ChangeView()
 	for (auto combatant : GetGameMode()->GetCombatants())
 	{
 
-		if (IsValid(combatant) && combatant != GetDrone()->GetCombatantComponent())
+		if (IsValid(combatant) && (!IsValid(GetDrone()) || combatant != GetDrone()->GetCombatantComponent()))
 		{
 			float combatScore = combatant->GetCombatScore();
 

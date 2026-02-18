@@ -70,7 +70,7 @@ void APlasmaStormEvent::TriggerEvent()
 	GetOverlappingActors(overlaps);
 
 	// Get drones within our radius, deal damage to them
-	for (auto actor : overlaps) 
+	for (auto actor : overlaps)
 	{
 		UHealthComponent* healthComponent = mGetHealthComponent(actor);
 		if (IsValid(healthComponent))
@@ -119,14 +119,21 @@ float APlasmaStormEvent::GetRadius()
 void APlasmaStormEvent::Move()
 {
 	// We're not a Player hunter, find a random location to move to, within a radius
-	if (!isPlayerHunter) 
+	if (!isPlayerHunter)
 	{
 		mRandomPointInNavigableRadius(GetActorLocation(), travelDistance, targetLocation);
 	}
 	// Otherwise, find a random player and move to their location
-	else if (GetGameMode()->GetCombatants().Num() > 0) 
+	else if (GetGameMode()->GetCombatants().Num() > 0)
 	{
-		targetLocation.Location = mGetRandomObject(GetGameMode()->GetCombatants())->GetOwner()->GetActorLocation();
+		UCombatantComponent* combatant = NULL;
+
+		while (!IsValid(combatant))
+		{
+			combatant = mGetRandomObject(GetGameMode()->GetCombatants());
+		}
+
+		targetLocation.Location = combatant->GetOwner()->GetActorLocation();
 	}
 
 	mSetTimer(TimerHandle_Move, &APlasmaStormEvent::Move, moveRate);

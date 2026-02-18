@@ -19,8 +19,8 @@
 ADroneRPGCharacter::ADroneRPGCharacter()
 {
 	// Set size for player capsule
-	const float capWidth = 300;
-	const float capHeight = 120;
+	const float capWidth = 50;
+	const float capHeight = 100;
 
 	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
@@ -53,7 +53,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 6000.f;
+	CameraBoom->TargetArmLength = 8000;
 	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
@@ -62,7 +62,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
-	TopDownCameraComponent->SetOrthoWidth(10000);
+	TopDownCameraComponent->SetOrthoWidth(6000);
 
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
@@ -101,6 +101,9 @@ FColor ADroneRPGCharacter::GetTeamColour() {
 void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	float Radius = GetCapsuleComponent()->GetScaledCapsuleRadius();
+	float HalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
 
 #if WITH_EDITOR
 	SetFolderPath(TEXT("Characters"));

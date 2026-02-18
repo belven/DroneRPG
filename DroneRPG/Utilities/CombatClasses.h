@@ -36,6 +36,11 @@ struct FTargetData
 		return healthComponent != NULL ? healthComponent->IsAlive() : false;
 	}
 
+	FString GetCombatantName()
+	{
+		return combatantComponent != NULL ? combatantComponent->GetCombatantName() : "Unknown";
+	}
+
 	int32 GetTeam() const
 	{
 		return combatantComponent != NULL ? combatantComponent->GetTeam() : -10;

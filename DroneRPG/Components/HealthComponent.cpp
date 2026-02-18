@@ -28,7 +28,7 @@ UHealthComponent::UHealthComponent()
 	minWipe = -0.2;
 	wipeValue = FMath::RandRange(minWipe, maxWipe);
 
-	healthParticleSize = 50;
+	healthParticleSize = 25;
 
 	static ConstructorHelpers::FObjectFinder<UMaterialInstanceConstant> shieldInstance(TEXT("/ Script/Engine.MaterialInstanceConstant'/Game/TopDownCPP/Materials/Shield_Inst.Shield_Inst'"));
 
@@ -159,10 +159,11 @@ bool UHealthComponent::HasShields()
 void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	//GetOwner()->GetCapsuleComponent()->GetScaledCapsuleRadius()
 
 	// Set up particle effect defaults
 	healthParticle = mSpawnSystemAttached(auraSystem, TEXT("healthParticle"));
-	healthParticle->SetFloatParameter(TEXT("Radius"), 225);
+	healthParticle->SetFloatParameter(TEXT("Radius"), 120);
 	healthParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Green));
 	healthParticle->SetFloatParameter(TEXT("Size"), healthParticleSize);
 
@@ -194,9 +195,9 @@ void UHealthComponent::SetTeamColour(FColor colour)
 	teamColour = colour;
 
 	FLinearColor col2 = FLinearColor(colour);
-	col2.R *= 300;
-	col2.G *= 300;
-	col2.B *= 300;
+	//col2.R *= 300;
+	//col2.G *= 300;
+	//col2.B *= 300;
 	col2.A = 1;
 	SetMaterialColour(TEXT("Emissive Color"), col2);
 }

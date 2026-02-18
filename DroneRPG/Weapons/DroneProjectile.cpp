@@ -72,8 +72,9 @@ void ADroneProjectile::ActorDetected(AActor* OtherActor)
 {
 	bool isProjectile = OtherActor->GetClass() == StaticClass();
 
+	bool isObjective = OtherActor->Tags.Contains("Objective");
 	// Only add impulse and destroy projectile if we hit a physics
-	if (!isProjectile)
+	if (!isProjectile && !isObjective)
 	{
 		FTargetData targetData = mCreateTargetData(OtherActor);
 
