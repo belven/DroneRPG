@@ -101,7 +101,7 @@ void ARespawnPoint::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	FTargetData data = UCombatClasses::CreateTargetData(OtherActor);
+	FCombatantData data = UCombatClasses::CreateCombatantData(OtherActor);
 	if (data.isSet)
 	{
 		if (data.GetTeam() == GetTeam() && !data.healthComponent->IsHealthy())

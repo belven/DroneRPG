@@ -38,7 +38,7 @@ public:
 
 	bool IsTargetValid() { return IsTargetValid(GetTarget()); };
 
-	bool IsTargetValid(FTargetData& data);
+	bool IsTargetValid(FCombatantData& data);
 
 	UFUNCTION()
 	void CheckLastLocation();
@@ -56,11 +56,11 @@ public:
 	void SetCurrentGameMode(EGameModeType val);
 	FString GetStateString(EActionState state);
 
-	FTargetData& GetTarget() { return target; }
+	FCombatantData& GetTarget() { return target; }
 
 	UFUNCTION()
 	void OnTargetUnitDied(UCombatantComponent* inKiller);
-	void SetTarget(const FTargetData& inTarget);
+	void SetTarget(const FCombatantData& inTarget);
 
 	bool CompareState(EActionState state);
 	void ActorSeen(AActor* Actor);
@@ -110,7 +110,7 @@ private:
 	AObjective* targetObjective;
 
 	UPROPERTY()
-	FTargetData target;
+	FCombatantData target;
 
 	UPROPERTY()
 	ADroneRPGCharacter* droneCharacter;
@@ -132,7 +132,7 @@ private:
 	void EvadingDamage();
 	bool IsNotMoving();
 	bool IsTargetInWeaponRange();
-	bool IsTargetInWeaponRange(const FTargetData& targetToCheck);
+	bool IsTargetInWeaponRange(const FCombatantData& targetToCheck);
 	void AttackingTarget();
 	FHitResult LineTraceToLocation(const FVector& startLoc, const FVector& endLocation);
 	bool CanSee(AActor* other, const FVector& startLoc);

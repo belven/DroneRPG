@@ -20,7 +20,7 @@
 
 #define  mObjectiveLocation targetObjective->GetActorLocation()
 
-ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), currentState(EActionState::Start), previousState(EActionState::Start), targetObjective(nullptr), target(FTargetData())
+ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), currentState(EActionState::Start), previousState(EActionState::Start), targetObjective(nullptr), target(FCombatantData())
 {
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	drawDebug = DRONE_DEBUG_ENABLED;
@@ -106,7 +106,7 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	// If this is hit, then we've likely died and need to reset our state!
 	else
 	{
-		SetTarget(FTargetData());
+		SetTarget(FCombatantData());
 		SetCurrentState(EActionState::Start);
 		StopMovement();
 		SetFiringState(false);
@@ -192,7 +192,7 @@ FVector ADroneBaseAI::GetPredictedLocation(AActor* actor)
 	return actor->GetActorLocation() + (actor->GetVelocity() * time);
 }
 
-bool ADroneBaseAI::IsTargetValid(FTargetData& data)
+bool ADroneBaseAI::IsTargetValid(FCombatantData& data)
 {
 	if (data.IsValid() && data.IsAlive() && data.GetTeam() != GetDrone()->GetTeam())
 	{
@@ -296,7 +296,7 @@ bool ADroneBaseAI::IsTargetInWeaponRange()
 	return IsTargetInWeaponRange(GetTarget());
 }
 
-bool ADroneBaseAI::IsTargetInWeaponRange(const FTargetData& targetToCheck)
+bool ADroneBaseAI::IsTargetInWeaponRange(const FCombatantData& targetToCheck)
 {
 	return FVector::Dist(targetToCheck.GetActorLocation(), mDroneLocation) <= GetWeaponRange();
 }
@@ -320,7 +320,7 @@ float ADroneBaseAI::GetWeaponRange()
 
 // Region AI State machine
 
-void ADroneBaseAI::SetTarget(const FTargetData& inTarget)
+void ADroneBaseAI::SetTarget(const FCombatantData& inTarget)
 {
 	if (target.isSet)
 	{
@@ -354,7 +354,7 @@ bool ADroneBaseAI::GetNextVisibleTarget()
 
 	for (auto seen : actorsSeen)
 	{
-		FTargetData data = mCreateTargetData(seen);
+		FCombatantData data = mCreateCombatantData(seen);
 
 		if (IsTargetValid(data))
 		{
@@ -598,7 +598,7 @@ void ADroneBaseAI::PerformActions()
 void ADroneBaseAI::OnTargetUnitDied(UCombatantComponent* inKiller)
 {
 	UE_LOG(LogDroneAI, Log, TEXT("%s's target ( %s) died "), *GetDrone()->GetDroneName(), *GetTarget().GetCombatantName());
-	SetTarget(FTargetData());
+	SetTarget(FCombatantData());
 
 	if (CompareState(EActionState::AttackingTarget))
 	{
@@ -627,7 +627,7 @@ void ADroneBaseAI::ActorSeen(AActor* Actor)
 	if (!IsTargetValid())
 	{
 		UE_LOG(LogDroneAI, Log, TEXT("%s's actor seen"), *GetDrone()->GetDroneName());
-		FTargetData data = mCreateTargetData(Actor);
+		FCombatantData data = mCreateCombatantData(Actor);
 
 		if (IsTargetValid(data))
 		{
@@ -647,7 +647,7 @@ void ADroneBaseAI::LostSightOfActor(AActor* Actor, const FVector& lastSeenLocati
 		}
 		else if (!GetNextVisibleTarget())
 		{
-			SetTarget(FTargetData());
+			SetTarget(FCombatantData());
 		}
 	}
 }
@@ -702,7 +702,7 @@ void ADroneBaseAI::DroneAttacked(AActor* attacker)
 	// We have no target
 	else if (!IsTargetValid())
 	{
-		FTargetData data = mCreateTargetData(attacker);
+		FCombatantData data = mCreateCombatantData(attacker);
 
 		if (IsTargetValid(data))
 		{
@@ -718,7 +718,7 @@ void ADroneBaseAI::CheckLastLocation()
 	{
 		GetDrone()->Respawn();
 		SetCurrentState(EActionState::Start);
-		SetTarget(FTargetData());
+		SetTarget(FCombatantData());
 	}
 	lastLocation = FVector::ZeroVector;
 }

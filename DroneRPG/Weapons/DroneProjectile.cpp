@@ -53,17 +53,17 @@ void ADroneProjectile::BeginPlay()
 }
 
 
-void ADroneProjectile::SetTarget(FTargetData targetData)
+void ADroneProjectile::SetTarget(FCombatantData targetData)
 {
 	target = targetData;
 }
 
-void ADroneProjectile::HItValidTarget(const FTargetData& targetData)
+void ADroneProjectile::HItValidTarget(const FCombatantData& targetData)
 {
 	targetData.healthComponent->ReceiveDamage(GetDamage(), shooter);
 }
 
-bool ADroneProjectile::CheckIfValidTarget(const FTargetData& targetData)
+bool ADroneProjectile::CheckIfValidTarget(const FCombatantData& targetData)
 {
 	return targetData.IsValid() && targetData.IsAlive() && targetData.GetTeam() != GetShooter()->GetTeam();
 }
@@ -76,7 +76,7 @@ void ADroneProjectile::ActorDetected(AActor* OtherActor)
 	// Only add impulse and destroy projectile if we hit a physics
 	if (!isProjectile && !isObjective)
 	{
-		FTargetData targetData = mCreateTargetData(OtherActor);
+		FCombatantData targetData = mCreateCombatantData(OtherActor);
 
 		// Did we hit a valid target?
 		if (CheckIfValidTarget(targetData))

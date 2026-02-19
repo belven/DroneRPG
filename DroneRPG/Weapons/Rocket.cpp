@@ -37,7 +37,7 @@ ARocket::ARocket()
 	sphereComponent->OnComponentBeginOverlap.AddUniqueDynamic(this, &ARocket::BeginOverlap);
 }
 
-bool ARocket::SetTargetIfValid(const FTargetData& targetData)
+bool ARocket::SetTargetIfValid(const FCombatantData& targetData)
 {
 	bool result = false;
 	if (CheckIfValidTarget(targetData))
@@ -59,7 +59,7 @@ void ARocket::TargetDied(UCombatantComponent* inKiller)
 	}
 }
 
-void ARocket::SetTarget(FTargetData targetData)
+void ARocket::SetTarget(FCombatantData targetData)
 {
 	Super::SetTarget(targetData);
 
@@ -88,7 +88,7 @@ void ARocket::DealDamage()
 
 	for (auto overlap : overlaps)
 	{
-		FTargetData targetData = mCreateTargetData(overlap);
+		FCombatantData targetData = mCreateCombatantData(overlap);
 		if (CheckIfValidTarget(targetData))
 		{
 			targetData.healthComponent->ReceiveDamage(GetDamage(), GetShooter());
@@ -105,7 +105,7 @@ void ARocket::TargetOverlappingActors()
 
 		for (auto overlap : overlaps)
 		{
-			if (SetTargetIfValid(mCreateTargetData(overlap)))
+			if (SetTargetIfValid(mCreateCombatantData(overlap)))
 			{
 				break;
 			}
@@ -120,7 +120,7 @@ void ARocket::SetShooter(UCombatantComponent* val)
 	TargetOverlappingActors();
 }
 
-void ARocket::HItValidTarget(const FTargetData& targetData)
+void ARocket::HItValidTarget(const FCombatantData& targetData)
 {
 	DealDamage();
 }
@@ -129,6 +129,6 @@ void ARocket::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 {
 	if (IsValid(GetShooter()) && GetShooter()->GetTeam() != -1 && !target.isSet)
 	{
-		SetTargetIfValid(mCreateTargetData(OtherActor));
+		SetTargetIfValid(mCreateCombatantData(OtherActor));
 	}
 }

@@ -36,9 +36,9 @@ protected:
 	UPROPERTY()
 	USphereComponent* CollisionComp;
 
-	virtual void SetTarget(FTargetData targetData);
-	virtual	void HItValidTarget(const FTargetData& targetData);
-	bool CheckIfValidTarget(const FTargetData& targetData);
+	virtual void SetTarget(FCombatantData targetData);
+	virtual	void HItValidTarget(const FCombatantData& targetData);
+	bool CheckIfValidTarget(const FCombatantData& targetData);
 	void ActorDetected(AActor* OtherActor);
 
 	UPROPERTY()
@@ -54,7 +54,7 @@ public:
 	static const float Default_Initial_Lifespan;
 
 	UPROPERTY()
-	FTargetData target;
+	FCombatantData target;
 
 	FORCEINLINE UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
 

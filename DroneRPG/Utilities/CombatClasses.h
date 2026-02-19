@@ -7,18 +7,18 @@
 #define mGetComponent(actor, clazz) Cast<clazz>(actor->GetComponentByClass(clazz::StaticClass()))
 #define mGetCombatantComponent(actor) mGetComponent(actor, UCombatantComponent)
 #define mGetHealthComponent(actor) mGetComponent(actor, UHealthComponent)
-#define mCreateTargetData UCombatClasses::CreateTargetData
+#define mCreateCombatantData UCombatClasses::CreateCombatantData
 
 USTRUCT(BlueprintType)
-struct FTargetData
+struct FCombatantData
 {
 	GENERATED_USTRUCT_BODY()
 
-	FTargetData() : combatantComponent(nullptr), healthComponent(nullptr)
+	FCombatantData() : combatantComponent(nullptr), healthComponent(nullptr)
 	{
 	}
 
-	FTargetData(UCombatantComponent* inCombatantComponent, UHealthComponent* inHealthComponent)
+	FCombatantData(UCombatantComponent* inCombatantComponent, UHealthComponent* inHealthComponent)
 		: isSet(true),
 		combatantComponent(inCombatantComponent), healthComponent(inHealthComponent)
 	{
@@ -69,14 +69,14 @@ class DRONERPG_API UCombatClasses : public UObject
 {
 	GENERATED_BODY()
 public:
-	static FTargetData CreateTargetData(AActor* actor);
+	static FCombatantData CreateCombatantData(AActor* actor);
 };
 
-inline FTargetData UCombatClasses::CreateTargetData(AActor* actor)
+inline FCombatantData UCombatClasses::CreateCombatantData(AActor* actor)
 {
 	if (IsValid(actor))
 	{
-		return FTargetData(mGetCombatantComponent(actor), mGetHealthComponent(actor));
+		return FCombatantData(mGetCombatantComponent(actor), mGetHealthComponent(actor));
 	}
-	return FTargetData();
+	return FCombatantData();
 }
