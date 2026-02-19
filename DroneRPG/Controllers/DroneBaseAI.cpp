@@ -23,7 +23,7 @@
 ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), isFiring(false), currentState(EActionState::Start), previousState(EActionState::Start), targetObjective(nullptr), target(FTargetData())
 {
 	AActor::SetIsTemporarilyHiddenInEditor(true);
-	drawDebug = false;
+	drawDebug = DRONE_DEBUG_ENABLED;
 
 	PrimaryActorTick.TickInterval = 0.3;
 	minCaptureDistance = 100;
@@ -103,9 +103,10 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 
 		PerformActions();
 	}
+	// If this is hit, then we've likely died and need to reset our state!
 	else
 	{
-		// If this is hit, then we've likely died and need to reset our state!
+		SetTarget(FTargetData());
 		SetCurrentState(EActionState::Start);
 		StopMovement();
 		SetFiringState(false);
@@ -117,14 +118,7 @@ void ADroneBaseAI::EvadingDamage()
 	if (IsNotMoving())
 	{
 		UE_LOG(LogDroneAI, Log, TEXT("%s evading damage"), *GetDrone()->GetDroneName());
-		/*	if (CompareState(EActionState::AttackingTarget) || CompareState(EActionState::MovingToObjective))
-			{*/
 		RunMoveQuery(FindEvadeLocationRequest, GetTarget().GetActorLocation(), GetWeaponRange(), "EvadingDamage");
-		//}
-		//else if (IsValid(GetTargetObjective()))
-		//{
-		//	RunMoveQuery(FindEvadeLocationRequest, GetTargetObjective()->GetActorLocation(), GetTargetObjective()->GetSize());
-		//}
 	}
 }
 
@@ -200,9 +194,7 @@ FVector ADroneBaseAI::GetPredictedLocation(AActor* actor)
 
 bool ADroneBaseAI::IsTargetValid(FTargetData& data)
 {
-	//&& IsTargetInWeaponRange(data)
-	if (data.IsValid() && data.IsAlive() && data.GetTeam() != GetDrone()->GetTeam()
-		)
+	if (data.IsValid() && data.IsAlive() && data.GetTeam() != GetDrone()->GetTeam())
 	{
 		return true;
 	}
@@ -347,6 +339,10 @@ void ADroneBaseAI::SetTarget(const FTargetData& inTarget)
 	{
 		SetCurrentState(EActionState::AttackingTarget);
 		StopMovement();
+	}
+	else if (!target.isSet && CompareState(EActionState::AttackingTarget))
+	{
+		SetCurrentState(EActionState::Start);
 	}
 }
 

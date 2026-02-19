@@ -1,6 +1,7 @@
 #include "EvadingLocationQueryTest.h"
 
 #include "NavigationSystem.h"
+#include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -22,6 +23,11 @@ UEvadingLocationQueryTest::UEvadingLocationQueryTest(const FObjectInitializer& O
 	ScoringEquation = EEnvTestScoreEquation::Constant;
 }
 
+EDrawDebugTrace::Type UEvadingLocationQueryTest::GetDrawDebug() const
+{
+	return DRONE_EQS_DEBUG_ENABLED ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None;
+}
+
 bool UEvadingLocationQueryTest::CanSeePoint(const FVector& contextLocation, const FVector& ItemLocation) const
 {
 	TArray<AActor*> ignore;
@@ -30,7 +36,7 @@ bool UEvadingLocationQueryTest::CanSeePoint(const FVector& contextLocation, cons
 	FVector endLoction = ItemLocation;
 
 	// Create a sphere trace, slightly larger than the characters capsule, so we make sure there's enough room to shoot
-	UKismetSystemLibrary::SphereTraceMulti(GetWorld(), ItemLocation, contextLocation, 20, TraceTypeQuery1, true, ignore, EDrawDebugTrace::None, hits, true);
+	UKismetSystemLibrary::SphereTraceMulti(GetWorld(), ItemLocation, contextLocation, 20, TraceTypeQuery1, true, ignore, GetDrawDebug(), hits, true);
 
 	for (FHitResult hit : hits)
 	{
@@ -52,9 +58,12 @@ bool UEvadingLocationQueryTest::CanSeePoint(const FVector& contextLocation, cons
 		}
 	}
 
-	FColor color = canSee? FColor::Yellow : FColor::Red;
-	//DrawDebugLine(GetWorld(), contextLocation, endLoction, color, false, 0.5);
-	//DrawDebugSphere(GetWorld(), endLoction, 300, 10, color, false, 0.5);
+	if (DRONE_DEBUG_ENABLED) 
+	{
+		FColor color = canSee ? FColor::Yellow : FColor::Red;
+		DrawDebugLine(GetWorld(), contextLocation, endLoction, color, false, 0.5);
+		DrawDebugSphere(GetWorld(), endLoction, 300, 10, color, false, 0.5);
+	}
 	return canSee;
 }
 

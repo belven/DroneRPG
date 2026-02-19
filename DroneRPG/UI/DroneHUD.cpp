@@ -1,5 +1,7 @@
 #include "DroneHUD.h"
 #include <Kismet/GameplayStatics.h>
+
+#include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Controllers/DroneBaseAI.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
@@ -158,8 +160,7 @@ void ADroneHUD::DrawCombatantIndicators(UCombatantComponent* combatant)
 
 			ADroneBaseAI* ai = Cast<ADroneBaseAI>(combatant->GetOwner()->GetInstigatorController());
 
-			bool showDebug = false;
-			if (IsValid(ai) && showDebug)
+			if (IsValid(ai) && DRONE_AI_DEBUG_ENABLED)
 			{
 				args.Add(FStringFormatArg(combatant->GetCombatantName()));
 				args.Add(FStringFormatArg(ai->GetStateString(ai->GetCurrentState())));

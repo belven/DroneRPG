@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "EnvironmentQuery/EnvQueryTest.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "EvadingLocationQueryTest.generated.h"
 
 UCLASS()
@@ -10,6 +11,7 @@ class DRONERPG_API UEvadingLocationQueryTest : public UEnvQueryTest
 public:
 
 	UEvadingLocationQueryTest(const FObjectInitializer& ObjectInitializer);
+	EDrawDebugTrace::Type GetDrawDebug() const;
 	virtual void RunTest(FEnvQueryInstance& QueryInstance) const override;
 	bool CanSeePoint(const FVector& contextLocation, const FVector& ItemLocation) const;
 

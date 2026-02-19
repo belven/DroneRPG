@@ -3,8 +3,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "../Plugins/FX/Niagara/Source/Niagara/Classes/NiagaraSystem.h"
 #include "Components/SphereComponent.h"
+#include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/Components/HealthComponent.h"
-#include "DroneRPG/Utilities/FunctionLibrary.h"
 
 const float ARocket::Default_Initial_Speed = 2500.0f;
 const float ARocket::Default_Initial_Lifespan = 4.5f;
@@ -30,7 +30,7 @@ ARocket::ARocket()
 	}
 
 	sphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RocketOverlap"));
-	sphereComponent->SetSphereRadius(1000);
+	sphereComponent->SetSphereRadius(500);
 	sphereComponent->SetupAttachment(GetRootComponent());
 	sphereComponent->SetCollisionProfileName("Projectile");
 	sphereComponent->SetGenerateOverlapEvents(true);
@@ -48,11 +48,37 @@ bool ARocket::SetTargetIfValid(const FTargetData& targetData)
 	return result;
 }
 
+void ARocket::TargetDied(UCombatantComponent* inKiller)
+{
+	TargetOverlappingActors();
+
+	if(!target.isSet)
+	{
+		// TODO create explosion effect for this and DealDamage
+		Destroy();
+	}
+}
+
 void ARocket::SetTarget(FTargetData targetData)
 {
 	Super::SetTarget(targetData);
-	ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
-	ProjectileMovement->bIsHomingProjectile = true;
+
+	if (targetData.isSet)
+	{
+		if (GetShooter() == targetData.combatantComponent)
+		{
+			UE_LOG(LogDroneAI, Log, TEXT("%s's targeted itself"), *GetShooter()->GetCombatantName());
+		}
+
+		ProjectileMovement->HomingTargetComponent = target.combatantComponent->GetOwner()->GetRootComponent();
+		ProjectileMovement->bIsHomingProjectile = true;
+		targetData.healthComponent->OnUnitDied.AddUniqueDynamic(this, &ARocket::TargetDied);
+	}
+	else
+	{
+		ProjectileMovement->bIsHomingProjectile = false;
+		ProjectileMovement->HomingTargetComponent = nullptr;
+	}
 }
 
 void ARocket::DealDamage()
@@ -70,10 +96,8 @@ void ARocket::DealDamage()
 	}
 }
 
-void ARocket::SetShooter(UCombatantComponent* val)
+void ARocket::TargetOverlappingActors()
 {
-	Super::SetShooter(val);
-
 	if (IsValid(GetShooter()) && GetShooter()->GetTeam() != -1 && !target.isSet)
 	{
 		TArray<AActor*> overlaps;
@@ -87,6 +111,13 @@ void ARocket::SetShooter(UCombatantComponent* val)
 			}
 		}
 	}
+}
+
+void ARocket::SetShooter(UCombatantComponent* val)
+{
+	Super::SetShooter(val);
+
+	TargetOverlappingActors();
 }
 
 void ARocket::HItValidTarget(const FTargetData& targetData)

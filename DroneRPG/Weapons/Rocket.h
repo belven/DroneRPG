@@ -18,8 +18,11 @@ public:
 	static const float Default_Initial_Speed;
 	static const float Default_Initial_Lifespan;
 
+	UFUNCTION()
+	void TargetDied(UCombatantComponent* inKiller);
 	virtual  void SetTarget(FTargetData targetData) override;
 	void DealDamage();
+	void TargetOverlappingActors();
 	virtual	void SetShooter(UCombatantComponent* val) override;
 
 	virtual	void HItValidTarget(const FTargetData& targetData) override;
