@@ -55,6 +55,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	void SetAngle(UNiagaraComponent* comp, float angle);
 
 	void CalculateOwnership();
 	void UpdateColour();
@@ -104,4 +105,10 @@ private:
 
 	UPROPERTY()
 		UNiagaraSystem* auraSystem;
+
+		UPROPERTY()
+		UNiagaraComponent* currentTeamParticles;
+
+		UPROPERTY()
+		UNiagaraComponent* transitioningParticles;
 };

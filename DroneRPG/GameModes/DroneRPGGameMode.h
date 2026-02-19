@@ -4,6 +4,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "DroneRPGGameMode.generated.h"
 
+class AObjective;
 class UCombatantComponent;
 class ADroneRPGCharacter;
 
@@ -41,6 +42,13 @@ public:
 	}
 
 	void AddCombatant(UCombatantComponent* combatant);
+
+	TArray<::AObjective*>& GetObjectives()
+	{
+		return objectives;
+	}
+
+	void AddObjective(AObjective* newObjective);
 protected:
 	EGameModeType gameMode;
 	TMap<int32, FTeamScore> teamScores;
@@ -51,4 +59,7 @@ protected:
 
 	UPROPERTY()
 	TArray <UCombatantComponent*> combatants;
+
+	UPROPERTY()
+	TArray <AObjective*> objectives;
 };

@@ -144,3 +144,8 @@ void ADroneRPGGameMode::AddCombatant(UCombatantComponent* combatant)
 		combatants.AddUnique(combatant);
 	}
 }
+
+void ADroneRPGGameMode::AddObjective(AObjective* newObjective)
+{
+	objectives.AddUnique(newObjective);
+}

@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include "DroneBaseAI.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/DroneRPG.h"
@@ -26,7 +27,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	drawDebug = DRONE_DEBUG_ENABLED;
 
 	PrimaryActorTick.TickInterval = 0.3;
-	minCaptureDistance = 100;
+	minCaptureDistance = 200;
 
 	canCheckForEnemies = true;
 	currentGameMode = EGameModeType::Domination;
@@ -36,7 +37,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	sightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
 	// Set up sight config for AI perception
-	sightConfig->PeripheralVisionAngleDegrees = 270;
+	sightConfig->PeripheralVisionAngleDegrees = 350;
 
 	// This section is important, as without setting at least bDetectNeutrals to true, the AI will never perceive anything
 	// Still not tried to set this up correctly at all
@@ -128,7 +129,7 @@ void ADroneBaseAI::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 	//GetDrone()->GetCameraBoom()->TargetArmLength = 1500;
 
-	float range = 4000;
+	float range = 6000;
 
 	sightConfig->SightRadius = range * .8;
 	sightConfig->LoseSightRadius = range;
@@ -396,7 +397,7 @@ void ADroneBaseAI::FindSuitableObjective()
 
 void ADroneBaseAI::FindObjective()
 {
-	TArray<AObjective*> objectives = mGetActorsInWorld<AObjective>(GetWorld());
+	TArray<AObjective*> objectives = GetGameMode()->GetObjectives();
 
 	mShuffleArray<AObjective*>(objectives);
 

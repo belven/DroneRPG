@@ -27,11 +27,12 @@ AObjective::AObjective()
 	currentColour = FColor::Red;
 
 	keyActorSize = 2000;
-	smallParticle = 150;
-	bigParticle = 300;
+	smallParticle = 25;
+	bigParticle = 50;
 	overlapTimeRate = 5;
-
-	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
+	// 
+//	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Game/TopDownCPP/ParticleEffects/AuraSystem"));
+	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Script/Niagara.NiagaraSystem'/Game/TopDownCPP/ParticleEffects/ObjectiveCaptureParticlesWedge.ObjectiveCaptureParticlesWedge'"));
 
 	if (auraParticleSystem.Succeeded())
 	{
@@ -103,21 +104,39 @@ void AObjective::BeginPlay()
 	objectiveArea->OnComponentBeginOverlap.AddDynamic(this, &AObjective::BeginOverlap);
 	objectiveArea->OnComponentEndOverlap.AddDynamic(this, &AObjective::EndOverlap);
 
-	// Create our particle system
-	captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+	currentTeamParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("currentTeamParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+	transitioningParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("transitioningParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
 	// Set up the systems defaults
-	//captureParticle->SetVectorParameter(TEXT("Box Extent"), FVector(GetSize(), GetSize(), 400));
+	// Create our particle system
+	/*captureParticle = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, RootComponent, TEXT("captureParticle"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 	captureParticle->SetFloatParameter(TEXT("Radius"), GetSize());
 	captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-	captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
+	captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);*/
 
+	currentTeamParticles->SetFloatParameter(TEXT("Radius"), GetSize());
+	currentTeamParticles->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Red));
+	currentTeamParticles->SetFloatParameter(TEXT("Size"), smallParticle);
+	SetAngle(currentTeamParticles, 0);
+
+	transitioningParticles->SetFloatParameter(TEXT("Radius"), GetSize());
+	transitioningParticles->SetFloatParameter(TEXT("Size"), smallParticle);
+	transitioningParticles->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Red));
+	SetAngle(currentTeamParticles, 360);
 	CalculateOwnership();
 
 	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
 	UpdateColour();
 
 	CheckForOverlaps();
+
+	GetGameMode()->AddObjective(this);
+}
+
+void AObjective::SetAngle(UNiagaraComponent* comp, float angle)
+{
+	comp->SetFloatParameter(TEXT("Percent"), angle);
+	comp->SetActive(angle > 10);	
 }
 
 void AObjective::CalculateOwnership()
@@ -146,21 +165,15 @@ void AObjective::UpdateColour()
 {
 	// Check if we have exceeded the minimum control value, if so then we can change the colour to the owning team
 	// Check if the previousAreaOwner and areaOwner are the same, this means the colour can change as the previousAreaOwner isn't an enemy team
-	if (currentControl > minControl && previousAreaOwner == areaOwner)
+	if (currentControl > 0 && previousAreaOwner == areaOwner)
 	{
 		FColor teamColour = GetGameMode()->GetTeamColour(areaOwner);
 
 		if (currentColour != teamColour)
 		{
-			captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(teamColour));
 			currentColour = teamColour;
+			currentTeamParticles->SetColorParameter(TEXT("Colour"), FLinearColor(currentColour));
 		}
-	}
-	// If the control is less than the minimum then it's a neutral 
-	else if (currentControl <= minControl && currentColour != FColor::Red)
-	{
-		captureParticle->SetColorParameter(TEXT("Base Colour"), FLinearColor(FColor::Red));
-		currentColour = FColor::Red;
 	}
 }
 
@@ -171,6 +184,8 @@ void AObjective::SetAreaOwner(int32 val)
 
 void AObjective::CalculateClaim()
 {
+	float startingCurrentControl = currentControl;
+
 	// If only one team is in the area, then they  can start to claim it
 	if (teamsInArea.Num() == 1)
 	{
@@ -179,8 +194,6 @@ void AObjective::CalculateClaim()
 		{
 			currentControl += combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
-
-			UpdateColour();
 
 			// Once the control exceeds the minimum control, the new team can have control
 			if (currentControl >= minControl)
@@ -194,8 +207,6 @@ void AObjective::CalculateClaim()
 			currentControl -= combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
-			UpdateColour();
-
 			// If the control is now 0, then we've removed all existing control and can start to claim it
 			if (currentControl == 0)
 			{
@@ -208,15 +219,13 @@ void AObjective::CalculateClaim()
 		{
 			currentControl += combatantsInArea.Num();
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
-
-			UpdateColour();
 		}
 
 		// Check if we have full control and we've not already got full claim
 		// If we have this level of control, the make the particles bigger
 		if (currentControl == maxControl && !fullClaim)
 		{
-			captureParticle->SetFloatParameter(TEXT("Size"), bigParticle);
+			currentTeamParticles->SetFloatParameter(TEXT("Size"), bigParticle);
 			fullClaim = true;
 
 			if (OnObjectiveClaimed.IsBound())
@@ -227,8 +236,24 @@ void AObjective::CalculateClaim()
 		// If the control is less than max then make the particles smaller, this makes it easier to tell when it's fully claimed
 		else if (currentControl < maxControl && fullClaim)
 		{
-			captureParticle->SetFloatParameter(TEXT("Size"), smallParticle);
+			currentTeamParticles->SetFloatParameter(TEXT("Size"), smallParticle);
 			fullClaim = false;
+		}
+
+
+		if (currentControl != startingCurrentControl) 
+		{
+			UpdateColour();
+
+			float radius = 360 * (currentControl / maxControl);
+			float radiusDiff = 360 - radius;
+
+			currentTeamParticles->SetFloatParameter(TEXT("Percent"), radius);
+			transitioningParticles->SetFloatParameter(TEXT("Percent"), radiusDiff);
+			SetAngle(currentTeamParticles, radius);
+			SetAngle(transitioningParticles, radiusDiff);
+
+			transitioningParticles->SetFloatParameter(TEXT("Rotation"), (radius / 2) + (radiusDiff / 2));
 		}
 	}
 }
