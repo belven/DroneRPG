@@ -27,12 +27,12 @@ UWeapon* UWeaponCreator::GetDefaultWeapon(EWeaponType type, UCombatantComponent*
 	switch (type) {
 	case EWeaponType::Rail_Gun:
 	case EWeaponType::Laser:
-		return ULaser::CreateLaser(0.3f, 25.0f, inOwner);
+		return ULaser::CreateLaser(0.3f, 35.0f, inOwner);
 	case EWeaponType::Rocket:
-		return URocketLauncher::CreateRocketLauncher(1.5f, 50.0f, inOwner);
+		return URocketLauncher::CreateRocketLauncher(1.5f, 75.0f, inOwner);
 	case EWeaponType::Mine:
 	case EWeaponType::Shotgun:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+		return UShotgun::CreateShotgun(0.5f, 25.0f, inOwner);
 	default:
 		break;
 	}

@@ -7,6 +7,7 @@
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Utilities/WeaponCreator.h"
 #include "DroneRPG/Weapons/Weapon.h"
@@ -168,32 +169,61 @@ void ADroneRPGPlayerController::OnPossess(APawn* aPawn)
 	}
 }
 
+void ADroneRPGPlayerController::ViewTargetDied(UCombatantComponent* inKiller)
+{
+	ChangeView();
+}
+
 void ADroneRPGPlayerController::ChangeView()
 {
-	UCombatantComponent* combatantFound = NULL;
+	if (combatantFound.IsValid())
+	{
+		combatantFound.combatantComponent->ResetCombatScore();
+		combatantFound.healthComponent->OnUnitDied.RemoveAll(this);
+		combatantFound = FCombatantData();
+	}
+
+//	TArray<FCombatantData> combatants;
 
 	for (auto combatant : GetGameMode()->GetCombatants())
 	{
-
-		if (IsValid(combatant) && (!IsValid(GetDrone()) || combatant != GetDrone()->GetCombatantComponent()))
+		if (IsValid(combatant))
 		{
-			float combatScore = combatant->GetCombatScore();
+			FCombatantData data = mCreateCombatantData(combatant->GetOwner());
 
-			if (!IsValid(combatantFound))
+			if (!IsValid(GetDrone()) || GetDrone()->GetCombatantComponent() != combatant)
 			{
-				combatantFound = combatant;
-			}
-			else if (combatScore > combatantFound->GetCombatScore())
-			{
-				combatantFound = combatant;
+				if (data.IsAlive()) 
+				{
+					//combatants.Add(combatantFound);
+
+					if (!combatantFound.isSet)
+					{
+						combatantFound = data;
+					}
+					else if (combatant->GetCombatScore() > combatantFound.combatantComponent->GetCombatScore())
+					{
+						combatantFound = data;
+					}
+				}
 			}
 		}
 	}
 
-	if (IsValid(combatantFound))
+	//combatants.Sort([](const FCombatantData& a, const FCombatantData& b) {
+	//	return a.combatantComponent->GetCombatScore() > b.combatantComponent->GetCombatScore();
+	//	});
+
+	//if (combatants.Num() > 2)
+	//{
+	//	FVector dotA =	FVector::DotProduct(combatants[0].GetActorLocation(), combatants[1].GetActorLocation());
+	//} 
+
+	if (combatantFound.isSet)
 	{
+		combatantFound.healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneRPGPlayerController::ViewTargetDied);
 		//SetViewTargetWithBlend(combatantFound->GetOwner(), 1.0f, VTBlend_EaseInOut, 1, true);
-		SetViewTarget(combatantFound->GetOwner());
+		SetViewTarget(combatantFound);
 		mSetTimer(TimerHandle_CameraTimer, &ADroneRPGPlayerController::ChangeView, 3.0f);
 	}
 }

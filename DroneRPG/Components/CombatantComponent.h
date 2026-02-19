@@ -53,6 +53,16 @@ public:
 	void IncrementDeaths() { deaths++; }
 	void IncrementKills() { kills++; }
 
+	FColor GetTeamColour() const
+	{
+		return teamColour;
+	}
+
+	void SetTeamColour(FColor inTeamColour)
+	{
+		teamColour = inTeamColour;
+	}
+
 	UFUNCTION()
 	void ResetCombatScore();
 private:
@@ -64,6 +74,7 @@ private:
 	float combatScore;
 	int32 kills;
 	int32 deaths;
+	FColor teamColour;
 
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;

@@ -1,5 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "DroneRPG/Components/CombatantComponent.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
 #include "GameFramework/PlayerController.h"
 #include "DroneRPGPlayerController.generated.h"
@@ -57,7 +59,12 @@ protected:
 
 private:
 	UFUNCTION()
+	void ViewTargetDied(UCombatantComponent* inKiller);
+	UFUNCTION()
 	void ChangeView();
+
+	UPROPERTY()
+	FCombatantData combatantFound;
 
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;

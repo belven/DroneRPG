@@ -119,7 +119,7 @@ void AAsteroidField::CreateSpawnPoint(TArray<ARespawnPoint*>& respawnPoints, int
 {
 	ARespawnPoint* respawn = GetWorld()->SpawnActor<ARespawnPoint>(ARespawnPoint::StaticClass(), newLocation, newLocation.Rotation());
 	respawn->SetTeam(team);
-	respawn->SetTeamSize(5);
+	respawn->SetTeamSize(10);
 	respawn->SetSize(minDist / 2);
 	respawnPoints.Add(respawn);
 }

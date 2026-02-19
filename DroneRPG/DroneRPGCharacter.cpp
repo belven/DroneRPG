@@ -62,7 +62,7 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
-	TopDownCameraComponent->SetOrthoWidth(6000);
+	TopDownCameraComponent->SetOrthoWidth(10000);
 
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
@@ -102,14 +102,9 @@ void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	float Radius = GetCapsuleComponent()->GetScaledCapsuleRadius();
-	float HalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-
 #if WITH_EDITOR
 	SetFolderPath(TEXT("Characters"));
 #endif
-
-	//	GetGameMode()->AddCombatant(GetCombatantComponent());
 }
 
 void ADroneRPGCharacter::SetUpDrone()
@@ -134,7 +129,9 @@ int32 ADroneRPGCharacter::GetTeam() const
 void ADroneRPGCharacter::SetTeam(int32 val)
 {
 	combatantComponent->SetTeam(val);
-	healthComponent->SetTeamColour(GetGameMode()->GetTeamColour(GetTeam()));
+	FColor colour = GetGameMode()->GetTeamColour(GetTeam());
+	healthComponent->SetTeamColour(colour);
+	combatantComponent->SetTeamColour(colour);
 }
 
 ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
@@ -151,6 +148,8 @@ void ADroneRPGCharacter::Respawn()
 {
 	// Get our teams respawn point
 	ARespawnPoint* respawn = GetRespawnPoint();
+
+	GetCombatantComponent()->ResetCombatScore();
 
 	// Did we find a respawn point?
 	if (IsValid(respawn))

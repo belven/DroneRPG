@@ -20,8 +20,8 @@ void ADominationGameMode::AddTeamScore(int32 team, int32 bonusScore)
 	{
 		for (APlayerState* ps : UGameplayStatics::GetGameState(GetWorld())->PlayerArray) 
 		{
-			APlayerController* con = UGameplayStatics::GetPlayerController(GetWorld(), ps->GetPlayerId());
-			UKismetSystemLibrary::QuitGame(GetWorld(), con, EQuitPreference::Quit, false);
+			//APlayerController* con = UGameplayStatics::GetPlayerController(GetWorld(), ps->GetPlayerId());
+			//UKismetSystemLibrary::QuitGame(GetWorld(), con, EQuitPreference::Quit, false);
 		}
 	}
 }

@@ -4,6 +4,7 @@
 #include <GameFramework/HUD.h>
 #include "DroneRPG/Controllers/DroneRPGPlayerController.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
+#include "Engine/DirectionalLight.h"
 
 ADroneRPGGameMode::ADroneRPGGameMode() : gameMode(), coloursSet(false)
 {
@@ -59,7 +60,7 @@ void ADroneRPGGameMode::EntityKilled(UCombatantComponent* killedEntity, UCombata
 	args.Add(FStringFormatArg(killer->GetCombatantName()));
 
 	// Add text to the kill feed
-	GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::White, FString::Format(TEXT("{0} was killed by {1}"), args));
+	GEngine->AddOnScreenDebugMessage(-1, 1.5f, killedEntity->GetTeamColour(), FString::Format(TEXT("{0} was killed by {1}"), args));
 }
 
 void ADroneRPGGameMode::AddTeamScore(int32 team, int32 bonusScore)
@@ -68,11 +69,36 @@ void ADroneRPGGameMode::AddTeamScore(int32 team, int32 bonusScore)
 	if (teamScore != NULL)
 	{
 		teamScore->score += bonusScore;
+
+		if (teamScore->score > topTeam.score)
+		{
+			topTeam = *teamScore;
+		}
 	}
 	else
 	{
 		teamScores.Add(team, FTeamScore(team, GetTeamColour(team), bonusScore));
 	}
+
+	if (!GetWorld()->GetTimerManager().IsTimerActive(TimerHandle_SortTeamsTimer))
+	{
+		mSetTimerWorld(GetWorld(), TimerHandle_SortTeamsTimer, &ADroneRPGGameMode::SortTeams, 1);
+	}
+}
+
+void ADroneRPGGameMode::SortTeams()
+{
+	ADirectionalLight* mainLight = mGetActorsInWorld<ADirectionalLight>(GetWorld())[0];
+
+	if (IsValid(mainLight))
+	{
+		mainLight->SetLightColor(FLinearColor(topTeam.teamColour));
+	}
+
+	teamScores.ValueSort([](const FTeamScore& a, const FTeamScore& b)
+		{
+			return a.score > b.score;
+		});
 }
 
 FString ADroneRPGGameMode::GetTeamScoreText(int32 team)

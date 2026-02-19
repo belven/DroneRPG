@@ -24,7 +24,6 @@ ADroneProjectile::ADroneProjectile()
 	}
 
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
-	CollisionComp->InitSphereRadius(10.0f);
 	CollisionComp->SetCollisionProfileName("Projectile");
 	CollisionComp->SetGenerateOverlapEvents(true);
 	RootComponent = CollisionComp;
@@ -50,6 +49,7 @@ void ADroneProjectile::BeginPlay()
 #endif
 
 	trialParticle = mSpawnSystemAttached(trailSystem, TEXT("trialParticle"));
+	CollisionComp->SetSphereRadius(200, true);
 }
 
 

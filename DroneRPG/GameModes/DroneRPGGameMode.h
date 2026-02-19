@@ -22,6 +22,7 @@ public:
 	virtual void EntityKilled(UCombatantComponent* killedEntity, UCombatantComponent* killer);
 
 	virtual void AddTeamScore(int32 team, int32 bonusScore);
+	void SortTeams();
 
 	virtual FString GetTeamScoreText(int32 team);
 
@@ -50,12 +51,15 @@ public:
 
 	void AddObjective(AObjective* newObjective);
 protected:
+	FTeamScore topTeam;
 	EGameModeType gameMode;
 	TMap<int32, FTeamScore> teamScores;
 	TMap<int32, FColor> teamColours;
 	TArray<FColor> colours;
 	bool coloursSet;
 	FTimerHandle TimerHandle_CleanUp;
+
+	FTimerHandle TimerHandle_SortTeamsTimer;
 
 	UPROPERTY()
 	TArray <UCombatantComponent*> combatants;

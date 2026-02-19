@@ -26,7 +26,7 @@ ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(
 	AActor::SetIsTemporarilyHiddenInEditor(true);
 	drawDebug = DRONE_DEBUG_ENABLED;
 
-	PrimaryActorTick.TickInterval = 0.3;
+	PrimaryActorTick.TickInterval = 0.05;
 	minCaptureDistance = 200;
 
 	canCheckForEnemies = true;
@@ -765,6 +765,7 @@ void ADroneBaseAI::ObjectiveTaken(AObjective* objective)
 	else if (hasControl && (CompareState(EActionState::CapturingObjective) || CompareState(EActionState::MovingToObjective)) && GetTargetObjective() == objective)
 	{
 		UE_LOG(LogDroneAI, Log, TEXT("%s ObjectiveTaken FindSuitableObjective"), *GetDrone()->GetDroneName());
+		StopMovement();
 		FindSuitableObjective();
 	}
 }
