@@ -9,7 +9,6 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "DroneBaseAI.generated.h"
 
-class UAISenseConfig_Sight;
 class ADroneRPGCharacter;
 class UObjectiveComponent;
 

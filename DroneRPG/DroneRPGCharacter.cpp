@@ -12,6 +12,7 @@
 #include "Materials/Material.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Utilities/FunctionLibrary.h"
+#include "Utilities/WeaponCreator.h"
 
 ADroneRPGCharacter::ADroneRPGCharacter() : Super()
 {
@@ -79,8 +80,8 @@ void ADroneRPGCharacter::Respawn()
 
 		// Fully Heal the drone
 		GetHealthComponent()->FullHeal();
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		meshComponent->SetHiddenInGame(false);
 	}
 }
@@ -103,6 +104,15 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 	}
 
 	return respawnPoint;
+}
+
+void ADroneRPGCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	// Give each drone a random weapon
+	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
+	SetWeapon(mGetDefaultWeapon(type, GetCombatantComponent()));
+
 }
 
 void ADroneRPGCharacter::UnitDied(UCombatantComponent* killer)

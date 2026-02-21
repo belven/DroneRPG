@@ -28,7 +28,7 @@ public:
 
 		UFUNCTION(BlueprintCallable, Category = "Drone")
 	int32 GetTeam() const;
-	void SetTeam(int32 val);
+	virtual void SetTeam(int32 val);
 
 	UHealthComponent* GetHealthComponent() const { return healthComponent; }
 	UCombatantComponent* GetCombatantComponent() const { return combatantComponent; }

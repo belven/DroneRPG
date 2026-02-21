@@ -36,7 +36,12 @@ UObjectiveComponent::UObjectiveComponent()
 	}
 
 	objectiveArea = CreateDefaultSubobject<USphereComponent>(TEXT("ObjectiveArea"));
+
+	// Bind to the box components begin and end overlap events
+	objectiveArea->OnComponentBeginOverlap.AddDynamic(this, &UObjectiveComponent::BeginOverlap);
+	objectiveArea->OnComponentEndOverlap.AddDynamic(this, &UObjectiveComponent::EndOverlap);
 	UFunctionLibrary::SetupOverlap(objectiveArea);
+
 }
 
 void UObjectiveComponent::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -88,11 +93,6 @@ void UObjectiveComponent::CheckForOverlaps()
 void UObjectiveComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// Bind to the box components begin and end overlap events
-	objectiveArea->OnComponentBeginOverlap.AddDynamic(this, &UObjectiveComponent::BeginOverlap);
-	objectiveArea->OnComponentEndOverlap.AddDynamic(this, &UObjectiveComponent::EndOverlap);
-
 	currentTeamParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, GetOwner()->GetRootComponent(), TEXT("currentTeamParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 	transitioningParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, GetOwner()->GetRootComponent(), TEXT("transitioningParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
 
@@ -104,17 +104,12 @@ void UObjectiveComponent::BeginPlay()
 	transitioningParticles->SetFloatParameter(TEXT("Radius"), GetSize());
 	transitioningParticles->SetFloatParameter(TEXT("Size"), smallParticle);
 	transitioningParticles->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Red));
-	SetAngle(currentTeamParticles, 360);
-	CalculateOwnership();
-
-	// Update the colour in here, as we may have started with a team controlling us, set in the editor etc.
-	UpdateColour();
-
-	CheckForOverlaps();
+	SetAngle(transitioningParticles, 360);
 
 	GetGameMode()->AddObjective(this);
-	//objectiveArea->AttachToComponent(GetOwner()->GetRootComponent(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, false));
 	objectiveArea->SetSphereRadius(GetSize() * 1.2);
+
+	CheckForOverlaps();
 }
 
 void UObjectiveComponent::SetAngle(UNiagaraComponent* comp, float angle)
@@ -143,6 +138,11 @@ void UObjectiveComponent::CalculateOwnership()
 	{
 		SetAreaOwner(teamsInArea[0]);
 	}
+}
+
+int32 UObjectiveComponent::GetCurrentOwningTeam()
+{
+	return previousAreaOwner == areaOwner ? areaOwner : previousAreaOwner;
 }
 
 void UObjectiveComponent::UpdateColour()
@@ -224,7 +224,6 @@ void UObjectiveComponent::CalculateClaim()
 			fullClaim = false;
 		}
 
-
 		if (currentControl != startingCurrentControl)
 		{
 			UpdateColour();
@@ -246,7 +245,9 @@ void UObjectiveComponent::Add(UCombatantComponent* combatant)
 {
 	UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
 
-	if (!combatantsInArea.Contains(combatant) && IsValid(healthComponent) && healthComponent->IsAlive())
+	bool notOwner = IsValid(GetOwner()) && combatant->GetOwner() != GetOwner();
+
+	if (notOwner && !combatantsInArea.Contains(combatant) && IsValid(healthComponent) && healthComponent->IsAlive())
 	{
 		combatantsInArea.AddUnique(combatant);
 		healthComponent->OnUnitDied.AddDynamic(this, &UObjectiveComponent::UnitDied);

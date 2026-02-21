@@ -3,16 +3,14 @@
 #include "DroneRPG/Components/CombatantComponent.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
-#include "DroneRPG/Utilities/FunctionLibrary.h"
-#include "DroneRPG/Utilities/WeaponCreator.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	// Set size for player capsule
 	const float capWidth = 50;
@@ -21,6 +19,7 @@ ABaseCharacter::ABaseCharacter()
 	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
 	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMesh"));
 
@@ -32,9 +31,6 @@ ABaseCharacter::ABaseCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
-
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
@@ -85,9 +81,6 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	combatantComponent->SetupCombatantComponent(GetCharacterName(), EDamagerType::Drone);
-	// Give each drone a random weapon
-	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(mGetDefaultWeapon(type, GetCombatantComponent()));
 }
 
 int32 ABaseCharacter::GetTeam() const

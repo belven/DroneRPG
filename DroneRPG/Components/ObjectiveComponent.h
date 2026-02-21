@@ -42,6 +42,16 @@ public:
 
 	FObjectiveClaimed OnObjectiveClaimed;
 
+	int32 GetPreviousAreaOwner() const { return previousAreaOwner; }
+
+	void SetPreviousAreaOwner(int32 inPreviousAreaOwner) { previousAreaOwner = inPreviousAreaOwner; }
+
+	UNiagaraComponent* GetCurrentTeamParticles() { return currentTeamParticles; }
+
+	UNiagaraComponent* GetTransitioningParticles() { return transitioningParticles; }
+
+	void SetAngle(UNiagaraComponent* comp, float angle);
+
 	FName GetObjectiveName() const { return objectiveName; }
 	void SetObjectiveName(FName val) { objectiveName = val; }
 
@@ -51,13 +61,20 @@ public:
 	float GetCurrentControl() const { return currentControl; }
 	int32 GetMaxControl() const { return maxControl; }
 	float GetCurrentControlPercent();
-	TArray<UCombatantComponent*> GetDronesInArea() const { return combatantsInArea; }
+
+	void SetCurrentControl(float inCurrentControl) { currentControl = inCurrentControl; }
+
+	bool IsFullClaim() const { return fullClaim; }
+
+	void SetFullClaim(bool inFullClaim) { fullClaim = inFullClaim; }
+
+	TArray<UCombatantComponent*> GetCombatantsInArea() const { return combatantsInArea; }
+	int32 GetCurrentOwningTeam();
+	void UpdateColour();
 
 protected:
-	void SetAngle(UNiagaraComponent* comp, float angle);
 
 	void CalculateOwnership();
-	void UpdateColour();
 	void CalculateClaim();
 
 	void Add(UCombatantComponent* combatant);

@@ -19,7 +19,5 @@ void UFunctionLibrary::SetupOverlap(UShapeComponent* comp)
 {
 	comp->SetCollisionProfileName(TEXT("Trigger"));
 	comp->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
-//	comp->SetCollisionObjectType(ECC_WorldDynamic);
-//	comp->SetCollisionResponseToAllChannels(ECR_Overlap);
 	comp->SetGenerateOverlapEvents(true);
 }

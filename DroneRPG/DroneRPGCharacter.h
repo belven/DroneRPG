@@ -31,6 +31,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	ARespawnPoint* GetRespawnPoint();
+	virtual void PossessedBy(AController* NewController) override;
 
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }

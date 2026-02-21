@@ -71,7 +71,8 @@ enum class  EGameModeType : uint8 {
 UENUM(BlueprintType)
 enum class  EDamagerType : uint8 {
 	Drone,
-	PlasmaStorm
+	PlasmaStorm,
+	Turret
 };
 
 UCLASS()
