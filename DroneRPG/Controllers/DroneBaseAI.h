@@ -11,7 +11,7 @@
 
 class UAISenseConfig_Sight;
 class ADroneRPGCharacter;
-class AObjective;
+class UObjectiveComponent;
 
 UCLASS()
 class DRONERPG_API ADroneBaseAI : public ABaseAIController
@@ -31,7 +31,7 @@ public:
 	virtual void SetFiringState(bool firingState) override;
 
 	UFUNCTION()
-	void ObjectiveTaken(AObjective* objective);
+	void ObjectiveTaken(UObjectiveComponent* objective);
 
 	virtual void OwnerAttacked(AActor* attacker) override;
 
@@ -44,9 +44,9 @@ public:
 	EActionState GetPreviousState() const { return previousState; }
 	void SetPreviousState(EActionState val);
 
-	AObjective* GetTargetObjective() const { return targetObjective; }
+	UObjectiveComponent* GetTargetObjective() const { return targetObjective; }
 
-	void SetTargetObjective(AObjective* val);
+	void SetTargetObjective(UObjectiveComponent* val);
 
 	virtual void OnTargetUnitDied(UCombatantComponent* inKiller) override;
 	virtual void SetTarget(const FCombatantData& inTarget) override;
@@ -85,7 +85,7 @@ private:
 	FEnvQueryRequest FindEvadeLocationRequest;
 
 	UPROPERTY()
-	AObjective* targetObjective;
+	UObjectiveComponent* targetObjective;
 
 	UPROPERTY()
 	ADroneRPGCharacter* droneCharacter;

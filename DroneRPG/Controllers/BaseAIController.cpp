@@ -2,6 +2,7 @@
 
 #include "DroneBaseAI.h"
 #include "DroneRPG/DroneRPG.h"
+#include "DroneRPG/Components/ObjectiveComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -185,12 +186,12 @@ void ABaseAIController::ActorSeen(AActor* Actor)
 	}
 }
 
-AObjective* ABaseAIController::GetClosestUncontrolledObjective()
+UObjectiveComponent* ABaseAIController::GetClosestUncontrolledObjective()
 {
-	AObjective* closest = nullptr;
-	TArray<AObjective*> objectives = GetGameMode()->GetObjectives();
+	UObjectiveComponent* closest = nullptr;
+	TArray<UObjectiveComponent*> objectives = GetGameMode()->GetObjectives();
 
-	for (AObjective* objective : objectives)
+	for (UObjectiveComponent* objective : objectives)
 	{
 		// Check if we don't already control the objective, if we do, then we'll be picking one to defend later
 		if (!objective->HasCompleteControl(combatant.GetTeam()))
@@ -199,7 +200,7 @@ AObjective* ABaseAIController::GetClosestUncontrolledObjective()
 			{
 				closest = objective;
 			}
-			else if (FVector::Dist(closest->GetActorLocation(), GetNavAgentLocation()) > FVector::Dist(objective->GetActorLocation(), GetNavAgentLocation()))
+			else if (FVector::Dist(closest->GetOwner()->GetActorLocation(), GetNavAgentLocation()) > FVector::Dist(objective->GetOwner()->GetActorLocation(), GetNavAgentLocation()))
 			{
 				closest = objective;
 			}

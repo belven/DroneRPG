@@ -3,6 +3,7 @@
 #include "GameFramework/HUD.h"
 #include "DroneHUD.generated.h"
 
+class UObjectiveComponent;
 class UCombatantComponent;
 class ADroneRPGGameMode;
 class AObjective;
@@ -34,7 +35,7 @@ public:
 
 	virtual void DrawHUD() override;
 	void DrawScore();
-	void DrawObjectiveIndicators(AObjective* objective);
+	void DrawObjectiveIndicators(UObjectiveComponent* objective);
 	void DrawCombatantIndicators(UCombatantComponent* combatant);
 
 	ADroneRPGGameMode* GetGameMode();

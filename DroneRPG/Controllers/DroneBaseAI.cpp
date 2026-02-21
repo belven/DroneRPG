@@ -4,7 +4,6 @@
 #include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
-#include "DroneRPG/LevelActors/Objective.h"
 #include "DroneRPG/LevelActors/RespawnPoint.h"
 #include "DroneRPG/Utilities/Enums.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
@@ -15,7 +14,9 @@
 #include "NavigationSystem.h"
 #include <Kismet/KismetMathLibrary.h>
 
-#define  mObjectiveLocation targetObjective->GetActorLocation()
+#include "DroneRPG/Components/ObjectiveComponent.h"
+
+#define  mObjectiveLocation targetObjective->GetOwner()->GetActorLocation()
 
 ADroneBaseAI::ADroneBaseAI(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer), lookAt(), lastLocation(), currentState(EActionState::Start), previousState(EActionState::Start), targetObjective(nullptr)
 {
@@ -173,7 +174,7 @@ void ADroneBaseAI::SetPreviousState(EActionState val)
 	previousState = val;
 }
 
-void ADroneBaseAI::SetTargetObjective(AObjective* val)
+void ADroneBaseAI::SetTargetObjective(UObjectiveComponent* val)
 {
 	targetObjective = val;
 
@@ -267,7 +268,7 @@ void ADroneBaseAI::FindSuitableObjective()
 
 void ADroneBaseAI::FindObjective()
 {
-	AObjective* closest = GetClosestUncontrolledObjective();
+	UObjectiveComponent* closest = GetClosestUncontrolledObjective();
 
 	// If we have an objective, then it wasn't claimed by this team, so head towards it
 	if (IsValid(closest))
@@ -279,12 +280,12 @@ void ADroneBaseAI::FindObjective()
 	// If the objective is null and we found any objectives, then find one to defend
 	else
 	{
-		TArray<AObjective*> objectives = GetGameMode()->GetObjectives();
+		TArray<UObjectiveComponent*> objectives = GetGameMode()->GetObjectives();
 
 		if (objectives.Num() > 0)
 		{
 			UE_LOG(LogDroneAI, Log, TEXT("%s moving to random objective"), *GetDrone()->GetCharacterName());
-			SetTargetObjective(UFunctionLibrary::GetRandomObject<AObjective*>(objectives));
+			SetTargetObjective(UFunctionLibrary::GetRandomObject<UObjectiveComponent*>(objectives));
 			MoveToObjective();
 		}
 		else
@@ -555,7 +556,7 @@ void ADroneBaseAI::StopMovement()
 	isMoving = false;
 }
 
-void ADroneBaseAI::ObjectiveTaken(AObjective* objective)
+void ADroneBaseAI::ObjectiveTaken(UObjectiveComponent* objective)
 {
 	bool hasControl = objective->HasCompleteControl(GetDrone()->GetTeam());
 

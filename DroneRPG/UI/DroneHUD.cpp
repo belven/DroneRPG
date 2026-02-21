@@ -3,6 +3,7 @@
 
 #include "DroneRPG/DroneRPG.h"
 #include "DroneRPG/Components/HealthComponent.h"
+#include "DroneRPG/Components/ObjectiveComponent.h"
 #include "DroneRPG/Controllers/DroneBaseAI.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
@@ -66,7 +67,7 @@ void ADroneHUD::DrawHUD()
 	}
 
 	// Get all the objectives in the game and display indicators where appropriate
-	for (AObjective* objective : mGetActorsInWorld<AObjective>(GetWorld()))
+	for (UObjectiveComponent* objective : GetGameMode()->GetObjectives())
 	{
 		DrawObjectiveIndicators(objective);
 	}
@@ -109,12 +110,12 @@ void ADroneHUD::DrawScore()
 	}
 }
 
-void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
+void ADroneHUD::DrawObjectiveIndicators(UObjectiveComponent* objective)
 {
 	if (IsValid(GetOwningPlayerController()))
 	{
 		constexpr int32 offset = 30;
-		FDrawLocation drawLocation = GetDrawLocation(objective->GetActorLocation(), offset);
+		FDrawLocation drawLocation = GetDrawLocation(objective->GetOwner()->GetActorLocation(), offset);
 
 		// Only display an indicator if the objective is offscreen
 		// If we've had to clamp a value, then the position is offscreen

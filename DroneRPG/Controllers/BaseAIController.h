@@ -44,7 +44,7 @@ public:
 	FString GetCombatantName() { return combatant.GetCombatantName(); }
 
 	virtual void ActorSeen(AActor* Actor);
-	AObjective* GetClosestUncontrolledObjective();
+	UObjectiveComponent* GetClosestUncontrolledObjective();
 	AActor* FindEnemyTarget();
 	virtual	void LostSightOfActor(AActor* Actor, const FVector& lastSeenLocation);
 
