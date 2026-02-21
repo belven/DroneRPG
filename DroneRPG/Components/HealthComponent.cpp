@@ -26,7 +26,7 @@ UHealthComponent::UHealthComponent()
 	largeShieldExp = 20;
 	maxWipe = 0.2;
 	minWipe = -0.2;
-	wipeValue = FMath::RandRange(minWipe, maxWipe);
+	wipeValue = maxWipe; // FMath::RandRange(minWipe, maxWipe);
 
 	healthParticleSize = 25;
 
@@ -185,7 +185,7 @@ void UHealthComponent::BeginPlay()
 		meshIndex = shieldMeshComp->AddInstance(trans, true);
 
 		// Set default shield values
-		SetMaterialFloat(TEXT("Wipe"), minWipe);
+		// SetMaterialFloat(TEXT("Wipe"), wipeValue);
 		SetMaterialFloat(TEXT("Exp"), largeShieldExp);
 	}
 }
@@ -319,7 +319,7 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// Update shield material
-	PulseShield();
+	//PulseShield();
 
 	CalculateEnergy(DeltaTime);
 	CalculateShields(DeltaTime);

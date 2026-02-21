@@ -56,7 +56,8 @@ void UWeapon::ShotTimerExpired()
 ADroneProjectile* UWeapon::SpawnProjectile(FVector gunLocation, FRotator FireRotation) {
 	ADroneProjectile* projectile = mSpawnProjectile;
 	projectile->SetShooter(GetOwner());
-	projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f));
+	//projectile->SetDamage(FMath::RandRange(damage * 0.95f, damage * 1.05f)); TODO Do we want random damage?
+	projectile->SetDamage(damage);
 	projectile->SetLifeSpan(lifespan);
 	projectile->GetProjectileMovement()->MaxSpeed = GetProjectileSpeed();
 	projectile->GetProjectileMovement()->InitialSpeed = GetProjectileSpeed();

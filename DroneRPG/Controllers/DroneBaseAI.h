@@ -1,7 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "DetourCrowdAIController.h"
+#include "BaseAIController.h"
 #include "DroneRPG/Utilities/CombatClasses.h"
 #include "DroneRPG/Utilities/Enums.h"
 #include "DroneRPG/Weapons/Weapon.h"
@@ -14,7 +14,7 @@ class ADroneRPGCharacter;
 class AObjective;
 
 UCLASS()
-class DRONERPG_API ADroneBaseAI : public ADetourCrowdAIController
+class DRONERPG_API ADroneBaseAI : public ABaseAIController
 {
 	GENERATED_BODY()
 public:
@@ -22,23 +22,18 @@ public:
 	ADroneBaseAI(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void OnPossess(APawn* InPawn) override;
+
 	void MovingToObjective();
 	void PerformActions();
 	void MoveToObjective();
-	virtual void BeginPlay() override;
+
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
-	void SetFiringState(bool firingState);
+	virtual void SetFiringState(bool firingState) override;
 
 	UFUNCTION()
 	void ObjectiveTaken(AObjective* objective);
 
-	UFUNCTION()
-	void DroneAttacked(AActor* attacker);
-
-	bool IsTargetValid() { return IsTargetValid(GetTarget()); };
-
-	bool IsTargetValid(FCombatantData& data);
+	virtual void OwnerAttacked(AActor* attacker) override;
 
 	UFUNCTION()
 	void CheckLastLocation();
@@ -50,31 +45,22 @@ public:
 	void SetPreviousState(EActionState val);
 
 	AObjective* GetTargetObjective() const { return targetObjective; }
+
 	void SetTargetObjective(AObjective* val);
 
-	EGameModeType GetCurrentGameMode() const { return currentGameMode; }
-	void SetCurrentGameMode(EGameModeType val);
-	FString GetStateString(EActionState state);
-
-	FCombatantData& GetTarget() { return target; }
-
-	UFUNCTION()
-	void OnTargetUnitDied(UCombatantComponent* inKiller);
-	void SetTarget(const FCombatantData& inTarget);
+	virtual void OnTargetUnitDied(UCombatantComponent* inKiller) override;
+	virtual void SetTarget(const FCombatantData& inTarget) override;
 
 	bool CompareState(EActionState state);
-	void ActorSeen(AActor* Actor);
-	void LostSightOfActor(AActor* Actor, const FVector& lastSeenLocation);
+	virtual void LostSightOfActor(AActor* Actor, const FVector& lastSeenLocation) override;
 
 	UFUNCTION()
-	void TargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-	void DrawNavigationDebug(const FVector& location, FColor colour);
 	void FailedToMoveToLocation(const FVector& location);
 
 	void MoveRequestFinished(TSharedPtr<FEnvQueryResult> Result);
 	FVector queryLocation;
 	bool drawDebug;
-	ADroneRPGGameMode* GetGameMode();
+
 	virtual void StopMovement() override;
 
 private:
@@ -84,15 +70,13 @@ private:
 	bool isMoving;
 	bool isRequestingMovement;
 	float targetRange;
+
 	FRotator lookAt;
 	FVector lastLocation;
-	int32 acceptanceRadius;
 
-	bool isFiring;
 	bool canCheckForEnemies;
 	EActionState currentState;
 	EActionState previousState;
-	EGameModeType currentGameMode;
 
 	UPROPERTY()
 	FEnvQueryRequest FindLocationEmptyLocationRequest;
@@ -101,27 +85,16 @@ private:
 	FEnvQueryRequest FindEvadeLocationRequest;
 
 	UPROPERTY()
-	ADroneRPGGameMode* gameMode;
-
-	UPROPERTY()
-	UAISenseConfig_Sight* sightConfig;
-
-	UPROPERTY()
 	AObjective* targetObjective;
-
-	UPROPERTY()
-	FCombatantData target;
 
 	UPROPERTY()
 	ADroneRPGCharacter* droneCharacter;
 
 	ADroneRPGCharacter* GetDrone();
-	AActor* FindEnemyTarget();
 
 	void FindTarget();
 	void FindSuitableObjective();
 	void RotateToFace(float DeltaSeconds);
-	bool GetNextVisibleTarget();
 	void FindObjective();
 
 	void DefendingObjective();

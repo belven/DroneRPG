@@ -133,7 +133,7 @@ void ADroneHUD::DrawObjectiveIndicators(AObjective* objective)
 			args.Add(FStringFormatArg(control));
 
 			// Write some text below the drone that states it's current kills and deaths
-			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(UFunctionLibrary::InvertColorRGB(objective->GetCurrentColour())), drawLocation.X, drawLocation.Y);
+			DrawText(FString::Format(TEXT("{0}%"), args), FLinearColor(UFunctionLibrary::InvertColorRGB(objective->GetCurrentColour())), drawLocation.X - 10, drawLocation.Y);
 		}
 	}
 }
@@ -171,7 +171,7 @@ void ADroneHUD::DrawCombatantIndicators(UCombatantComponent* combatant)
 				args.Add(FStringFormatArg(combatant->GetKills()));
 				args.Add(FStringFormatArg(combatant->GetDeaths()));
 				// Write some text below the drone that states it's current kills and deaths
-				DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X, drawLocation.Y + 30);
+				DrawText(FString::Format(TEXT("{0} / {1}"), args), FLinearColor(colour), drawLocation.X - 10, drawLocation.Y + 15);
 			}
 		}
 	}
