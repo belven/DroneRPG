@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "Components/CombatantComponent.h"
-#include "GameFramework/Character.h"
+#include "Actors/BaseCharacter.h"
 #include "DroneRPGCharacter.generated.h"
 
 class UHealthComponent;
@@ -15,72 +14,34 @@ class ADroneRPGGameMode;
 class UCombatantComponent;
 
 UCLASS(Blueprintable)
-class ADroneRPGCharacter : public ACharacter
+class ADroneRPGCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-
 	void Respawn();
 
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	void UnitHit(float damage, UCombatantComponent* attacker);
-
 	ADroneRPGCharacter();
-	virtual void BeginDestroy() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	FColor GetTeamColour();
 
-	UFUNCTION()
-	void KillDrone(UCombatantComponent* killer);
-	FString GetDroneName();
+	virtual void UnitDied(UCombatantComponent* killer) override;
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	ARespawnPoint* GetRespawnPoint();
 
-	void SetUpDrone();
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	virtual void PossessedBy(AController* NewController) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	int32 GetTeam() const;
-	void SetTeam(int32 val);
-
-	UFUNCTION(BlueprintCallable, Category = "Drone")
-	UWeapon* GetWeapon() const { return weapon; }
-	void SetWeapon(UWeapon* val) { weapon = val; }
-
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
-	UHealthComponent* GetHealthComponent() const { return healthComponent; }
-	UCombatantComponent* GetCombatantComponent() const { return combatantComponent; }
-
-	ADroneRPGGameMode* GetGameMode();
-
 private:
 	UPROPERTY()
 	ARespawnPoint* respawnPoint;
-	FString droneName;
-
-	UPROPERTY()
-	UHealthComponent* healthComponent;
-
-	UPROPERTY()
-	UCombatantComponent* combatantComponent;
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
 	FTimerHandle TimerHandle_Kill;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
-	UStaticMeshComponent* meshComponent;
-
-	UPROPERTY()
-	UWeapon* weapon;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* TopDownCameraComponent;
@@ -90,7 +51,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UDecalComponent* CursorToWorld;
-
-	UPROPERTY()
-	ADroneRPGGameMode* gameMode;
 };

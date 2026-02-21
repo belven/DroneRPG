@@ -29,7 +29,6 @@ ABaseAIController::ABaseAIController(const FObjectInitializer& ObjectInitializer
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ABaseAIController::TargetPerceptionUpdated);
 }
 
-
 FString ABaseAIController::GetStateString(EActionState state)
 {
 	switch (state)
@@ -188,11 +187,8 @@ void ABaseAIController::ActorSeen(AActor* Actor)
 
 AObjective* ABaseAIController::GetClosestUncontrolledObjective()
 {
-	TArray<AObjective*> objectives = GetGameMode()->GetObjectives();
-
-	mShuffleArray<AObjective*>(objectives);
-
 	AObjective* closest = nullptr;
+	TArray<AObjective*> objectives = GetGameMode()->GetObjectives();
 
 	for (AObjective* objective : objectives)
 	{

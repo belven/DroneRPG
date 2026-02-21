@@ -1,11 +1,9 @@
-
 #include "ObjectiveLocationQueryTest.h"
 #include "AIController.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
 #include "DroneRPG/DroneRPGCharacter.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_VectorBase.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 #define mSphereTraceMultiEQS(start, end, radius, hits) UKismetSystemLibrary::SphereTraceMulti(GetWorld(), start, end, radius, ETraceTypeQuery::TraceTypeQuery1, true, ignore, EDrawDebugTrace::None, hits, true);
 

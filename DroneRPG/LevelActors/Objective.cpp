@@ -1,12 +1,10 @@
 #include "Objective.h"
-#include "Components/BoxComponent.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include <Components/StaticMeshComponent.h>
 #include <DroneRPG/Components/CombatantComponent.h>
 #include <Kismet/GameplayStatics.h>
-
 #include "Components/SphereComponent.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/Utilities/FunctionLibrary.h"

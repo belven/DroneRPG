@@ -1,6 +1,5 @@
 #pragma once
 #include "DominationGameMode.h"
-#include <Kismet/KismetSystemLibrary.h>
 #include <Kismet/GameplayStatics.h>
 #include "GameFramework/GameState.h"
 #include "GameFramework/PlayerState.h"

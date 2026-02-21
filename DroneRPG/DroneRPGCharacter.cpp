@@ -6,29 +6,17 @@
 #include "Components/HealthComponent.h"
 #include "Components/CombatantComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameModes/DroneRPGGameMode.h"
 #include "LevelActors/RespawnPoint.h"
 #include "Materials/Material.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Utilities/FunctionLibrary.h"
-#include <Kismet/GameplayStatics.h>
-#include "Utilities/WeaponCreator.h"
 
-ADroneRPGCharacter::ADroneRPGCharacter()
+ADroneRPGCharacter::ADroneRPGCharacter() : Super()
 {
 	// Set size for player capsule
-	const float capWidth = 50;
-	const float capHeight = 100;
-
-	GetCapsuleComponent()->InitCapsuleSize(capWidth, capHeight);
-	GetCapsuleComponent()->SetCollisionProfileName("Pawn");
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> DroneMesh(TEXT("StaticMesh'/Game/TopDownCPP/Models/Drone.Drone'"));
-
-	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMesh"));
 
 	if (DroneMesh.Succeeded())
 	{
@@ -36,18 +24,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 		meshComponent->SetupAttachment(RootComponent);
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-
-	// Don't rotate character to camera direction
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
-
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 150.f, 0.f);
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
 
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -76,22 +52,6 @@ ADroneRPGCharacter::ADroneRPGCharacter()
 
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
-
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = true;
-
-	GetCharacterMovement()->MaxWalkSpeed = 1500;
-
-	healthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
-	healthComponent->OnUnitDied.AddUniqueDynamic(this, &ADroneRPGCharacter::KillDrone);
-	healthComponent->OnUnitHit.AddUniqueDynamic(this, &ADroneRPGCharacter::UnitHit);
-
-	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
-}
-
-void ADroneRPGCharacter::BeginDestroy()
-{
-	Super::BeginDestroy();
 }
 
 FColor ADroneRPGCharacter::GetTeamColour() {
@@ -102,46 +62,6 @@ void ADroneRPGCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-#if WITH_EDITOR
-	SetFolderPath(TEXT("Characters"));
-#endif
-}
-
-void ADroneRPGCharacter::SetUpDrone()
-{
-	// Give each drone a random weapon
-	combatantComponent->SetupCombatantComponent(GetDroneName(), EDamagerType::Drone);
-	EWeaponType type = UFunctionLibrary::GetRandomEnum<EWeaponType>(EWeaponType::End);
-	SetWeapon(mGetDefaultWeapon(type, GetCombatantComponent()));
-}
-
-void ADroneRPGCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	SetUpDrone();
-}
-
-int32 ADroneRPGCharacter::GetTeam() const
-{
-	return IsValid(GetCombatantComponent()) ? GetCombatantComponent()->GetTeam() : -1;
-}
-
-void ADroneRPGCharacter::SetTeam(int32 val)
-{
-	combatantComponent->SetTeam(val);
-	FColor colour = GetGameMode()->GetTeamColour(GetTeam());
-	healthComponent->SetTeamColour(colour);
-	combatantComponent->SetTeamColour(colour);
-}
-
-ADroneRPGGameMode* ADroneRPGCharacter::GetGameMode()
-{
-	if (!IsValid(gameMode))
-	{
-		gameMode = Cast<ADroneRPGGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
-		combatantComponent->SetGameMode(gameMode);
-	}
-	return gameMode;
 }
 
 void ADroneRPGCharacter::Respawn()
@@ -158,16 +78,11 @@ void ADroneRPGCharacter::Respawn()
 		SetActorLocation(respawn->GetSpawnLocation(), false, NULL, ETeleportType::ResetPhysics);
 
 		// Fully Heal the drone
-		healthComponent->FullHeal();
+		GetHealthComponent()->FullHeal();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 		meshComponent->SetHiddenInGame(false);
 	}
-}
-
-void ADroneRPGCharacter::UnitHit(float damage, UCombatantComponent* attacker)
-{
-	GetGameMode()->UnitHit(damage, attacker);
 }
 
 ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
@@ -190,28 +105,8 @@ ARespawnPoint* ADroneRPGCharacter::GetRespawnPoint()
 	return respawnPoint;
 }
 
-void ADroneRPGCharacter::KillDrone(UCombatantComponent* killer)
+void ADroneRPGCharacter::UnitDied(UCombatantComponent* killer)
 {
-	GetCombatantComponent()->IncrementDeaths();
-
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
-	meshComponent->SetHiddenInGame(true);
-
+	Super::UnitDied(killer);
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
-
-	// Tell the killer they've killed us
-	killer->UnitKilled(GetCombatantComponent());
-
-	// Tell the gamemode we've died, to update score etc.
-	GetGameMode()->EntityKilled(GetCombatantComponent(), killer);
-}
-
-FString ADroneRPGCharacter::GetDroneName()
-{
-	if (droneName.IsEmpty() && GetGameMode()->GetCombatants().Contains(GetCombatantComponent()))
-	{
-		droneName = "Drone " + FString::FromInt(GetGameMode()->GetCombatants().IndexOfByKey(GetCombatantComponent()));
-	}
-	return droneName;
 }
