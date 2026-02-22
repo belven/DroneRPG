@@ -183,7 +183,7 @@ void ADroneRPGPlayerController::ChangeView()
 		combatantFound = FCombatantData();
 	}
 
-//	TArray<FCombatantData> combatants;
+	//TArray<FCombatantData> combatants;
 
 	for (auto combatant : GetGameMode()->GetCombatants())
 	{
@@ -193,7 +193,7 @@ void ADroneRPGPlayerController::ChangeView()
 
 			if (!IsValid(GetDrone()) || GetDrone()->GetCombatantComponent() != combatant)
 			{
-				if (data.IsAlive()) 
+				if (data.IsAlive())
 				{
 					//combatants.Add(combatantFound);
 
@@ -214,10 +214,26 @@ void ADroneRPGPlayerController::ChangeView()
 	//	return a.combatantComponent->GetCombatScore() > b.combatantComponent->GetCombatScore();
 	//	});
 
-	//if (combatants.Num() > 2)
+	//FBox Bounds(ForceInit);
+	//int amount = 0;
+
+	//for (FCombatantData data : combatants)
 	//{
-	//	FVector dotA =	FVector::DotProduct(combatants[0].GetActorLocation(), combatants[1].GetActorLocation());
-	//} 
+	//	amount++;
+	//	Bounds += data.GetActorLocation();
+
+	//	if (amount > 3)
+	//	{
+	//		break;
+	//	}
+	//}
+
+	//FVector Centre = Bounds.GetCenter();
+	//FVector Extent = Bounds.GetExtent();
+
+	//float Distance = Extent.Size();
+	//FVector CameraLocation = Centre + FVector(0, 0, Distance);
+
 
 	if (combatantFound.isSet)
 	{

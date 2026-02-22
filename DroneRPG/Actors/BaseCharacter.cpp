@@ -21,6 +21,7 @@ ABaseCharacter::ABaseCharacter()
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 	meshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DroneMesh"));
 
 	healthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
@@ -39,7 +40,6 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
-	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 }
 
 void ABaseCharacter::UnitDied(AActor* unitKilled, UCombatantComponent* inKiller)

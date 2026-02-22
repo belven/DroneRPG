@@ -19,10 +19,21 @@ class DRONERPG_API UObjectiveComponent : public UActorComponent
 
 public:
 	UObjectiveComponent();
-	float GetSize() { return size; }
-	void SetupParticles(UNiagaraComponent** inNiagaraComponent, const FString& inStr, int32 angle);
+
+	FObjectiveClaimed OnObjectiveClaimed;
+	FObjectiveParticlesSetup OnObjectiveParticlesSetup;
+	bool setupComplete;
+	static FColor UNCLAIMED_COLOUR;
+
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UNiagaraComponent* SpawnSystemAttached(FName name);
+	void SetupParticles(UNiagaraComponent** inNiagaraComponent, const FString& inStr, int32 angle);
+
+	int32 GetCurrentOwningTeam();
+	void UpdateColour();
+	float GetCurrentControlPercent();
 
 	UFUNCTION()
 	void BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -30,11 +41,11 @@ public:
 	UFUNCTION()
 	void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	void CheckForOverlaps();
-	UNiagaraComponent* SpawnSystemAttached(FName name);
 
 	UFUNCTION()
 	void UnitDied(AActor* unitKilled, UCombatantComponent* killer);
 
+	float GetSize() { return size; }
 	void SetTeamClaim(int32 team);
 
 	int32 GetAreaOwner() const { return areaOwner; }
@@ -43,16 +54,10 @@ public:
 	bool HasCompleteControl(int32 team);
 	void SetSize(float inKeyActorSize);
 
-	FObjectiveClaimed OnObjectiveClaimed;
-	FObjectiveParticlesSetup OnObjectiveParticlesSetup;
-	bool setupComplete;
-
 	int32 GetPreviousAreaOwner() const { return previousAreaOwner; }
-
 	void SetPreviousAreaOwner(int32 inPreviousAreaOwner) { previousAreaOwner = inPreviousAreaOwner; }
 
 	UNiagaraComponent* GetCurrentTeamParticles() { return currentTeamParticles; }
-
 	UNiagaraComponent* GetTransitioningParticles() { return transitioningParticles; }
 
 	void SetAngle(UNiagaraComponent* comp, float angle);
@@ -65,20 +70,19 @@ public:
 
 	float GetCurrentControl() const { return currentControl; }
 	int32 GetMaxControl() const { return maxControl; }
-	float GetCurrentControlPercent();
 
 	void SetCurrentControl(float inCurrentControl) { currentControl = inCurrentControl; }
 
 	bool IsFullClaim() const { return fullClaim; }
-
 	void SetFullClaim(bool inFullClaim) { fullClaim = inFullClaim; }
 
 	TArray<FCombatantData> GetCombatantsInArea() const { return combatantsInArea; }
-	int32 GetCurrentOwningTeam();
-	void UpdateColour();
 
 	int32 GetScoreMultiplier() const { return scoreMultiplier; }
 	void SetScoreMultiplier(int32 inScoreMultiplier) { scoreMultiplier = inScoreMultiplier; }
+
+	USphereComponent* GetObjectiveArea() const { return objectiveArea; }
+	void SetObjectiveArea(USphereComponent* inObjectiveArea) { objectiveArea = inObjectiveArea; }
 
 protected:
 	void CalculateOwnership();

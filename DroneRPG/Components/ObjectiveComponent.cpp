@@ -16,10 +16,12 @@ FName UObjectiveComponent::COLOUR = TEXT("Colour");
 FName UObjectiveComponent::SIZE = TEXT("Size");
 FName UObjectiveComponent::PERCENT = TEXT("Percent");
 FName UObjectiveComponent::ROTATION = TEXT("Rotation");
+FColor UObjectiveComponent::UNCLAIMED_COLOUR = FColor::Red;
 
 UObjectiveComponent::UObjectiveComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
 	PrimaryComponentTick.TickInterval = 1;
 	objectiveName = "";
 
@@ -30,7 +32,7 @@ UObjectiveComponent::UObjectiveComponent()
 	maxControl = 10;
 	fullClaim = false;
 	setupComplete = false;
-	currentColour = FColor::Red;
+	currentColour = UNCLAIMED_COLOUR;
 
 	smallParticle = 25;
 	bigParticle = 50;
@@ -49,7 +51,6 @@ UObjectiveComponent::UObjectiveComponent()
 	objectiveArea->OnComponentBeginOverlap.AddDynamic(this, &UObjectiveComponent::BeginOverlap);
 	objectiveArea->OnComponentEndOverlap.AddDynamic(this, &UObjectiveComponent::EndOverlap);
 	UFunctionLibrary::SetupOverlap(objectiveArea);
-
 }
 
 void UObjectiveComponent::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -118,7 +119,7 @@ void UObjectiveComponent::SetupParticles(UNiagaraComponent** inNiagaraComponent,
 {
 	UNiagaraComponent* comp =	SpawnSystemAttached(FName(*inStr));
 	*inNiagaraComponent = comp;
-	comp->SetColorParameter(COLOUR, FLinearColor(FColor::Red));
+	comp->SetColorParameter(COLOUR, FLinearColor(UNCLAIMED_COLOUR));
 	comp->SetFloatParameter(SIZE, smallParticle);
 	comp->SetFloatParameter(RADIUS, GetSize());
 	SetAngle(comp, angle);
@@ -223,10 +224,12 @@ void UObjectiveComponent::CalculateClaim()
 	// If only one team is in the area, then they  can start to claim it
 	if (teamsInArea.Num() == 1)
 	{
+		int32 scoreChange = combatantsInArea.Num() * scoreMultiplier;
+
 		// If the previousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
 		if (previousAreaOwner == 0 && areaOwner != 0)
 		{
-			currentControl += combatantsInArea.Num() * scoreMultiplier;
+			currentControl += scoreChange;
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			// Once the control exceeds the minimum control, the new team can have control
@@ -238,7 +241,7 @@ void UObjectiveComponent::CalculateClaim()
 		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
 		else if (previousAreaOwner != areaOwner && currentControl > 0)
 		{
-			currentControl -= combatantsInArea.Num() * scoreMultiplier;
+			currentControl -= scoreChange;
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
@@ -331,6 +334,8 @@ ADroneRPGGameMode* UObjectiveComponent::GetGameMode()
 void UObjectiveComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	objectiveArea->SetHiddenInGame(false);
 
 	if (setupComplete && IsValid(currentTeamParticles) && IsValid(transitioningParticles))
 	{

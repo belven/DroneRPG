@@ -1,25 +1,24 @@
 #include "Turret.h"
-
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "DroneRPG/Components/ObjectiveComponent.h"
 #include "DroneRPG/Controllers/TurretController.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "DroneRPG/Utilities/WeaponCreator.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 ATurret::ATurret() : Super()
 {
 	AIControllerClass = ATurretController::StaticClass();
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 1;
-
-	RootComponent = GetCapsuleComponent();
+	GetCharacterMovement()->SetMovementMode(MOVE_None);
 
 	objectiveComponent = CreateDefaultSubobject<UObjectiveComponent>("ObjectiveComp");
 	objectiveComponent->OnObjectiveClaimed.AddUniqueDynamic(this, &ATurret::ObjectiveClaimed);
 	objectiveComponent->OnObjectiveParticlesSetup.AddUniqueDynamic(this, &ATurret::ObjectiveParticlesSetup);
 	objectiveComponent->SetObjectiveName("Turret");
-	objectiveComponent->SetScoreMultiplier(3);
+	objectiveComponent->SetScoreMultiplier(5);
 	objectiveComponent->SetSize(1000);
+	objectiveComponent->GetObjectiveArea()->SetupAttachment(GetCapsuleComponent());
 
 	// Set size for player capsule
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> DroneMesh(TEXT("StaticMesh'/Game/TopDownCPP/Models/Drone.Drone'"));
@@ -32,9 +31,6 @@ ATurret::ATurret() : Super()
 		meshComponent->SetHiddenInGame(false);
 	}
 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-
 	GetCombatantComponent()->SetupCombatantComponent("Turret", EDamagerType::Turret);
 }
 
@@ -45,7 +41,7 @@ void ATurret::SetTeam(int32 newTeam)
 
 void ATurret::ObjectiveClaimed(UObjectiveComponent* inObjective)
 {
-	SetTeam(objectiveComponent->GetAreaOwner());
+	SetTeam(objectiveComponent->GetPreviousAreaOwner());
 	GetHealthComponent()->FullHeal();
 	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -55,14 +51,13 @@ void ATurret::ObjectiveClaimed(UObjectiveComponent* inObjective)
 
 void ATurret::UnitDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
-	//Super::UnitDied(inKiller);
+	//Super::UnitDied(unitKilled, inKiller);
 }
 
 void ATurret::ObjectiveParticlesSetup()
 {
-	int newTeam = 100;
-	SetTeam(newTeam);
-	objectiveComponent->SetTeamClaim(newTeam);
+	SetTeam(100);
+	objectiveComponent->SetTeamClaim(GetTeam());
 }
 
 void ATurret::BeginPlay()
