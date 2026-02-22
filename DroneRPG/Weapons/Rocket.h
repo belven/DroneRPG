@@ -19,7 +19,7 @@ public:
 	static const float Default_Initial_Lifespan;
 
 	UFUNCTION()
-	void TargetDied(UCombatantComponent* inKiller);
+	void TargetDied(AActor* unitKilled, UCombatantComponent* inKiller);
 	virtual  void SetTarget(FCombatantData targetData) override;
 	void DealDamage();
 	void TargetOverlappingActors();

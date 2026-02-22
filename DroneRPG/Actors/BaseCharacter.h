@@ -14,7 +14,7 @@ class DRONERPG_API ABaseCharacter : public ACharacter
 	GENERATED_BODY()
 public:
 	UFUNCTION()
-	virtual void UnitDied(UCombatantComponent* inKiller);
+	virtual void UnitDied(AActor* unitKilled, UCombatantComponent* inKiller);
 	// Sets default values for this character's properties
 	ABaseCharacter();
 

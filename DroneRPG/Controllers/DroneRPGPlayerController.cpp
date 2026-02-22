@@ -169,7 +169,7 @@ void ADroneRPGPlayerController::OnPossess(APawn* aPawn)
 	}
 }
 
-void ADroneRPGPlayerController::ViewTargetDied(UCombatantComponent* inKiller)
+void ADroneRPGPlayerController::ViewTargetDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
 	ChangeView();
 }

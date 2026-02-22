@@ -432,9 +432,9 @@ void ADroneBaseAI::PerformActions()
 
 // Region AI Events / Interrupts
 
-void ADroneBaseAI::OnTargetUnitDied(UCombatantComponent* inKiller)
+void ADroneBaseAI::OnTargetUnitDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
-	Super::OnTargetUnitDied(inKiller);
+	Super::OnTargetUnitDied(unitKilled, inKiller);
 
 	if (CompareState(EActionState::AttackingTarget))
 	{

@@ -42,7 +42,7 @@ ABaseCharacter::ABaseCharacter()
 	combatantComponent = CreateDefaultSubobject<UCombatantComponent>(TEXT("CombatComp"));
 }
 
-void ABaseCharacter::UnitDied(UCombatantComponent* inKiller)
+void ABaseCharacter::UnitDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
 	GetCombatantComponent()->IncrementDeaths();
 

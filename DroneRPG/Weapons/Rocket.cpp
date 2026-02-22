@@ -48,7 +48,7 @@ bool ARocket::SetTargetIfValid(const FCombatantData& targetData)
 	return result;
 }
 
-void ARocket::TargetDied(UCombatantComponent* inKiller)
+void ARocket::TargetDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
 	TargetOverlappingActors();
 

@@ -49,7 +49,7 @@ public:
 	virtual	void LostSightOfActor(AActor* Actor, const FVector& lastSeenLocation);
 
 	UFUNCTION()
-	virtual void OnTargetUnitDied(UCombatantComponent* inKiller);
+	virtual void OnTargetUnitDied(AActor* unitKilled, UCombatantComponent* inKiller);
 
 protected:
 	bool isFiring;

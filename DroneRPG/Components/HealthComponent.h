@@ -7,7 +7,7 @@ class UCombatantComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUnitDied, UCombatantComponent*, killer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitDied, AActor*, unitKilled, UCombatantComponent*, killer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUnitHit, float, damage, UCombatantComponent*, attacker);
 
 USTRUCT(BlueprintType)

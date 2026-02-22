@@ -1,15 +1,21 @@
 #include "ObjectiveComponent.h"
+#include "Components/SphereComponent.h"
+#include "DroneRPG/Components/HealthComponent.h"
+#include "DroneRPG/DroneRPG.h"
+#include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "Niagara/Public/NiagaraComponent.h"
 #include "Niagara/Public/NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
-#include <Components/StaticMeshComponent.h>
 #include <DroneRPG/Components/CombatantComponent.h>
 #include <Kismet/GameplayStatics.h>
-#include "Components/SphereComponent.h"
-#include "DroneRPG/Components/HealthComponent.h"
-#include "DroneRPG/Utilities/FunctionLibrary.h"
-#include "DroneRPG/GameModes/DroneRPGGameMode.h"
-#include "DroneRPG/Utilities/CombatClasses.h"
+
+FName UObjectiveComponent::RADIUS = TEXT("Radius");
+FName UObjectiveComponent::COLOUR = TEXT("Colour");
+FName UObjectiveComponent::SIZE = TEXT("Size");
+FName UObjectiveComponent::PERCENT = TEXT("Percent");
+FName UObjectiveComponent::ROTATION = TEXT("Rotation");
 
 UObjectiveComponent::UObjectiveComponent()
 {
@@ -17,11 +23,13 @@ UObjectiveComponent::UObjectiveComponent()
 	PrimaryComponentTick.TickInterval = 1;
 	objectiveName = "";
 
+	scoreMultiplier = 1;
 	areaOwner = 0;
 	currentControl = 0;
 	minControl = 3;
 	maxControl = 10;
 	fullClaim = false;
+	setupComplete = false;
 	currentColour = FColor::Red;
 
 	smallParticle = 25;
@@ -46,7 +54,7 @@ UObjectiveComponent::UObjectiveComponent()
 
 void UObjectiveComponent::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UCombatantComponent* combatant = mGetCombatantComponent(OtherActor);
+	FCombatantData combatant = mCreateCombatantData(OtherActor);
 
 	// Check if we have a drone and we have it in the list
 	if (IsValid(combatant))
@@ -56,20 +64,15 @@ void UObjectiveComponent::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	}
 }
 
-void UObjectiveComponent::UnitDied(UCombatantComponent* unit)
-{
-	Remove(unit);
-}
-
 void UObjectiveComponent::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UCombatantComponent* combatantComponent = mGetCombatantComponent(OtherActor);
+	FCombatantData combatant = mCreateCombatantData(OtherActor);
 
 	// Check if we have a drone and we have it in the list
-	if (IsValid(combatantComponent))
+	if (IsValid(combatant))
 	{
 		// Remove it from the list and re-calculate ownership
-		Remove(combatantComponent);
+		Remove(combatant);
 	}
 }
 
@@ -80,7 +83,7 @@ void UObjectiveComponent::CheckForOverlaps()
 
 	for (AActor* overlap : overlaps)
 	{
-		UCombatantComponent* combatant = mGetCombatantComponent(overlap);
+		FCombatantData combatant = mCreateCombatantData(overlap);
 
 		// Check if we have a drone and we have it in the list
 		if (IsValid(combatant))
@@ -90,32 +93,81 @@ void UObjectiveComponent::CheckForOverlaps()
 	}
 }
 
+UNiagaraComponent* UObjectiveComponent::SpawnSystemAttached(FName name)
+{
+	return UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, GetOwner()->GetRootComponent(), name, FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
+}
+
+void UObjectiveComponent::UnitDied(AActor* unitKilled, UCombatantComponent* killer)
+{
+	Remove(mCreateCombatantData(unitKilled));
+}
+
+void UObjectiveComponent::SetTeamClaim(int32 team)
+{
+	SetAreaOwner(team);
+	SetPreviousAreaOwner(team);
+	SetAngle(GetCurrentTeamParticles(), 360);
+	SetAngle(GetTransitioningParticles(), 0);
+	SetCurrentControl(10);
+	SetFullClaim(true);
+	UpdateColour();
+}
+
+void UObjectiveComponent::SetupParticles(UNiagaraComponent** inNiagaraComponent, const FString& inStr, int32 angle)
+{
+	UNiagaraComponent* comp =	SpawnSystemAttached(FName(*inStr));
+	*inNiagaraComponent = comp;
+	comp->SetColorParameter(COLOUR, FLinearColor(FColor::Red));
+	comp->SetFloatParameter(SIZE, smallParticle);
+	comp->SetFloatParameter(RADIUS, GetSize());
+	SetAngle(comp, angle);
+}
+
 void UObjectiveComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	currentTeamParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, GetOwner()->GetRootComponent(), TEXT("currentTeamParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
-	transitioningParticles = UNiagaraFunctionLibrary::SpawnSystemAttached(auraSystem, GetOwner()->GetRootComponent(), TEXT("transitioningParticles"), FVector(1), FRotator(1), EAttachLocation::SnapToTarget, false);
-
-	currentTeamParticles->SetFloatParameter(TEXT("Radius"), GetSize());
-	currentTeamParticles->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Red));
-	currentTeamParticles->SetFloatParameter(TEXT("Size"), smallParticle);
-	SetAngle(currentTeamParticles, 0);
-
-	transitioningParticles->SetFloatParameter(TEXT("Radius"), GetSize());
-	transitioningParticles->SetFloatParameter(TEXT("Size"), smallParticle);
-	transitioningParticles->SetColorParameter(TEXT("Colour"), FLinearColor(FColor::Red));
-	SetAngle(transitioningParticles, 360);
-
+	SetupParticles(&currentTeamParticles, "CurrentTeamParticles", 0);
+	SetupParticles(&transitioningParticles, "TransitioningParticles", 360);
+	SetSize(GetSize());
 	GetGameMode()->AddObjective(this);
+	CheckForOverlaps();
+	setupComplete = true;
+	OnObjectiveParticlesSetup.Broadcast();
+}
+
+void UObjectiveComponent::SetSize(float inKeyActorSize)
+{
+	size = inKeyActorSize;
 	objectiveArea->SetSphereRadius(GetSize() * 1.2);
 
-	CheckForOverlaps();
+	if (IsValid(currentTeamParticles))
+	{
+		currentTeamParticles->SetFloatParameter(RADIUS, GetSize());
+	}
+
+	if (IsValid(transitioningParticles))
+	{
+		transitioningParticles->SetFloatParameter(RADIUS, GetSize());
+	}
 }
 
 void UObjectiveComponent::SetAngle(UNiagaraComponent* comp, float angle)
 {
-	comp->SetFloatParameter(TEXT("Percent"), angle);
+	comp->SetFloatParameter(PERCENT, angle);
 	comp->SetActive(angle > 10);
+}
+
+FString UObjectiveComponent::GetObjectiveName()
+{
+	if (objectiveName.IsEmpty())
+	{
+		if (IsValid(GetGameMode()))
+		{
+			objectiveName = "Objective " + FString::FromInt(GetGameMode()->GetObjectives().IndexOfByKey(this));
+		}
+	}
+	return objectiveName;
 }
 
 void UObjectiveComponent::CalculateOwnership()
@@ -123,13 +175,11 @@ void UObjectiveComponent::CalculateOwnership()
 	// Clear the teams list, as we're calculating it again 
 	teamsInArea.Empty();
 
-	for (UCombatantComponent* component : combatantsInArea)
+	for (FCombatantData combatant : combatantsInArea)
 	{
-		UHealthComponent* healthComponent = mGetHealthComponent(component->GetOwner());
-
-		if (!teamsInArea.Contains(component->GetTeam()) && healthComponent->IsAlive())
+		if (!teamsInArea.Contains(combatant.GetTeam()) && combatant.IsAlive())
 		{
-			teamsInArea.Add(component->GetTeam());
+			teamsInArea.Add(combatant.GetTeam());
 		}
 	}
 
@@ -156,7 +206,7 @@ void UObjectiveComponent::UpdateColour()
 		if (currentColour != teamColour)
 		{
 			currentColour = teamColour;
-			currentTeamParticles->SetColorParameter(TEXT("Colour"), FLinearColor(currentColour));
+			currentTeamParticles->SetColorParameter(COLOUR, FLinearColor(currentColour));
 		}
 	}
 }
@@ -176,7 +226,7 @@ void UObjectiveComponent::CalculateClaim()
 		// If the previousAreaOwner is 0 and there's a new owner then start to claim, this is only ever the case if it's yet to be claimed 
 		if (previousAreaOwner == 0 && areaOwner != 0)
 		{
-			currentControl += combatantsInArea.Num();
+			currentControl += combatantsInArea.Num() * scoreMultiplier;
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			// Once the control exceeds the minimum control, the new team can have control
@@ -188,7 +238,7 @@ void UObjectiveComponent::CalculateClaim()
 		// If the area owner isn't the same as the last and the area has some control, start to remove the control from the existing team
 		else if (previousAreaOwner != areaOwner && currentControl > 0)
 		{
-			currentControl -= combatantsInArea.Num();
+			currentControl -= combatantsInArea.Num() * scoreMultiplier;
 			currentControl = mClampValue<int32>(currentControl, maxControl, 0);
 
 			// If the control is now 0, then we've removed all existing control and can start to claim it
@@ -209,7 +259,8 @@ void UObjectiveComponent::CalculateClaim()
 		// If we have this level of control, the make the particles bigger
 		if (currentControl == maxControl && !fullClaim)
 		{
-			currentTeamParticles->SetFloatParameter(TEXT("Size"), bigParticle);
+			UE_LOG(LogObjectives, Log, TEXT("Team %d claimed objective %s"), previousAreaOwner, *GetObjectiveName());
+			currentTeamParticles->SetFloatParameter(SIZE, bigParticle);
 			fullClaim = true;
 
 			if (OnObjectiveClaimed.IsBound())
@@ -220,7 +271,8 @@ void UObjectiveComponent::CalculateClaim()
 		// If the control is less than max then make the particles smaller, this makes it easier to tell when it's fully claimed
 		else if (currentControl < maxControl && fullClaim)
 		{
-			currentTeamParticles->SetFloatParameter(TEXT("Size"), smallParticle);
+			UE_LOG(LogObjectives, Log, TEXT("Team %d is loosing claim to objective %s"), previousAreaOwner, *GetObjectiveName());
+			currentTeamParticles->SetFloatParameter(SIZE, smallParticle);
 			fullClaim = false;
 		}
 
@@ -231,38 +283,39 @@ void UObjectiveComponent::CalculateClaim()
 			float radius = 360 * (currentControl / maxControl);
 			float radiusDiff = 360 - radius;
 
-			currentTeamParticles->SetFloatParameter(TEXT("Percent"), radius);
-			transitioningParticles->SetFloatParameter(TEXT("Percent"), radiusDiff);
+			currentTeamParticles->SetFloatParameter(PERCENT, radius);
+			transitioningParticles->SetFloatParameter(PERCENT, radiusDiff);
 			SetAngle(currentTeamParticles, radius);
 			SetAngle(transitioningParticles, radiusDiff);
 
-			transitioningParticles->SetFloatParameter(TEXT("Rotation"), (radius / 2) + (radiusDiff / 2));
+			transitioningParticles->SetFloatParameter(ROTATION, (radius / 2) + (radiusDiff / 2));
 		}
 	}
 }
 
-void UObjectiveComponent::Add(UCombatantComponent* combatant)
+void UObjectiveComponent::Add(FCombatantData combatant)
 {
-	UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+	bool notOwner = IsValid(GetOwner()) && combatant != GetOwner();
 
-	bool notOwner = IsValid(GetOwner()) && combatant->GetOwner() != GetOwner();
-
-	if (notOwner && !combatantsInArea.Contains(combatant) && IsValid(healthComponent) && healthComponent->IsAlive())
+	if (notOwner && combatant.IsValid() && combatant.IsAlive())
 	{
+		//UE_LOG(LogObjectives, Log, TEXT("%s entered objective %s"), *combatant.GetCombatantName(), *GetObjectiveName());
 		combatantsInArea.AddUnique(combatant);
-		healthComponent->OnUnitDied.AddDynamic(this, &UObjectiveComponent::UnitDied);
+		combatant.healthComponent->OnUnitDied.AddUniqueDynamic(this, &UObjectiveComponent::UnitDied);
 		CalculateOwnership();
+		UE_LOG(LogObjectives, Log, TEXT("%s added combatant %s, total %d"), *GetObjectiveName(), *combatant.GetCombatantName(), combatantsInArea.Num());
 	}
 }
 
-void UObjectiveComponent::Remove(UCombatantComponent* combatant)
+void UObjectiveComponent::Remove(const FCombatantData& combatant)
 {
 	if (combatantsInArea.Contains(combatant))
 	{
-		UHealthComponent* healthComponent = mGetHealthComponent(combatant->GetOwner());
+		//UE_LOG(LogObjectives, Log, TEXT("%s left objective %s"), *combatant.GetCombatantName(), *GetObjectiveName());
 		combatantsInArea.Remove(combatant);
-		healthComponent->OnUnitDied.RemoveDynamic(this, &UObjectiveComponent::UnitDied);
+		combatant.healthComponent->OnUnitDied.RemoveDynamic(this, &UObjectiveComponent::UnitDied);
 		CalculateOwnership();
+		UE_LOG(LogObjectives, Log, TEXT("%s removed combatant %s, total %d"), *GetObjectiveName(), *combatant.GetCombatantName(), combatantsInArea.Num());
 	}
 }
 
@@ -278,19 +331,24 @@ ADroneRPGGameMode* UObjectiveComponent::GetGameMode()
 void UObjectiveComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	CalculateClaim();
 
-	overlapTimePassed += DeltaTime;
+	if (setupComplete && IsValid(currentTeamParticles) && IsValid(transitioningParticles))
+	{
+		CalculateClaim();
 
-	// Every second add 5 points to the team that full owns this point
-	if (fullClaim)
-	{
-		GetGameMode()->AddTeamScore(areaOwner, 50);
-	}
-	else if (overlapTimePassed > overlapTimeRate)
-	{
-		overlapTimePassed = 0;
-		CheckForOverlaps();
+		overlapTimePassed += DeltaTime;
+
+		// Every second add 5 points to the team that full owns this point
+		if (fullClaim)
+		{
+			GetGameMode()->AddTeamScore(areaOwner, 50);
+		}
+
+		if (overlapTimePassed > overlapTimeRate)
+		{
+			overlapTimePassed = 0;
+			CheckForOverlaps();
+		}
 	}
 }
 
@@ -303,5 +361,3 @@ float UObjectiveComponent::GetCurrentControlPercent()
 {
 	return (currentControl / maxControl) * 100;
 }
-
-

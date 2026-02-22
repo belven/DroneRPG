@@ -115,8 +115,8 @@ void ADroneRPGCharacter::PossessedBy(AController* NewController)
 
 }
 
-void ADroneRPGCharacter::UnitDied(UCombatantComponent* killer)
+void ADroneRPGCharacter::UnitDied(AActor* unitKilled, UCombatantComponent* killer)
 {
-	Super::UnitDied(killer);
+	Super::UnitDied(unitKilled, killer);
 	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
 }

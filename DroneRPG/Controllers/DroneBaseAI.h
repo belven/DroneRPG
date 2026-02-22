@@ -47,7 +47,7 @@ public:
 
 	void SetTargetObjective(UObjectiveComponent* val);
 
-	virtual void OnTargetUnitDied(UCombatantComponent* inKiller) override;
+	virtual void OnTargetUnitDied(AActor* unitKilled, UCombatantComponent* inKiller) override;
 	virtual void SetTarget(const FCombatantData& inTarget) override;
 
 	bool CompareState(EActionState state);

@@ -26,9 +26,14 @@ struct FCombatantData
 
 	bool isSet = false;
 
+	bool operator==(const FCombatantData& other) const
+	{
+		return combatantComponent == other.combatantComponent;
+	}
+
 	bool IsValid() const
 	{
-		return combatantComponent != NULL && healthComponent != NULL;
+		return isSet && combatantComponent != NULL && healthComponent != NULL;
 	}
 
 	bool IsAlive() const
@@ -36,7 +41,7 @@ struct FCombatantData
 		return healthComponent != NULL ? healthComponent->IsAlive() : false;
 	}
 
-	FString GetCombatantName()
+	FString GetCombatantName() const
 	{
 		return combatantComponent != NULL ? combatantComponent->GetCombatantName() : "Unknown";
 	}

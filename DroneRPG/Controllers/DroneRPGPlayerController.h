@@ -59,7 +59,7 @@ protected:
 
 private:
 	UFUNCTION()
-	void ViewTargetDied(UCombatantComponent* inKiller);
+	void ViewTargetDied(AActor* unitKilled, UCombatantComponent* inKiller);
 	UFUNCTION()
 	void ChangeView();
 

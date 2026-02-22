@@ -88,7 +88,7 @@ void UHealthComponent::ReceiveDamage(float damage, UCombatantComponent* damager)
 
 		if (!IsAlive())
 		{
-			OnUnitDied.Broadcast(damager);
+			OnUnitDied.Broadcast(GetOwner(), damager);
 			shieldMeshComp->SetHiddenInGame(true);
 			healthParticle->SetHiddenInGame(true);
 			shieldsActive = false;

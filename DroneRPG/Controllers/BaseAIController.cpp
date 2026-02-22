@@ -243,7 +243,7 @@ void ABaseAIController::LostSightOfActor(AActor* Actor, const FVector& lastSeenL
 	}
 }
 
-void ABaseAIController::OnTargetUnitDied(UCombatantComponent* inKiller)
+void ABaseAIController::OnTargetUnitDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
 	UE_LOG(LogDroneAI, Log, TEXT("%s's target ( %s) died "), *GetCombatantName(), *GetTarget().GetCombatantName());
 	SetTarget(FCombatantData());

@@ -26,7 +26,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	FColor GetTeamColour();
 
-	virtual void UnitDied(UCombatantComponent* killer) override;
+	virtual void UnitDied(AActor* unitKilled, UCombatantComponent* killer) override;
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Drone")

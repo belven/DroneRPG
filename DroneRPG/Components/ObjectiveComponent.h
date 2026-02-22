@@ -1,17 +1,16 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "DroneRPG/LevelActors/Objective.h"
+#include "DroneRPG/Utilities/CombatClasses.h"
 #include "ObjectiveComponent.generated.h"
 
 class UNiagaraComponent;
 class USphereComponent;
-class UBoxComponent;
-class UCombatantComponent;
 class UNiagaraSystem;
 class ADroneRPGGameMode;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FObjectiveClaimed, UObjectiveComponent*, objective);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FObjectiveParticlesSetup);
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class DRONERPG_API UObjectiveComponent : public UActorComponent
@@ -21,6 +20,7 @@ class DRONERPG_API UObjectiveComponent : public UActorComponent
 public:
 	UObjectiveComponent();
 	float GetSize() { return size; }
+	void SetupParticles(UNiagaraComponent** inNiagaraComponent, const FString& inStr, int32 angle);
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -30,17 +30,22 @@ public:
 	UFUNCTION()
 	void EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	void CheckForOverlaps();
+	UNiagaraComponent* SpawnSystemAttached(FName name);
 
 	UFUNCTION()
-	void UnitDied(UCombatantComponent* unit);
+	void UnitDied(AActor* unitKilled, UCombatantComponent* killer);
+
+	void SetTeamClaim(int32 team);
 
 	int32 GetAreaOwner() const { return areaOwner; }
 	void SetAreaOwner(int32 val);
 
 	bool HasCompleteControl(int32 team);
-	void SetSize(float inKeyActorSize) { size = inKeyActorSize; }
+	void SetSize(float inKeyActorSize);
 
 	FObjectiveClaimed OnObjectiveClaimed;
+	FObjectiveParticlesSetup OnObjectiveParticlesSetup;
+	bool setupComplete;
 
 	int32 GetPreviousAreaOwner() const { return previousAreaOwner; }
 
@@ -52,8 +57,8 @@ public:
 
 	void SetAngle(UNiagaraComponent* comp, float angle);
 
-	FName GetObjectiveName() const { return objectiveName; }
-	void SetObjectiveName(FName val) { objectiveName = val; }
+	FString GetObjectiveName();
+	void SetObjectiveName(FString val) { objectiveName = val; }
 
 	FColor GetCurrentColour() const { return currentColour; }
 	void SetCurrentColour(FColor val) { currentColour = val; }
@@ -68,17 +73,19 @@ public:
 
 	void SetFullClaim(bool inFullClaim) { fullClaim = inFullClaim; }
 
-	TArray<UCombatantComponent*> GetCombatantsInArea() const { return combatantsInArea; }
+	TArray<FCombatantData> GetCombatantsInArea() const { return combatantsInArea; }
 	int32 GetCurrentOwningTeam();
 	void UpdateColour();
 
-protected:
+	int32 GetScoreMultiplier() const { return scoreMultiplier; }
+	void SetScoreMultiplier(int32 inScoreMultiplier) { scoreMultiplier = inScoreMultiplier; }
 
+protected:
 	void CalculateOwnership();
 	void CalculateClaim();
 
-	void Add(UCombatantComponent* combatant);
-	void Remove(UCombatantComponent* combatant);
+	void Add(FCombatantData combatant);
+	void Remove(const FCombatantData& combatant);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")
 	int32 areaOwner;
@@ -91,6 +98,12 @@ protected:
 
 	ADroneRPGGameMode* GetGameMode();
 private:
+	static FName RADIUS;
+	static FName COLOUR;
+	static FName SIZE;
+	static FName PERCENT;
+	static FName ROTATION;
+
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;
 
@@ -98,7 +111,7 @@ private:
 	USphereComponent* objectiveArea;
 
 	UPROPERTY()
-	TArray<UCombatantComponent*> combatantsInArea;
+	TArray<FCombatantData> combatantsInArea;
 
 	int32 minControl;
 	int32 maxControl;
@@ -107,6 +120,7 @@ private:
 	float overlapTimePassed;
 	float overlapTimeRate;
 	float size;
+	int32 scoreMultiplier;
 
 	UPROPERTY()
 	TArray<int32> teamsInArea;
@@ -118,7 +132,7 @@ private:
 	bool fullClaim;
 
 	UPROPERTY()
-	FName objectiveName;
+	FString objectiveName;
 
 	UPROPERTY()
 	UNiagaraSystem* auraSystem;
