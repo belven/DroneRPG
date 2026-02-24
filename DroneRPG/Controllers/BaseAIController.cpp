@@ -16,7 +16,7 @@ ABaseAIController::ABaseAIController(const FObjectInitializer& ObjectInitializer
 	sightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
 	// Set up sight config for AI perception
-	sightConfig->PeripheralVisionAngleDegrees = 350;
+	sightConfig->PeripheralVisionAngleDegrees = 360;
 
 	// This section is important, as without setting at least bDetectNeutrals to true, the AI will never perceive anything
 	// Still not tried to set this up correctly at all
@@ -50,17 +50,20 @@ FString ABaseAIController::GetStateString(EActionState state)
 	return "Unknown";
 }
 
+void ABaseAIController::UpdateSightRange(float range)
+{
+	sightConfig->SightRadius = range * .8;
+	sightConfig->LoseSightRadius = range;
+	PerceptionComponent->RequestStimuliListenerUpdate();
+}
+
 void ABaseAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
 	combatant = mCreateCombatantData(InPawn);
 
-	float range = 6000;
-
-	sightConfig->SightRadius = range * .8;
-	sightConfig->LoseSightRadius = range;
-	PerceptionComponent->RequestStimuliListenerUpdate();
+	UpdateSightRange();
 	acceptanceRadius = 100;
 }
 

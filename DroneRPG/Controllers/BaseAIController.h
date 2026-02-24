@@ -17,6 +17,7 @@ class DRONERPG_API ABaseAIController : public ADetourCrowdAIController
 public:
 	ABaseAIController(const FObjectInitializer& ObjectInitializer);
 	FString GetStateString(EActionState state);
+	void UpdateSightRange(float range = 6000);
 
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void BeginPlay() override;

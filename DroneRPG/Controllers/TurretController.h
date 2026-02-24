@@ -18,6 +18,7 @@ public:
 	ATurret* GetTurret();
 
 	void SetTurret(ATurret* inTurret) { turret = inTurret; }
+	virtual void OnPossess(APawn* InPawn) override;
 
 private:
 	UPROPERTY()

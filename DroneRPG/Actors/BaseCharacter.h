@@ -3,6 +3,8 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
+class USpringArmComponent;
+class UCameraComponent;
 class ADroneRPGGameMode;
 class UCombatantComponent;
 class UHealthComponent;
@@ -38,6 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Drone")
 	virtual void UnitHit(float damage, UCombatantComponent* attacker);
 
+	FORCEINLINE UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
+	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+
 protected:
 		UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Mesh, meta = (AllowPrivateAccess = "true"))
 	UStaticMeshComponent* meshComponent;
@@ -54,4 +59,10 @@ private:
 
 	UPROPERTY()
 	ADroneRPGGameMode* gameMode;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* TopDownCameraComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USpringArmComponent* CameraBoom;
 };

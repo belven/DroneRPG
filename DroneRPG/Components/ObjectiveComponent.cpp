@@ -36,7 +36,7 @@ UObjectiveComponent::UObjectiveComponent()
 
 	smallParticle = 25;
 	bigParticle = 50;
-	overlapTimeRate = 5;
+	overlapTimeRate = 10;
 
 	static ConstructorHelpers::FObjectFinder<UNiagaraSystem> auraParticleSystem(TEXT("/Script/Niagara.NiagaraSystem'/Game/TopDownCPP/ParticleEffects/ObjectiveCaptureParticlesWedge.ObjectiveCaptureParticlesWedge'"));
 
@@ -58,7 +58,7 @@ void UObjectiveComponent::BeginOverlap(UPrimitiveComponent* OverlappedComponent,
 	FCombatantData combatant = mCreateCombatantData(OtherActor);
 
 	// Check if we have a drone and we have it in the list
-	if (IsValid(combatant))
+	if (IsCombatantValid(combatant))
 	{
 		// Add it to the list and re-calculate ownership
 		Add(combatant);
@@ -70,7 +70,7 @@ void UObjectiveComponent::EndOverlap(UPrimitiveComponent* OverlappedComponent, A
 	FCombatantData combatant = mCreateCombatantData(OtherActor);
 
 	// Check if we have a drone and we have it in the list
-	if (IsValid(combatant))
+	if (combatant.IsValid())
 	{
 		// Remove it from the list and re-calculate ownership
 		Remove(combatant);
@@ -79,18 +79,31 @@ void UObjectiveComponent::EndOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 void UObjectiveComponent::CheckForOverlaps()
 {
+
 	TArray<AActor*> overlaps;
 	objectiveArea->GetOverlappingActors(overlaps);
+	TArray<FCombatantData> validCombatants;
 
 	for (AActor* overlap : overlaps)
 	{
 		FCombatantData combatant = mCreateCombatantData(overlap);
 
 		// Check if we have a drone and we have it in the list
-		if (IsValid(combatant))
+		if (IsCombatantValid(combatant))
 		{
-			Add(combatant);
+			validCombatants.Add(combatant);
 		}
+	}
+
+	if (combatantsInArea.Num() != validCombatants.Num())
+	{
+		UE_LOG(LogObjectives, Log, TEXT("%s has mismatched combatants: Combatants = %s | Valid Combatants = %s"), *GetObjectiveName(), *FString::FromInt(combatantsInArea.Num()), *FString::FromInt(validCombatants.Num()));
+		combatantsInArea.Empty();
+	}
+
+	for (FCombatantData validCombatant : validCombatants)
+	{
+		Add(validCombatant);		
 	}
 }
 
@@ -117,7 +130,7 @@ void UObjectiveComponent::SetTeamClaim(int32 team)
 
 void UObjectiveComponent::SetupParticles(UNiagaraComponent** inNiagaraComponent, const FString& inStr, int32 angle)
 {
-	UNiagaraComponent* comp =	SpawnSystemAttached(FName(*inStr));
+	UNiagaraComponent* comp = SpawnSystemAttached(FName(*inStr));
 	*inNiagaraComponent = comp;
 	comp->SetColorParameter(COLOUR, FLinearColor(UNCLAIMED_COLOUR));
 	comp->SetFloatParameter(SIZE, smallParticle);
@@ -178,7 +191,7 @@ void UObjectiveComponent::CalculateOwnership()
 
 	for (FCombatantData combatant : combatantsInArea)
 	{
-		if (!teamsInArea.Contains(combatant.GetTeam()) && combatant.IsAlive())
+		if (!teamsInArea.Contains(combatant.GetTeam()) && IsCombatantValid(combatant))
 		{
 			teamsInArea.Add(combatant.GetTeam());
 		}
@@ -296,11 +309,15 @@ void UObjectiveComponent::CalculateClaim()
 	}
 }
 
-void UObjectiveComponent::Add(FCombatantData combatant)
+bool UObjectiveComponent::IsCombatantValid(FCombatantData combatant)
 {
 	bool notOwner = IsValid(GetOwner()) && combatant != GetOwner();
+	return notOwner && combatant.IsValid() && combatant.IsAlive();
+}
 
-	if (notOwner && combatant.IsValid() && combatant.IsAlive())
+void UObjectiveComponent::Add(const FCombatantData& combatant)
+{
+	if (IsCombatantValid(combatant))
 	{
 		//UE_LOG(LogObjectives, Log, TEXT("%s entered objective %s"), *combatant.GetCombatantName(), *GetObjectiveName());
 		combatantsInArea.AddUnique(combatant);

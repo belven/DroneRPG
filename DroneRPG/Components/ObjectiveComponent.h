@@ -87,8 +87,9 @@ public:
 protected:
 	void CalculateOwnership();
 	void CalculateClaim();
+	bool IsCombatantValid(FCombatantData combatant);
 
-	void Add(FCombatantData combatant);
+	void Add(const FCombatantData& combatant);
 	void Remove(const FCombatantData& combatant);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective")

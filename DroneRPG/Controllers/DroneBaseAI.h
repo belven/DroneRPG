@@ -21,6 +21,7 @@ public:
 	ADroneBaseAI(const FObjectInitializer& ObjectInitializer);
 
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void OnPossess(APawn* InPawn) override;
 
 	void MovingToObjective();
 	void PerformActions();

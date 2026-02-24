@@ -74,3 +74,10 @@ ATurret* ATurretController::GetTurret()
 	}
 	return turret;
 }
+
+void ATurretController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	UpdateSightRange(GetTurret()->GetWeapon()->GetRange());
+}

@@ -7,19 +7,19 @@ UWeapon* UWeaponCreator::GetWeapon(EWeaponType type, float inFireRate, float inD
 {
 	switch (type) {
 	case EWeaponType::Laser:
-		return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
+		return ULaser::CreateLaser(inFireRate, inDamage, inOwner);
 	case EWeaponType::Rocket:
-		return URocketLauncher::CreateRocketLauncher(1.5f, 60.0f, inOwner);
+		return URocketLauncher::CreateRocketLauncher(inFireRate, inDamage, inOwner);
 	case EWeaponType::Mine:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+		return UShotgun::CreateShotgun(inFireRate, inDamage, inOwner);
 	case EWeaponType::Rail_Gun:
-		return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
+		return ULaser::CreateLaser(inFireRate, inDamage, inOwner);
 	case EWeaponType::Shotgun:
-		return UShotgun::CreateShotgun(0.5f, 15.0f, inOwner);
+		return UShotgun::CreateShotgun(inFireRate, inDamage, inOwner);
 	default:
 		break;
 	}
-	return ULaser::CreateLaser(0.3f, 20.0f, inOwner);
+	return ULaser::CreateLaser(inFireRate, inDamage, inOwner);
 }
 
 UWeapon* UWeaponCreator::GetDefaultWeapon(EWeaponType type, UCombatantComponent* inOwner)

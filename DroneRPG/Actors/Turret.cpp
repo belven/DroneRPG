@@ -4,7 +4,9 @@
 #include "DroneRPG/Components/ObjectiveComponent.h"
 #include "DroneRPG/Controllers/TurretController.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
+#include "DroneRPG/Utilities/FunctionLibrary.h"
 #include "DroneRPG/Utilities/WeaponCreator.h"
+#include "DroneRPG/Weapons/DroneProjectile.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ATurret::ATurret() : Super()
@@ -42,16 +44,13 @@ void ATurret::SetTeam(int32 newTeam)
 void ATurret::ObjectiveClaimed(UObjectiveComponent* inObjective)
 {
 	SetTeam(objectiveComponent->GetPreviousAreaOwner());
-	GetHealthComponent()->FullHeal();
-	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	meshComponent->SetHiddenInGame(false);
-	GetCombatantComponent()->ResetCombatScore();
+	Respawn();
 }
 
 void ATurret::UnitDied(AActor* unitKilled, UCombatantComponent* inKiller)
 {
 	//Super::UnitDied(unitKilled, inKiller);
+	mSetTimer(TimerHandle_Respawn, &ATurret::Respawn, 10.f);
 }
 
 void ATurret::ObjectiveParticlesSetup()
@@ -73,4 +72,16 @@ void ATurret::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	SetWeapon(mGetDefaultWeapon(EWeaponType::Laser, GetCombatantComponent()));
+	SetWeapon(UWeaponCreator::GetWeapon(EWeaponType::Rail_Gun, 1.0f, 100, GetCombatantComponent()));
+	GetWeapon()->SetProjectileSpeed(ADroneProjectile::Default_Initial_Speed * 2);
+}
+
+void ATurret::Respawn()
+{
+	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_Respawn);
+	GetHealthComponent()->FullHeal();
+	GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	meshComponent->SetHiddenInGame(false);
+	GetCombatantComponent()->ResetCombatScore();
 }

@@ -1,12 +1,10 @@
 #pragma once
 #include "DroneRPGCharacter.h"
-#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/HealthComponent.h"
 #include "Components/CombatantComponent.h"
 #include "Engine/World.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "GameModes/DroneRPGGameMode.h"
 #include "LevelActors/RespawnPoint.h"
 #include "Materials/Material.h"
@@ -25,21 +23,6 @@ ADroneRPGCharacter::ADroneRPGCharacter() : Super()
 		meshComponent->SetupAttachment(RootComponent);
 		meshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
-
-	// Create a camera boom...
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 8000;
-	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
-	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
-
-	// Create a camera...
-	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
-	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
-	TopDownCameraComponent->SetOrthoWidth(10000);
 
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
@@ -118,5 +101,5 @@ void ADroneRPGCharacter::PossessedBy(AController* NewController)
 void ADroneRPGCharacter::UnitDied(AActor* unitKilled, UCombatantComponent* killer)
 {
 	Super::UnitDied(unitKilled, killer);
-	mSetTimer(TimerHandle_Kill, &ADroneRPGCharacter::Respawn, 2.5f);
+	mSetTimer(TimerHandle_Respawn, &ADroneRPGCharacter::Respawn, 2.5f);
 }

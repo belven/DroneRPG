@@ -33,8 +33,6 @@ public:
 	ARespawnPoint* GetRespawnPoint();
 	virtual void PossessedBy(AController* NewController) override;
 
-	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
 private:
@@ -42,13 +40,7 @@ private:
 	ARespawnPoint* respawnPoint;
 
 	FTimerHandle TimerHandle_ShieldRegenRestart;
-	FTimerHandle TimerHandle_Kill;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* TopDownCameraComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+	FTimerHandle TimerHandle_Respawn;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UDecalComponent* CursorToWorld;

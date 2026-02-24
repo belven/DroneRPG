@@ -20,4 +20,5 @@ void UFunctionLibrary::SetupOverlap(UShapeComponent* comp)
 	comp->SetCollisionProfileName(TEXT("Trigger"));
 	comp->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
 	comp->SetGenerateOverlapEvents(true);
+	comp->SetHiddenInGame(true);
 }

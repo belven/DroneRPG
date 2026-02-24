@@ -22,7 +22,11 @@ public:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 
+	UFUNCTION()
+	void Respawn();
+
 private:
 	UPROPERTY()
 	UObjectiveComponent* objectiveComponent;
+	FTimerHandle TimerHandle_Respawn;
 };

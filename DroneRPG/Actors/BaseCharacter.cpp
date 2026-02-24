@@ -1,9 +1,12 @@
 #include "BaseCharacter.h"
+
+#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DroneRPG/Components/CombatantComponent.h"
 #include "DroneRPG/Components/HealthComponent.h"
 #include "DroneRPG/GameModes/DroneRPGGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -40,6 +43,21 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
 	GetCharacterMovement()->SetMovementMode(MOVE_NavWalking);
 	GetCharacterMovement()->MaxWalkSpeed = 1500;
+
+	// Create a camera boom...
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
+	CameraBoom->TargetArmLength = 8000;
+	CameraBoom->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
+	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+
+	// Create a camera...
+	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
+	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	TopDownCameraComponent->SetProjectionMode(ECameraProjectionMode::Orthographic);
+	TopDownCameraComponent->SetOrthoWidth(10000);
 }
 
 void ABaseCharacter::UnitDied(AActor* unitKilled, UCombatantComponent* inKiller)

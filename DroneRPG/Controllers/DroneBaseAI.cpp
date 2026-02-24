@@ -84,6 +84,13 @@ void ADroneBaseAI::Tick(float DeltaSeconds)
 	}
 }
 
+void ADroneBaseAI::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	UpdateSightRange(GetWeaponRange());
+}
+
 void ADroneBaseAI::EvadingDamage()
 {
 	if (IsNotMoving())
